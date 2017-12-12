@@ -4,9 +4,10 @@ package com.mygdx.game.logic;
  * Created by fraayala19 on 12/12/17.
  */
 public class Body {
-    private double mass;
-    private double x, y, z;
-    private double vX, vY, vZ;
+    protected double mass;
+    protected double x, y, z;
+    protected double vX, vY, vZ;
+
 
     public Body(double mass, double x, double y, double z) {
         this.mass = mass;
