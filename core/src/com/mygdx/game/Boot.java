@@ -20,11 +20,6 @@ public class Boot extends Game {
 	}
 
 	@Override
-	public void render () {
-
-	}
-	
-	@Override
 	public void dispose () {
 	}
 }
