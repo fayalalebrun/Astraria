@@ -12,8 +12,13 @@ import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.g3d.utils.CameraInputController;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
+import com.badlogic.gdx.math.Quaternion;
+import com.badlogic.gdx.math.Vector3;
+import com.mygdx.game.logic.Body;
+import com.mygdx.game.logic.DetailedBody;
 
 import java.util.ArrayList;
+import java.util.Vector;
 
 /**
  * Created by fraayala19 on 12/12/17.
@@ -26,12 +31,15 @@ public class SimulationScreen extends BaseScreen {
     private ModelInstance instance;
     private Model model;
     private Environment environment;
-    ArrayList<ModelInstance> instances = new ArrayList<ModelInstance>();
+    ArrayList<ModelInstance> instances;
+    Vector<DetailedBody> bodies;
 
     private CameraInputController camController;
 
     public SimulationScreen(Boot boot) {
         super(boot);
+        bodies = new Vector<DetailedBody>();
+        instances = new ArrayList<ModelInstance>();
     }
 
     @Override
@@ -44,10 +52,10 @@ public class SimulationScreen extends BaseScreen {
         modelBatch = new ModelBatch();
 
         cam = new PerspectiveCamera(67, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-        cam.position.set(10f, 10f, 10f);
+        cam.position.set(0.0000000668449198f, 0.0000000668449198f, 0.0000000668449198f);
         cam.lookAt(0,0,0);
-        cam.near = 1f;
-        cam.far = 300f;
+        cam.near = 0f;
+        cam.far = 14960000000000000f;
         cam.update();
 
         camController = new CameraInputController(cam);
@@ -57,9 +65,11 @@ public class SimulationScreen extends BaseScreen {
 
         final Material material = new Material(ColorAttribute.createDiffuse(Color.GREEN));
         final long attributes = VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal;
-        model = modelBuilder.createSphere(4f, 4f, 4f, 24, 24, material, attributes);
+        model = modelBuilder.createSphere(0.00000000668449198f, 0.00000000668449198f, 0.00000000668449198f, 24, 24, material, attributes);
         instance = new ModelInstance(model);
         instances.add(instance);
+
+
     }
 
 
@@ -99,6 +109,16 @@ public class SimulationScreen extends BaseScreen {
     public void dispose() {
         modelBatch.dispose();
         model.dispose();
+    }
+
+    public void addBody(DetailedBody body){
+        instances.add(body.getInstance());
+        bodies.add(body);
+    }
+
+    public void removeBody(DetailedBody body){
+        instances.remove(body);
+        bodies.remove(body);
     }
 
 
