@@ -13,6 +13,8 @@ import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.g3d.utils.CameraInputController;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 
+import java.util.ArrayList;
+
 /**
  * Created by fraayala19 on 12/12/17.
  */
@@ -24,8 +26,9 @@ public class SimulationScreen extends BaseScreen {
     private ModelInstance instance;
     private Model model;
     private Environment environment;
+    ArrayList<ModelInstance> instances = new ArrayList<ModelInstance>();
 
-    public CameraInputController camController;
+    private CameraInputController camController;
 
     public SimulationScreen(Boot boot) {
         super(boot);
@@ -56,6 +59,7 @@ public class SimulationScreen extends BaseScreen {
         final long attributes = VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal;
         model = modelBuilder.createSphere(4f, 4f, 4f, 24, 24, material, attributes);
         instance = new ModelInstance(model);
+        instances.add(instance);
     }
 
 
@@ -65,7 +69,7 @@ public class SimulationScreen extends BaseScreen {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
         cam.update();
         modelBatch.begin(cam);
-        modelBatch.render(instance, environment);
+        modelBatch.render(instances, environment);
         modelBatch.end();
     }
 
