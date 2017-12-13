@@ -20,6 +20,8 @@ public abstract class NBodyAlgorithm implements Runnable{
     public void run() {
         if(!terminate){
             runAlgorithm();
+        } else {
+            endThreads();
         }
     }
 
@@ -28,4 +30,6 @@ public abstract class NBodyAlgorithm implements Runnable{
     private void terminate(){
         terminate = true;
     }
+
+    protected abstract void endThreads();
 }
