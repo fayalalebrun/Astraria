@@ -19,6 +19,10 @@ public class DetailedBody extends Body{
         this.name = name;
     }
 
+    public ModelInstance getInstance() {
+        return instance;
+    }
+
     public double getRadius() {
         return radius;
     }
