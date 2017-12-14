@@ -9,7 +9,7 @@ import java.util.Vector;
  */
 public abstract class NBodyAlgorithm implements Runnable{
 
-    Vector<Body> bodies;
+    protected  Vector<Body> bodies;
     private boolean terminate = false;
 
     public NBodyAlgorithm(Vector<Body> bodies) {

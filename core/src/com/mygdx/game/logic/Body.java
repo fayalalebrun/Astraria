@@ -6,7 +6,8 @@ package com.mygdx.game.logic;
 public class Body {
     protected double mass;
     protected double x, y, z;
-    protected double vX, vY, vZ;
+    protected double vX, vY, vZ, currAccelX=Double.NaN, currAccelY = Double.NaN, currAccelZ = Double.NaN;
+    private boolean accelInit = false;
 
 
     public Body(double mass, double x, double y, double z) {
@@ -20,7 +21,7 @@ public class Body {
         return mass;
     }
 
-    public void setMass(double mass) {
+    public synchronized void setMass(double mass) {
         this.mass = mass;
     }
 
@@ -28,7 +29,7 @@ public class Body {
         return x;
     }
 
-    public void setX(double x) {
+    public synchronized void setX(double x) {
         this.x = x;
     }
 
@@ -36,7 +37,7 @@ public class Body {
         return y;
     }
 
-    public void setY(double y) {
+    public synchronized void setY(double y) {
         this.y = y;
     }
 
@@ -44,7 +45,7 @@ public class Body {
         return z;
     }
 
-    public void setZ(double z) {
+    public synchronized void setZ(double z) {
         this.z = z;
     }
 
@@ -52,7 +53,7 @@ public class Body {
         return vX;
     }
 
-    public void setvX(double vX) {
+    public synchronized void setvX(double vX) {
         this.vX = vX;
     }
 
@@ -60,7 +61,7 @@ public class Body {
         return vY;
     }
 
-    public void setvY(double vY) {
+    public synchronized void setvY(double vY) {
         this.vY = vY;
     }
 
@@ -68,7 +69,39 @@ public class Body {
         return vZ;
     }
 
-    public void setvZ(double vZ) {
+    public synchronized void setvZ(double vZ) {
         this.vZ = vZ;
+    }
+
+    public boolean getAccelInit(){
+        return accelInit;
+    }
+
+    public synchronized void setAccelInitTrue(){
+        accelInit = true;
+    }
+
+    public double getCurrAccelX() {
+        return currAccelX;
+    }
+
+    public synchronized void setCurrAccelX(double currAccelX) {
+        this.currAccelX = currAccelX;
+    }
+
+    public double getCurrAccelY() {
+        return currAccelY;
+    }
+
+    public synchronized void setCurrAccelY(double currAccelY) {
+        this.currAccelY = currAccelY;
+    }
+
+    public double getCurrAccelZ() {
+        return currAccelZ;
+    }
+
+    public synchronized void setCurrAccelZ(double currAccelZ) {
+        this.currAccelZ = currAccelZ;
     }
 }
