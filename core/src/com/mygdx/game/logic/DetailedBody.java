@@ -20,8 +20,8 @@ public class DetailedBody extends Body{
     private double auRadius;
     private Vector3 pos;
 
-    public DetailedBody(double mass, double x, double y, double z, Model model, double radius, String name) {
-        super(mass, x, y, z);
+    public DetailedBody(double mass, double x, double y, double z, double vX, double vY, double vZ, Model model, double radius, String name) {
+        super(mass, x, y, z, vX, vY, vZ);
         this.instance = new ModelInstance(model);
         this.pos = new Vector3();
         this.radius = radius;
