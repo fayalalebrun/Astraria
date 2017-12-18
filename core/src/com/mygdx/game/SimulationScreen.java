@@ -163,5 +163,25 @@ public class SimulationScreen extends BaseScreen {
         bodies.remove(body);
     }
 
+    public void addBodies(Vector<DetailedBody> bodies){
+        synchronized (this.bodies){
+            for(DetailedBody body : bodies){
+                this.bodies.add(body);
+                this.instances.add(body.getInstance());
+            }
+        }
+    }
 
+    public void removeBodies(Vector<DetailedBody> bodies){
+        synchronized (this.bodies){
+            this.bodies.removeAll(bodies);
+            for(DetailedBody body : bodies){
+                this.instances.remove(body.getInstance());
+            }
+        }
+    }
+
+    public Vector<DetailedBody> getBodies() {
+        return bodies;
+    }
 }
