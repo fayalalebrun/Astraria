@@ -13,7 +13,13 @@ import com.kotcrab.vis.ui.VisUI;
 public class Boot extends Game {
 
 	public static AssetManager manager;
-	
+	private String[] arg;
+
+	public Boot(String[] arg) {
+		super();
+		this.arg = arg;
+	}
+
 	@Override
 	public void create () {
 		Gdx.graphics.setResizable(true);
@@ -27,7 +33,7 @@ public class Boot extends Game {
 
 		VisUI.load();
 
-		setScreen(new SimulationScreen(this));
+		setScreen(new SimulationScreen(this, arg));
 	}
 
 	@Override
