@@ -48,11 +48,12 @@ public class SimulationScreen extends BaseScreen {
 
     private CameraInputController camController;
 
-    public SimulationScreen(Boot boot) {
+    public SimulationScreen(Boot boot, String[] arg) {
         super(boot);
         bodies = new Vector<DetailedBody>();
         instances = new ArrayList<ModelInstance>();
         bodyLabelBatch = new SpriteBatch();
+        
     }
 
     @Override
