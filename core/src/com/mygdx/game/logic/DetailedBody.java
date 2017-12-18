@@ -52,4 +52,8 @@ public class DetailedBody extends Body{
     public String getName() {
         return name;
     }
+
+    public Vector3 getPos() {
+        return pos;
+    }
 }
