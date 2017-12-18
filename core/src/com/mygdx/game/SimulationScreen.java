@@ -45,7 +45,6 @@ public class SimulationScreen extends BaseScreen {
     Vector<DetailedBody> bodies;
     SpriteBatch bodyLabelBatch;
 
-    DetailedBody earth;
 
     private CameraInputController camController;
 
@@ -75,18 +74,9 @@ public class SimulationScreen extends BaseScreen {
         camController = new CameraInputController(cam);
         Gdx.input.setInputProcessor(camController);
 
-        ModelBuilder modelBuilder = new ModelBuilder();
-
-        final Material material = new Material(ColorAttribute.createDiffuse(Color.GREEN));
-        final long attributes = VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal;
-        model = modelBuilder.createSphere(1, 1, 1, 24, 24, material, attributes);
 
 
 
-        earth = new DetailedBody(123,0,0,0,model, 60000000000f,"earth");
-
-        addBody(earth);
-        earth.centerCamera(cam);
 
 
     }
@@ -115,10 +105,12 @@ public class SimulationScreen extends BaseScreen {
 
         BitmapFont font = manager.get("comicsans.fnt", BitmapFont.class);
 
-        Vector3 labelPos = earth.getPos().cpy();
+        Vector3 labelPos;
 
-        cam.project(labelPos);
+
         for(DetailedBody body : this.bodies){
+            labelPos = body.getPos().cpy();
+            cam.project(labelPos);
             font.draw(bodyLabelBatch,body.getName(),labelPos.x,labelPos.y);
         }
         batch.end();
