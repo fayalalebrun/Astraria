@@ -2,6 +2,7 @@ package com.mygdx.game;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.assets.AssetManager;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
@@ -53,7 +54,11 @@ public class SimulationScreen extends BaseScreen {
         bodies = new Vector<DetailedBody>();
         instances = new ArrayList<ModelInstance>();
         bodyLabelBatch = new SpriteBatch();
-        
+        for(int i = 0; i<arg.length; i++){
+            System.out.println(arg[i]);
+            FileHandle file = new FileHandle(arg[i]);
+            SaveFileManager.loadGame(this, file);
+        }
     }
 
     @Override
