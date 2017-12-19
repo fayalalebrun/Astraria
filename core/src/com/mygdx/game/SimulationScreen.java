@@ -15,6 +15,7 @@ import com.badlogic.gdx.graphics.g3d.attributes.FloatAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.g3d.utils.CameraInputController;
+import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector3;
@@ -39,15 +40,16 @@ public class SimulationScreen extends BaseScreen {
     private PerspectiveCamera cam;
 
     private ModelBatch modelBatch;
-    private ModelInstance instance;
-    private Model model;
     private Environment environment;
     ArrayList<ModelInstance> instances;
     Vector<DetailedBody> bodies;
     SpriteBatch bodyLabelBatch;
 
+    Vector3 cameraDirection = new Vector3();
+    Vector3 objectFromCamera = new Vector3();
 
-    private CameraInputController camController;
+
+    private ViewportListener camController;
 
     public SimulationScreen(Boot boot, String[] arg) {
         super(boot);
@@ -77,12 +79,8 @@ public class SimulationScreen extends BaseScreen {
         cam.far = 1496000000000f;
         cam.update();
 
-        camController = new CameraInputController(cam);
+        camController = new ViewportListener(cam);
         Gdx.input.setInputProcessor(camController);
-
-
-
-
 
 
     }
@@ -90,7 +88,7 @@ public class SimulationScreen extends BaseScreen {
 
     @Override
     public void render(float delta) {
-
+        camController.update(delta);
 
         for(DetailedBody body : this.bodies){
             body.render();
@@ -115,6 +113,10 @@ public class SimulationScreen extends BaseScreen {
 
 
         for(DetailedBody body : this.bodies){
+            //cameraDirection.set(cam.direction);
+            //objectFromCamera.set(cam.position);
+            //objectFromCamera = objectFromCamera.sub(body.getPos().cpy()).nor();
+
             labelPos = body.getPos().cpy();
             cam.project(labelPos);
             font.draw(bodyLabelBatch,body.getName(),labelPos.x,labelPos.y);
@@ -148,7 +150,6 @@ public class SimulationScreen extends BaseScreen {
     @Override
     public void dispose() {
         modelBatch.dispose();
-        model.dispose();
     }
 
     public void addBody(DetailedBody body){
