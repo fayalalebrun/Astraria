@@ -1,6 +1,7 @@
 package com.mygdx.game.logic.algorithms;
 
 import com.mygdx.game.logic.Body;
+import com.mygdx.game.logic.DetailedBody;
 
 import java.util.Vector;
 
@@ -9,12 +10,12 @@ import java.util.Vector;
  */
 public abstract class NBodyAlgorithm implements Runnable{
 
-    protected  Vector<Body> bodies;
+    protected  Vector<DetailedBody> bodies;
     private boolean terminate = false;
     private double lastTime;
 
 
-    public NBodyAlgorithm(Vector<Body> bodies) {
+    public NBodyAlgorithm(Vector<DetailedBody> bodies) {
         this.bodies = bodies;
     }
 
