@@ -25,6 +25,7 @@ import com.kotcrab.vis.ui.VisUI;
 import com.kotcrab.vis.ui.widget.VisLabel;
 import com.mygdx.game.logic.Body;
 import com.mygdx.game.logic.DetailedBody;
+import com.mygdx.game.logic.algorithms.MultiThreadAlgorithm;
 
 import javax.xml.soap.Detail;
 import java.util.ArrayList;
@@ -45,7 +46,8 @@ public class SimulationScreen extends BaseScreen {
     Vector<DetailedBody> bodies;
     SpriteBatch bodyLabelBatch;
 
-    public static volatile double simSpeed = 1;
+    public static volatile double simSpeed;
+    private Thread algorithmThread;
 
     Vector3 cameraDirection = new Vector3();
     Vector3 objectFromCamera = new Vector3();
@@ -62,6 +64,11 @@ public class SimulationScreen extends BaseScreen {
             System.out.println(arg[i]);
             FileHandle file = new FileHandle(arg[i]);
             SaveFileManager.loadGame(this, file);
+
+            simSpeed = 1;
+
+            algorithmThread = new Thread(new MultiThreadAlgorithm(bodies));
+            //algorithmThread.start();
         }
     }
 
@@ -152,6 +159,7 @@ public class SimulationScreen extends BaseScreen {
     @Override
     public void dispose() {
         modelBatch.dispose();
+        algorithmThread.interrupt();
     }
 
     public void addBody(DetailedBody body){
