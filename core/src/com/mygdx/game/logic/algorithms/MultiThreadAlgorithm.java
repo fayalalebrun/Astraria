@@ -9,6 +9,7 @@ package com.mygdx.game.logic.algorithms;/*
 
 import com.mygdx.game.SimulationScreen;
 import com.mygdx.game.logic.Body;
+import com.mygdx.game.logic.DetailedBody;
 import com.mygdx.game.logic.algorithms.threads.VelocityVerlet;
 
 import java.util.Vector;
@@ -30,7 +31,7 @@ public class MultiThreadAlgorithm extends NBodyAlgorithm{
 
 
 
-    public MultiThreadAlgorithm(Vector<Body> bodies){
+    public MultiThreadAlgorithm(Vector<DetailedBody> bodies){
         super(bodies);
         this.amountOfThreads = Runtime.getRuntime().availableProcessors()-1;
         executorService = Executors.newFixedThreadPool(this.amountOfThreads);
@@ -139,7 +140,7 @@ public class MultiThreadAlgorithm extends NBodyAlgorithm{
         return az;
     }
 
-    public Vector<Body> getBodies(){
+    public Vector<DetailedBody> getBodies(){
         return bodies;
     }
 

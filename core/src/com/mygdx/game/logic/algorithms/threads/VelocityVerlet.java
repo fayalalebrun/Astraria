@@ -8,6 +8,7 @@ package com.mygdx.game.logic.algorithms.threads;/*
 */
 
 import com.mygdx.game.logic.Body;
+import com.mygdx.game.logic.DetailedBody;
 import com.mygdx.game.logic.algorithms.MultiThreadAlgorithm;
 import com.mygdx.game.logic.helpers.Units;
 
@@ -48,7 +49,7 @@ public class VelocityVerlet implements Runnable {
             double pZ = Units.AUToM(current.getZ());
 
 
-            Vector<Body> bodies = multiThreadParent.getBodies();
+            Vector<DetailedBody> bodies = multiThreadParent.getBodies();
 
 
             //First time procedure?
