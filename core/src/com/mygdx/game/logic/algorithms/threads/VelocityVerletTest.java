@@ -20,7 +20,7 @@ public class VelocityVerletTest implements Runnable{
     public VelocityVerletTest(CountDownLatch latch, MultiThreadAlgorithmTest resutParent){
         this.latch = latch;
         this.resultParent = resutParent;
-        this.body = new Body(0,0,0,0);
+        this.body = new Body(0,0,0,0,0,0,0);
     }
 
     @Override

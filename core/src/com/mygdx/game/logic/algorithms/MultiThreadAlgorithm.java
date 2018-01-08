@@ -74,9 +74,13 @@ public class MultiThreadAlgorithm extends NBodyAlgorithm{
 
             CountDownLatch countDownLatch = new CountDownLatch(bodies.size());
 
+            //
+
+            double delta = this.getDelta();
+
             for (int i = 0; i < bodies.size(); i++) {
 
-                executorService.submit(new VelocityVerlet(countDownLatch, this, i));
+                executorService.submit(new VelocityVerlet(countDownLatch, this, i, delta));
 
             }
 

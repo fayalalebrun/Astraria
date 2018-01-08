@@ -10,11 +10,14 @@ public class Body {
     private boolean accelInit = false;
 
 
-    public Body(double mass, double x, double y, double z) {
+    public Body(double mass, double x, double y, double z, double vX, double vY, double vZ) {
         this.mass = mass;
         this.x = x;
         this.y = y;
         this.z = z;
+        this.vX = vX;
+        this.vY = vY;
+        this.vZ = vZ;
     }
 
     public double getMass() {
