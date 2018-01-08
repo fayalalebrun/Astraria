@@ -45,6 +45,8 @@ public class SimulationScreen extends BaseScreen {
     Vector<DetailedBody> bodies;
     SpriteBatch bodyLabelBatch;
 
+    public static volatile double simSpeed = 1;
+
     Vector3 cameraDirection = new Vector3();
     Vector3 objectFromCamera = new Vector3();
 
