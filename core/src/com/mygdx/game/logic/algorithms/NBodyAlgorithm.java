@@ -11,6 +11,8 @@ public abstract class NBodyAlgorithm implements Runnable{
 
     protected  Vector<Body> bodies;
     private boolean terminate = false;
+    private double lastTime;
+
 
     public NBodyAlgorithm(Vector<Body> bodies) {
         this.bodies = bodies;
@@ -32,4 +34,14 @@ public abstract class NBodyAlgorithm implements Runnable{
     }
 
     protected abstract void endThreads();
+
+    protected double getDelta(){
+        double currTime = (double)System.nanoTime()/1000000000.0;
+        if(lastTime==0){
+            lastTime = currTime;
+        }
+        double temp = currTime - lastTime;
+        lastTime = currTime;
+        return temp;
+    }
 }

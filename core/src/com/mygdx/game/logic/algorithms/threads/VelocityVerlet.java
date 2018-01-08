@@ -9,7 +9,7 @@ package com.mygdx.game.logic.algorithms.threads;/*
 
 import com.mygdx.game.logic.Body;
 import com.mygdx.game.logic.algorithms.MultiThreadAlgorithm;
-import com.mygdx.game.logic.algorithms.helpers.Units;
+import com.mygdx.game.logic.helpers.Units;
 
 import java.util.Vector;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -20,8 +20,9 @@ public class VelocityVerlet implements Runnable {
     private int thisBody;
     private double temporary, ax, ay, az;
     private MultiThreadAlgorithm multiThreadParent;
+    private double delta;
 
-    public VelocityVerlet(CountDownLatch latch, MultiThreadAlgorithm multiThreadParent, int thisBody) {
+    public VelocityVerlet(CountDownLatch latch, MultiThreadAlgorithm multiThreadParent, int thisBody, double delta) {
         this.latch = latch;
         this.thisBody = thisBody;
         this.multiThreadParent = multiThreadParent;
@@ -33,16 +34,18 @@ public class VelocityVerlet implements Runnable {
 
         //Verlet Algorithm
 
-        double delta = 0; //provisional delta
+        //double delta = 0; //provisional delta
 
         //Get time
             ax = 0;
             ay = 0;
             az = 0;
 
-            double pX = current.getX();
-            double pY = current.getY();
-            double pZ = current.getZ(); //Units
+
+
+            double pX = Units.AUToM(current.getX());
+            double pY = Units.AUToM(current.getY());
+            double pZ = Units.AUToM(current.getZ());
 
 
             Vector<Body> bodies = multiThreadParent.getBodies();
@@ -63,9 +66,9 @@ public class VelocityVerlet implements Runnable {
                 }
 
 
-                    ax *= Units.GRAVCONSTANT;
-                    ay *= Units.GRAVCONSTANT;
-                    az *= Units.GRAVCONSTANT;
+                    ax *= Units.GRAV;
+                    ay *= Units.GRAV;
+                    az *= Units.GRAV;
 
                     multiThreadParent.getAx()[thisBody] = ax;
                     multiThreadParent.getAy()[thisBody] = ay;
@@ -79,9 +82,9 @@ public class VelocityVerlet implements Runnable {
             pY = pY + (current.getY() * delta) + (0.5*current.getCurrAccelY() *square(delta));
             pZ = pZ + (current.getZ() * delta) + (0.5*current.getCurrAccelZ() *square(delta));
 
-            multiThreadParent.getX()[thisBody] = pX;
-            multiThreadParent.getY()[thisBody] = pY;
-            multiThreadParent.getZ()[thisBody] = pZ;
+            multiThreadParent.getX()[thisBody] = Units.mToAU(pX);
+            multiThreadParent.getY()[thisBody] = Units.mToAU(pY);
+            multiThreadParent.getZ()[thisBody] = Units.mToAU(pZ);
 
             //new positions saved into arrays, bodies still hold old positions
 
@@ -95,9 +98,9 @@ public class VelocityVerlet implements Runnable {
             for (int k = bodies.indexOf(current) + 1; k < bodies.size(); k++) {
                 parseAcceleration(bodies.get(k), pX, pY, pZ);
             }
-            ax *= Units.GRAVCONSTANT;
-            ay *= Units.GRAVCONSTANT;
-            az *= Units.GRAVCONSTANT;
+            ax *= Units.GRAV;
+            ay *= Units.GRAV;
+            az *= Units.GRAV;
 
             multiThreadParent.getVx()[thisBody] += (((multiThreadParent.getAx()[thisBody] + ax)/2)*delta);
             multiThreadParent.getVx()[thisBody] += (((multiThreadParent.getAx()[thisBody] + ax)/2)*delta);
