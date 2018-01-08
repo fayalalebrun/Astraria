@@ -7,6 +7,7 @@ package com.mygdx.game.logic.algorithms;/*
 
 */
 
+import com.mygdx.game.SimulationScreen;
 import com.mygdx.game.logic.Body;
 import com.mygdx.game.logic.algorithms.threads.VelocityVerlet;
 
@@ -76,7 +77,7 @@ public class MultiThreadAlgorithm extends NBodyAlgorithm{
 
             //
 
-            double delta = this.getDelta();
+            double delta = this.getDelta() * SimulationScreen.simSpeed;
 
             for (int i = 0; i < bodies.size(); i++) {
 
