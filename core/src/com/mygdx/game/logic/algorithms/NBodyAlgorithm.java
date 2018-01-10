@@ -10,23 +10,60 @@ import java.util.Vector;
  */
 public abstract class NBodyAlgorithm implements Runnable{
 
-    protected  Vector<DetailedBody> bodies;
+    protected Vector<DetailedBody> bodies;
     private boolean terminate = false;
     private double lastTime;
+    protected final Object lock;
+
+    private double tmp;
 
 
-    public NBodyAlgorithm(Vector<DetailedBody> bodies) {
+    public NBodyAlgorithm(Vector<DetailedBody> bodies, Object lock) {
         this.bodies = bodies;
+
+        this.lock = lock;
     }
 
     @Override
     public void run() {
-        if(!terminate){
-            runAlgorithm();
-        } else {
-            endThreads();
+
+        int calcSec = 0;
+        double timeSinceCalcSec = 0;
+
+        double average = 0;
+        double times = 0;
+
+
+        while (!terminate){
+           runAlgorithm();
+        // System.out.println("Algorithm done");
+
+            //System.out.println(tmp);
+
+
+            if(true) {
+                calcSec++;
+                timeSinceCalcSec += tmp;
+                if (timeSinceCalcSec >= 1) {
+                    timeSinceCalcSec = 0;
+                    System.out.println("Calc: "+calcSec);
+
+                    average = (average*times+calcSec)/(times+1);
+
+                    System.out.println("Avg: "+average);
+
+
+
+                    calcSec = 0;
+                    times++;
+                }
+            }
+
         }
+
+        endThreads();
     }
+
 
     protected abstract void runAlgorithm();
 
@@ -43,6 +80,9 @@ public abstract class NBodyAlgorithm implements Runnable{
         }
         double temp = currTime - lastTime;
         lastTime = currTime;
+
+        this.tmp = temp;
+
         return temp;
     }
 }
