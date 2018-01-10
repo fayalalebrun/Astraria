@@ -32,9 +32,9 @@ public class SaveFileManager {
             String name;
             double radius;
             double mass;
-            double vX;
-            double vY;
-            double vZ;
+            double vX=0;
+            double vY=0;
+            double vZ=0;
             float r=0,g=0,b=0,a=0;
             double x;
             double y;
@@ -101,9 +101,11 @@ public class SaveFileManager {
                 } else {
                     i++;
                 }
-
+               // System.out.println(vX+""+vY+" "+vZ);
             }
             simulationScreen.addBodies(planetList);
+
+
         }
     }
 }
