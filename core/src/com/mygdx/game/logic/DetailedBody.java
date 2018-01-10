@@ -31,9 +31,14 @@ public class DetailedBody extends Body{
     }
 
     public void render(){
+
+
+
+
         instance.transform.getTranslation(pos);
         instance.transform.trn(-pos.x, -pos.y, -pos.z);
         instance.transform.trn((float)x, (float)y, (float)z);
+
     }
 
     public void centerCamera(Camera cam){
