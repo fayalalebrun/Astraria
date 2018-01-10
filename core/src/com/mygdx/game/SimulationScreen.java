@@ -52,11 +52,17 @@ public class SimulationScreen extends BaseScreen {
     Vector3 cameraDirection = new Vector3();
     Vector3 objectFromCamera = new Vector3();
 
+    private final Object lock = new Object();
+
 
     private ViewportListener camController;
 
     public SimulationScreen(Boot boot, String[] arg) {
         super(boot);
+
+        simSpeed = 10000000;
+
+
         bodies = new Vector<DetailedBody>();
         instances = new ArrayList<ModelInstance>();
         bodyLabelBatch = new SpriteBatch();
@@ -65,11 +71,12 @@ public class SimulationScreen extends BaseScreen {
             FileHandle file = new FileHandle(arg[i]);
             SaveFileManager.loadGame(this, file);
 
-            simSpeed = 1;
 
-            algorithmThread = new Thread(new MultiThreadAlgorithm(bodies));
-            //algorithmThread.start();
         }
+
+
+
+
     }
 
     @Override
@@ -97,11 +104,16 @@ public class SimulationScreen extends BaseScreen {
 
     @Override
     public void render(float delta) {
+
+
+
         camController.update(delta);
 
         for(DetailedBody body : this.bodies){
             body.render();
+
         }
+
 
         Gdx.gl.glViewport(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
@@ -111,6 +123,7 @@ public class SimulationScreen extends BaseScreen {
         modelBatch.end();
 
         drawLabels(bodyLabelBatch);
+
     }
 
     private void drawLabels(SpriteBatch batch){
@@ -173,12 +186,18 @@ public class SimulationScreen extends BaseScreen {
     }
 
     public void addBodies(Vector<DetailedBody> bodies){
-        synchronized (this.bodies){
+        synchronized (lock){
             for(DetailedBody body : bodies){
                 this.bodies.add(body);
                 this.instances.add(body.getInstance());
             }
         }
+
+        algorithmThread = new Thread(new MultiThreadAlgorithm(bodies, lock));
+        algorithmThread.start();
+
+
+
     }
 
     public void removeBodies(Vector<DetailedBody> bodies){

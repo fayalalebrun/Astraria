@@ -31,9 +31,10 @@ public class MultiThreadAlgorithm extends NBodyAlgorithm{
 
 
 
-    public MultiThreadAlgorithm(Vector<DetailedBody> bodies){
-        super(bodies);
-        this.amountOfThreads = Runtime.getRuntime().availableProcessors()-1;
+    public MultiThreadAlgorithm(Vector<DetailedBody> bodies, Object lock){
+        super(bodies, lock);
+        this.amountOfThreads = Runtime.getRuntime().availableProcessors()-2;
+
         executorService = Executors.newFixedThreadPool(this.amountOfThreads);
         int k = bodies.size();
         x = new double[k];
@@ -46,6 +47,7 @@ public class MultiThreadAlgorithm extends NBodyAlgorithm{
         ay = new double[k];
         az = new double[k];
         lastSize  = k;
+
 
     }
 
@@ -66,7 +68,8 @@ public class MultiThreadAlgorithm extends NBodyAlgorithm{
     @Override
     protected void runAlgorithm() {
 
-        synchronized (bodies) {
+        synchronized (lock) {
+
 
 
             if (lastSize != bodies.size()) {
@@ -84,16 +87,23 @@ public class MultiThreadAlgorithm extends NBodyAlgorithm{
 
                 executorService.submit(new VelocityVerlet(countDownLatch, this, i, delta));
 
+
             }
 
 
+
             try {
+
                 countDownLatch.await();
+
+
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
 
+
             updateBodies();
+
 
         }
 
@@ -157,8 +167,16 @@ public class MultiThreadAlgorithm extends NBodyAlgorithm{
             current.setCurrAccelX(ax[i]);
             current.setCurrAccelY(ay[i]);
             current.setCurrAccelZ(az[i]);
-            i++;
-        }
 
+            //System.out.println("Body "+i+": "+"x: "+x[i]+" y: "+y[i]+" z: "+z[i]);
+            //System.out.println("Body "+i+": "+"vx: "+vx[i]+" vy: "+vy[i]+" vz: "+vz[i]);
+            //System.out.println("Body "+i+": "+"ax: "+ax[i]+" ay: "+ay[i]+" az: "+az[i]);
+            //System.out.println("");
+
+
+
+            i++;
+
+        }
     }
 }
