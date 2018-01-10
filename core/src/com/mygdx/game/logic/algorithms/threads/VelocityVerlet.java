@@ -27,13 +27,19 @@ public class VelocityVerlet implements Runnable {
         this.latch = latch;
         this.thisBody = thisBody;
         this.multiThreadParent = multiThreadParent;
+        this.delta = delta;
     }
 
     @Override
     public void run() {
-        Body current = multiThreadParent.getBodies().elementAt(thisBody);
+
+
+
+        DetailedBody current = multiThreadParent.getBodies().elementAt(thisBody);
 
         //Verlet Algorithm
+
+
 
         //double delta = 0; //provisional delta
 
@@ -47,6 +53,7 @@ public class VelocityVerlet implements Runnable {
             double pX = Units.AUToM(current.getX());
             double pY = Units.AUToM(current.getY());
             double pZ = Units.AUToM(current.getZ());
+
 
 
             Vector<DetailedBody> bodies = multiThreadParent.getBodies();
@@ -71,27 +78,37 @@ public class VelocityVerlet implements Runnable {
                     ay *= Units.GRAV;
                     az *= Units.GRAV;
 
-                    multiThreadParent.getAx()[thisBody] = ax;
-                    multiThreadParent.getAy()[thisBody] = ay;
-                    multiThreadParent.getAz()[thisBody] = az;
+
+                   current.setCurrAccelX(ax);
+                   current.setCurrAccelY(ay);
+                   current.setCurrAccelZ(az);
+                   // multiThreadParent.getAy()[thisBody] = ay;
+                  //  multiThreadParent.getAz()[thisBody] = az;
 
                     current.setAccelInitTrue();
 
+
             }
 
-            pX = pX + (current.getX() * delta) + (0.5*current.getCurrAccelX() *square(delta));
-            pY = pY + (current.getY() * delta) + (0.5*current.getCurrAccelY() *square(delta));
-            pZ = pZ + (current.getZ() * delta) + (0.5*current.getCurrAccelZ() *square(delta));
+
+
+            pX = pX + (current.getvX() * delta) + (0.5*current.getCurrAccelX() *square(delta));
+            pY = pY + (current.getvY() * delta) + (0.5*current.getCurrAccelY() *square(delta));
+            pZ = pZ + (current.getvZ() * delta) + (0.5*current.getCurrAccelZ() *square(delta));
+
 
             multiThreadParent.getX()[thisBody] = Units.mToAU(pX);
             multiThreadParent.getY()[thisBody] = Units.mToAU(pY);
             multiThreadParent.getZ()[thisBody] = Units.mToAU(pZ);
+
 
             //new positions saved into arrays, bodies still hold old positions
 
             ax = 0;
             ay = 0;
             az = 0;
+
+
 
             for (int k = 0; k < bodies.indexOf(current); k++) {
                 parseAcceleration(bodies.get(k), pX, pY, pZ);
@@ -103,9 +120,13 @@ public class VelocityVerlet implements Runnable {
             ay *= Units.GRAV;
             az *= Units.GRAV;
 
-            multiThreadParent.getVx()[thisBody] += (((multiThreadParent.getAx()[thisBody] + ax)/2)*delta);
-            multiThreadParent.getVx()[thisBody] += (((multiThreadParent.getAx()[thisBody] + ax)/2)*delta);
-            multiThreadParent.getVx()[thisBody] += (((multiThreadParent.getAx()[thisBody] + ax)/2)*delta);
+
+
+
+            multiThreadParent.getVx()[thisBody] = current.getvX() + (((current.getCurrAccelX() + ax)/2)*delta);
+            multiThreadParent.getVy()[thisBody] = current.getvY() + (((current.getCurrAccelY() + ay)/2)*delta);
+            multiThreadParent.getVz()[thisBody] = current.getvZ() + (((current.getCurrAccelZ() + az)/2)*delta);
+
 
 
             multiThreadParent.getAx()[thisBody] = ax;
@@ -113,13 +134,15 @@ public class VelocityVerlet implements Runnable {
             multiThreadParent.getAz()[thisBody] = az;
 
 
+
+
         latch.countDown();
     }
 
     private void parseAcceleration(Body other, double pX, double pY, double pZ) {
-        double oX = other.getX();
-        double oY = other.getY();
-        double oZ = other.getZ();
+        double oX = Units.AUToM(other.getX());
+        double oY = Units.AUToM(other.getY());
+        double oZ = Units.AUToM(other.getZ());
 
         temporary = other.getMass() / cubed(Math.sqrt(square(oX - pX) + square(oY - pY) + square(oZ - pZ)));
 
@@ -127,6 +150,7 @@ public class VelocityVerlet implements Runnable {
         ax += (oX - pX) * temporary;
         ay += (oY - pY) * temporary;
         az += (oZ - pZ) * temporary;
+
     }
 
     private double cubed(double number) {
