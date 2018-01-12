@@ -39,6 +39,8 @@ public class PlayBackScreen extends BaseScreen{
 
     ArrayList<PlayBackBody> bodies;
 
+    PlayBackBody body;
+
     public PlayBackScreen(Boot boot, String[] arg) {
         super(boot);
 
@@ -57,9 +59,9 @@ public class PlayBackScreen extends BaseScreen{
     public void show() {
         cam = new PerspectiveCamera(67, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
-        cam.near = 0.1f;
-        cam.far = 100000f;
-        cam.position.set(10000,10,10);
+        cam.near = 0.001f;
+        cam.far = 100f;
+        cam.position.set(3,0,0);
         cam.lookAt(0,0,0);
         cam.update();
 
@@ -68,6 +70,9 @@ public class PlayBackScreen extends BaseScreen{
         camControl = new FirstPersonCameraController(cam);
         Gdx.input.setInputProcessor(camControl);
 
+        PlayBackBody body = new PlayBackBody(model,0.025f);
+        bodies.add(body);
+        toRender.add(body.getModelInstance());
     }
 
     @Override
