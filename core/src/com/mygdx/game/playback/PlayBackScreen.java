@@ -27,7 +27,7 @@ public class PlayBackScreen extends BaseScreen{
 
     private DecalBatch decalBatch;
 
-    private ArrayList<Decal> toRender;
+    private ArrayList<ModelInstance> toRender;
 
     private Decal d;
 
@@ -38,7 +38,6 @@ public class PlayBackScreen extends BaseScreen{
         super(boot);
 
 
-        toRender = new ArrayList<Decal>();
 
     }
 
@@ -52,13 +51,7 @@ public class PlayBackScreen extends BaseScreen{
         cam.lookAt(0,0,0);
         cam.update();
 
-        decalBatch = new DecalBatch(new CameraGroupStrategy(cam));
 
-        d = Decal.newDecal(new TextureRegion(Boot.manager.get("Star_texture_2.png", Texture.class)));
-        d.setPosition(0,0,0);
-        d.setScale(0.01f);
-
-        toRender.add(d);
 
         camControl = new FirstPersonCameraController(cam);
         Gdx.input.setInputProcessor(camControl);
@@ -73,13 +66,6 @@ public class PlayBackScreen extends BaseScreen{
         Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
 
         cam.update();
-
-        for (Decal decal : toRender){
-            decal.lookAt(cam.position,cam.up);
-            decalBatch.add(decal);
-        }
-
-        decalBatch.flush();
     }
 
     @Override
