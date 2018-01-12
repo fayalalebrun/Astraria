@@ -1,10 +1,7 @@
 package com.mygdx.game.playback;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.PerspectiveCamera;
-import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.VertexAttributes;
+import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.g3d.Material;
 import com.badlogic.gdx.graphics.g3d.Model;
@@ -39,7 +36,8 @@ public class PlayBackScreen extends BaseScreen{
     Model model;
 
     ModelBatch modelBatch;
-
+    
+    ArrayList<PlayBackBody> bodies;
 
     public PlayBackScreen(Boot boot, String[] arg) {
         super(boot);
@@ -48,10 +46,11 @@ public class PlayBackScreen extends BaseScreen{
 
         toRender = new ArrayList<ModelInstance>();
 
-        final Material material = new Material(ColorAttribute.createDiffuse(c));
+        final Material material = new Material(ColorAttribute.createDiffuse(Color.WHITE));
         final long attributes = VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal;
         model = modelBuilder.createSphere(1, 1, 1, 24, 24, material, attributes);
 
+        bodies = new ArrayList<PlayBackBody>();
     }
 
     @Override
