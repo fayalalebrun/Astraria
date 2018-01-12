@@ -36,7 +36,7 @@ public class PlayBackScreen extends BaseScreen{
     Model model;
 
     ModelBatch modelBatch;
-    
+
     ArrayList<PlayBackBody> bodies;
 
     public PlayBackScreen(Boot boot, String[] arg) {
@@ -107,5 +107,6 @@ public class PlayBackScreen extends BaseScreen{
     @Override
     public void dispose() {
         model.dispose();
+        modelBatch.dispose();
     }
 }
