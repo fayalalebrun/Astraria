@@ -32,17 +32,19 @@ public class PlayBackScreen extends BaseScreen{
     private ArrayList<ModelInstance> toRender;
 
 
-    FirstPersonCameraController camControl;
+    private FirstPersonCameraController camControl;
 
-    Model model;
+    private Model model;
 
-    ModelBatch modelBatch;
+    private ModelBatch modelBatch;
 
-    ArrayList<PlayBackBody> bodies;
+    private ArrayList<PlayBackBody> bodies;
 
-    PlayBackBody body;
+    private PlayBackBody body;
 
     byte[] recording;
+
+
 
     public PlayBackScreen(Boot boot, String arg) {
         super(boot);
