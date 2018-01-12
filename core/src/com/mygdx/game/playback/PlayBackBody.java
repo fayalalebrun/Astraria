@@ -37,4 +37,8 @@ public class PlayBackBody {
         modelInstance.transform.trn(-tempPos.x, -tempPos.y, -tempPos.z);
         modelInstance.transform.trn(posNew.x, posNew.y, posNew.z);
     }
+
+    public ModelInstance getModelInstance() {
+        return modelInstance;
+    }
 }
