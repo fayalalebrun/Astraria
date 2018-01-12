@@ -15,6 +15,7 @@ import com.badlogic.gdx.graphics.g3d.decals.DecalBatch;
 import com.badlogic.gdx.graphics.g3d.decals.DecalMaterial;
 import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
+import com.badlogic.gdx.math.Vector3;
 import com.mygdx.game.BaseScreen;
 import com.mygdx.game.Boot;
 
@@ -142,6 +143,22 @@ public class PlayBackScreen extends BaseScreen{
             bodyScale = bb.getFloat(6);
             maxAccel = bb.getFloat(10);
             minAccel = bb.getFloat(14);
+
+            int numberOfCycles = (recording.length-18)/numberOfBodies;
+
+            for (int i = 0; i < numberOfCycles; i++){
+                for(int z = 0; z < numberOfBodies; i++){
+                    if(bodies.size() <= z){
+                        bodies.add(new PlayBackBody(model, bodyScale));
+                    }
+                    PlayBackBody currBody = bodies.get(z);
+
+                    currBody.addPosition(new Vector3(bb.getFloat(18+z*16+i*16*numberOfBodies),
+                            bb.getFloat(22+z*16+i*16*numberOfBodies),
+                            bb.getFloat(26+z*16+i*16*numberOfBodies)));
+                    currBody.addAcceleration(bb.getFloat(30+z*16+i*16*numberOfBodies));
+                }
+            }
         }
 
     }
