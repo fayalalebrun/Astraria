@@ -38,6 +38,8 @@ public class PlayBackScreen extends BaseScreen{
 
     Model model;
 
+    ModelBatch modelBatch;
+
 
     public PlayBackScreen(Boot boot, String[] arg) {
         super(boot);
@@ -62,7 +64,7 @@ public class PlayBackScreen extends BaseScreen{
         cam.lookAt(0,0,0);
         cam.update();
 
-
+        modelBatch = new ModelBatch();
 
         camControl = new FirstPersonCameraController(cam);
         Gdx.input.setInputProcessor(camControl);
@@ -77,6 +79,10 @@ public class PlayBackScreen extends BaseScreen{
         Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
 
         cam.update();
+
+        modelBatch.begin(cam);
+        modelBatch.render(toRender);
+        modelBatch.end();
     }
 
     @Override
@@ -101,6 +107,6 @@ public class PlayBackScreen extends BaseScreen{
 
     @Override
     public void dispose() {
-        decalBatch.dispose();
+        model.dispose();
     }
 }
