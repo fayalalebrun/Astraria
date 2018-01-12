@@ -25,11 +25,9 @@ public class PlayBackScreen extends BaseScreen{
 
     private PerspectiveCamera cam;
 
-    private DecalBatch decalBatch;
 
     private ArrayList<ModelInstance> toRender;
 
-    private Decal d;
 
     FirstPersonCameraController camControl;
 
