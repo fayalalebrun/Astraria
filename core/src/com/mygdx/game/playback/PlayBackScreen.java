@@ -4,14 +4,19 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.VertexAttributes;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.g3d.Material;
+import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelBatch;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
+import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.decals.CameraGroupStrategy;
 import com.badlogic.gdx.graphics.g3d.decals.Decal;
 import com.badlogic.gdx.graphics.g3d.decals.DecalBatch;
 import com.badlogic.gdx.graphics.g3d.decals.DecalMaterial;
 import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
+import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.mygdx.game.BaseScreen;
 import com.mygdx.game.Boot;
 
@@ -31,11 +36,19 @@ public class PlayBackScreen extends BaseScreen{
 
     FirstPersonCameraController camControl;
 
+    Model model;
+
 
     public PlayBackScreen(Boot boot, String[] arg) {
         super(boot);
 
+        ModelBuilder modelBuilder = new ModelBuilder();
 
+        toRender = new ArrayList<ModelInstance>();
+
+        final Material material = new Material(ColorAttribute.createDiffuse(c));
+        final long attributes = VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal;
+        model = modelBuilder.createSphere(1, 1, 1, 24, 24, material, attributes);
 
     }
 
