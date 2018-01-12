@@ -36,7 +36,13 @@ public class Boot extends Game {
 
 		VisUI.load();
 
-		setScreen(new PlayBackScreen(this,arg));
+		if(arg[0].equals("sim")){
+			setScreen(new SimulationScreen(this, arg[1]));
+		} else if (arg[0].equals("play")){
+			setScreen(new PlayBackScreen(this,arg[1]));
+		}
+
+
 	}
 
 	@Override

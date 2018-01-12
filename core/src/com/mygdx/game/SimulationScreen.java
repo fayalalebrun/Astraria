@@ -51,16 +51,13 @@ public class SimulationScreen extends BaseScreen {
 
     private ViewportListener camController;
 
-    public SimulationScreen(Boot boot, String[] arg) {
+    public SimulationScreen(Boot boot, String arg) {
         super(boot);
         bodies = new Vector<DetailedBody>();
         instances = new ArrayList<ModelInstance>();
         bodyLabelBatch = new SpriteBatch();
-        for(int i = 0; i<arg.length; i++){
-            System.out.println(arg[i]);
-            FileHandle file = new FileHandle(arg[i]);
-            SaveFileManager.loadGame(this, file);
-        }
+        FileHandle file = new FileHandle(arg);
+        SaveFileManager.loadGame(this, file);
     }
 
     @Override
