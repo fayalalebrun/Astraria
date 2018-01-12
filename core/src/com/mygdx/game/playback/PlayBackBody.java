@@ -3,6 +3,7 @@ package com.mygdx.game.playback;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
+import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.math.Vector3;
 
 import java.util.ArrayList;
@@ -22,5 +23,7 @@ public class PlayBackBody {
         positions.add(pos);
     }
 
-    
+    public void changeColor(Color color){
+        modelInstance.materials.get(0).set(ColorAttribute.createDiffuse(color));
+    }
 }
