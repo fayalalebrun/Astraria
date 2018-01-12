@@ -13,6 +13,7 @@ import java.util.ArrayList;
  */
 public class PlayBackBody {
     private ArrayList<Vector3> positions;
+    private ArrayList<Float> acceleration;
     private ModelInstance modelInstance;
 
     private Vector3 tempPos;
@@ -36,6 +37,10 @@ public class PlayBackBody {
         modelInstance.transform.getTranslation(tempPos);
         modelInstance.transform.trn(-tempPos.x, -tempPos.y, -tempPos.z);
         modelInstance.transform.trn(posNew.x, posNew.y, posNew.z);
+    }
+
+    public void addAcceleration(float accel){
+        acceleration.add(accel);
     }
 
     public ModelInstance getModelInstance() {
