@@ -48,7 +48,7 @@ public class PlayBackScreen extends BaseScreen{
 
     private int numberOfBodies;
 
-    private int bodyScale;
+    private float bodyScale, maxAccel, minAccel;
 
 
 
@@ -134,10 +134,15 @@ public class PlayBackScreen extends BaseScreen{
     }
 
     private void loadRecording(){
-        ByteBuffer bb = ByteBuffer.allocate(2);
-        bb.order(ByteOrder.BIG_ENDIAN);
-        bb.put(recording[0]);
-        bb.put(recording[1]);
-        
+        ByteBuffer bb = ByteBuffer.wrap(recording);
+        short version = bb.getShort(0);
+
+        if(version==1){
+            numberOfBodies = bb.getInt(2);
+            bodyScale = bb.getFloat(6);
+            maxAccel = bb.getFloat(10);
+            minAccel = bb.getFloat(14);
+        }
+
     }
 }
