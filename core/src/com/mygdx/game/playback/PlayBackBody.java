@@ -17,9 +17,10 @@ public class PlayBackBody {
 
     private Vector3 tempPos;
 
-    public PlayBackBody(Model model) {
+    public PlayBackBody(Model model, float size) {
         modelInstance = new ModelInstance(model);
         tempPos = new Vector3();
+        modelInstance.transform.scale(size,size,size);
     }
 
     public void addPosition(Vector3 pos){
