@@ -1,6 +1,7 @@
 package com.mygdx.game.playback;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.g3d.Material;
@@ -41,6 +42,8 @@ public class PlayBackScreen extends BaseScreen{
 
     PlayBackBody body;
 
+    byte[] recording;
+
     public PlayBackScreen(Boot boot, String arg) {
         super(boot);
 
@@ -53,6 +56,9 @@ public class PlayBackScreen extends BaseScreen{
         model = modelBuilder.createSphere(1, 1, 1, 24, 24, material, attributes);
 
         bodies = new ArrayList<PlayBackBody>();
+
+        FileHandle file = new FileHandle(arg);
+        recording = file.readBytes();
     }
 
     @Override
@@ -73,6 +79,8 @@ public class PlayBackScreen extends BaseScreen{
         PlayBackBody body = new PlayBackBody(model,0.025f);
         bodies.add(body);
         toRender.add(body.getModelInstance());
+
+        loadRecording();
     }
 
     @Override
@@ -113,5 +121,9 @@ public class PlayBackScreen extends BaseScreen{
     public void dispose() {
         model.dispose();
         modelBatch.dispose();
+    }
+
+    private void loadRecording(){
+
     }
 }
