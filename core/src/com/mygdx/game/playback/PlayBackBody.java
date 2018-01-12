@@ -15,8 +15,11 @@ public class PlayBackBody {
     private ArrayList<Vector3> positions;
     private ModelInstance modelInstance;
 
+    private Vector3 tempPos;
+
     public PlayBackBody(Model model) {
         modelInstance = new ModelInstance(model);
+        tempPos = new Vector3();
     }
 
     public void addPosition(Vector3 pos){
@@ -25,5 +28,12 @@ public class PlayBackBody {
 
     public void changeColor(Color color){
         modelInstance.materials.get(0).set(ColorAttribute.createDiffuse(color));
+    }
+
+    public void setPosition(int index){
+        Vector3 posNew = positions.get(index);
+        modelInstance.transform.getTranslation(tempPos);
+        modelInstance.transform.trn(-tempPos.x, -tempPos.y, -tempPos.z);
+        modelInstance.transform.trn(posNew.x, posNew.y, posNew.z);
     }
 }
