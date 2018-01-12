@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.kotcrab.vis.ui.VisUI;
+import com.mygdx.game.playback.PlayBackScreen;
 
 public class Boot extends Game {
 
@@ -30,11 +31,12 @@ public class Boot extends Game {
 
 		manager = new AssetManager();
 		manager.load("comicsans.fnt", BitmapFont.class);
+		manager.load("Star_texture_2.png", Texture.class);
 		manager.finishLoading();
 
 		VisUI.load();
 
-		setScreen(new SimulationScreen(this, arg));
+		setScreen(new PlayBackScreen(this,arg));
 	}
 
 	@Override
