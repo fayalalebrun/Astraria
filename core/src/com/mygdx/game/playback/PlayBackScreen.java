@@ -19,6 +19,8 @@ import com.mygdx.game.BaseScreen;
 import com.mygdx.game.Boot;
 
 import java.lang.reflect.Array;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 
 /**
@@ -42,7 +44,13 @@ public class PlayBackScreen extends BaseScreen{
 
     private PlayBackBody body;
 
-    byte[] recording;
+    private byte[] recording;
+
+    private int numberOfBodies;
+
+    private int bodyScale;
+
+
 
 
 
@@ -126,6 +134,10 @@ public class PlayBackScreen extends BaseScreen{
     }
 
     private void loadRecording(){
-
+        ByteBuffer bb = ByteBuffer.allocate(2);
+        bb.order(ByteOrder.BIG_ENDIAN);
+        bb.put(recording[0]);
+        bb.put(recording[1]);
+        
     }
 }
