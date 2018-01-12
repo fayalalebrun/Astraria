@@ -18,5 +18,9 @@ public class PlayBackBody {
         modelInstance = new ModelInstance(model);
     }
 
+    public void addPosition(Vector3 pos){
+        positions.add(pos);
+    }
+
     
 }
