@@ -41,7 +41,7 @@ public class PlayBackScreen extends BaseScreen{
 
     PlayBackBody body;
 
-    public PlayBackScreen(Boot boot, String[] arg) {
+    public PlayBackScreen(Boot boot, String arg) {
         super(boot);
 
         ModelBuilder modelBuilder = new ModelBuilder();
