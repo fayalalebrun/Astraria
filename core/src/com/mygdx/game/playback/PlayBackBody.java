@@ -22,6 +22,8 @@ public class PlayBackBody {
         modelInstance = new ModelInstance(model);
         tempPos = new Vector3();
         modelInstance.transform.scale(size,size,size);
+        positions = new ArrayList<Vector3>();
+        acceleration = new ArrayList<Float>();
     }
 
     public void addPosition(Vector3 pos){
