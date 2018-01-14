@@ -135,7 +135,7 @@ public class PlayBackScreen extends BaseScreen{
 
     private void setFrame(int frame){
         for(PlayBackBody body : bodies){
-            body.setPosition(frame);
+            body.setFrame(frame);
         }
     }
 
