@@ -32,11 +32,19 @@ public class PlayBackBody {
         modelInstance.materials.get(0).set(ColorAttribute.createDiffuse(color));
     }
 
-    public void setPosition(int index){
+    private void setPosition(int index){
         Vector3 posNew = positions.get(index);
         modelInstance.transform.getTranslation(tempPos);
         modelInstance.transform.trn(-tempPos.x, -tempPos.y, -tempPos.z);
         modelInstance.transform.trn(posNew.x, posNew.y, posNew.z);
+    }
+
+    public boolean setFrame(int frame){
+        if(frame>=positions.size()){
+            return false;
+        }
+        setPosition(frame);
+        return true;
     }
 
     public void addAcceleration(float accel){
