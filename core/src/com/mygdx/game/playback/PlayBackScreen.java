@@ -19,6 +19,8 @@ import com.badlogic.gdx.math.Vector3;
 import com.mygdx.game.BaseScreen;
 import com.mygdx.game.Boot;
 
+import java.io.FileInputStream;
+import java.io.ObjectInputStream;
 import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -68,8 +70,8 @@ public class PlayBackScreen extends BaseScreen{
 
         bodies = new ArrayList<PlayBackBody>();
 
-        FileHandle file = new FileHandle(arg);
-        recording = file.readBytes();
+
+        loadRecording(arg);
     }
 
     @Override
@@ -87,11 +89,8 @@ public class PlayBackScreen extends BaseScreen{
         camControl = new FirstPersonCameraController(cam);
         Gdx.input.setInputProcessor(camControl);
 
-        PlayBackBody body = new PlayBackBody(model,0.025f);
-        bodies.add(body);
-        toRender.add(body.getModelInstance());
 
-        loadRecording();
+
     }
 
     @Override
@@ -134,31 +133,37 @@ public class PlayBackScreen extends BaseScreen{
         modelBatch.dispose();
     }
 
-    private void loadRecording(){
-        ByteBuffer bb = ByteBuffer.wrap(recording);
-        short version = bb.getShort(0);
 
-        if(version==1){
-            numberOfBodies = bb.getInt(2);
-            bodyScale = bb.getFloat(6);
-            maxAccel = bb.getFloat(10);
-            minAccel = bb.getFloat(14);
+    private void loadRecording(String path){
+        try {
+            FileInputStream ifStream = new FileInputStream(path);
+            ObjectInputStream stream = new ObjectInputStream(ifStream);
 
-            int numberOfCycles = (recording.length-18)/numberOfBodies;
+            short version = stream.readShort();
 
-            for (int i = 0; i < numberOfCycles; i++){
-                for(int z = 0; z < numberOfBodies; i++){
-                    if(bodies.size() <= z){
-                        bodies.add(new PlayBackBody(model, bodyScale));
+            if(version==1){
+                numberOfBodies = stream.readInt();
+                bodyScale = stream.readFloat();
+                bodyScale=1;
+                for(int i = 0; i < numberOfBodies; i++){
+                    bodies.add(new PlayBackBody(model, bodyScale));
+                    toRender.add(bodies.get(i).getModelInstance());
+                }
+                maxAccel = stream.readFloat();
+                minAccel = stream.readFloat();
+
+                while (ifStream.available()>0){
+                    for(int i = 0; i < numberOfBodies; i++){
+                        bodies.get(i).addPosition(new Vector3(stream.readFloat(),stream.readFloat(),stream.readFloat()));
+                        bodies.get(i).addAcceleration(stream.readFloat());
                     }
-                    PlayBackBody currBody = bodies.get(z);
-
-                    currBody.addPosition(new Vector3(bb.getFloat(18+z*16+i*16*numberOfBodies),
-                            bb.getFloat(22+z*16+i*16*numberOfBodies),
-                            bb.getFloat(26+z*16+i*16*numberOfBodies)));
-                    currBody.addAcceleration(bb.getFloat(30+z*16+i*16*numberOfBodies));
                 }
             }
+
+            stream.close();
+
+        }catch (Exception e){
+            e.getMessage();
         }
 
     }
