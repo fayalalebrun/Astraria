@@ -7,27 +7,37 @@ package com.company.screen;/*
 
 */
 
+import com.company.algorithm.MultiThreadAlgorithm;
+import com.company.files.BinWriter;
+import com.company.files.TxtReader;
+
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Menu {
 
     private String [] args;
-    private String filePath;
+    private static String filePath;
     private Scanner reader;
     private File file;
     private String outputPath;
     private int duration;
     public static boolean iniLoaded;
+    private TxtReader txtReader;
+
+    private Thread writerThread;
+    private BinWriter writer;
+    private boolean threadIsOn;
 
 
 
-        public Menu(String [] args){
+    public Menu(String [] args){
             this.args = args;
             filePath = "none";
             reader = new Scanner(System.in);
             iniLoaded = false;
-
+            threadIsOn = false;
         }
 
         public void mainMenu(){
@@ -59,8 +69,8 @@ public class Menu {
                 }else if (command.trim().equals("3")){
                     printHeader();
                     if (filePath.contains(".txt")){
-                        com.company.files.FileReader fileReader = new com.company.files.FileReader(file);
-                        fileReader.read();
+                        txtReader = new TxtReader(file);
+                        txtReader.read();
 
                         System.out.println("");
                         System.out.println("");
@@ -79,6 +89,12 @@ public class Menu {
                 }else if (command.trim().equals("5")){
 
                 }else if (command.trim().equals("6")){
+
+                    if (threadIsOn){
+                        writer.terminate();
+                        writerThread.interrupt();
+                    }
+
                     break;
 
                 }
@@ -88,7 +104,7 @@ public class Menu {
 
         }
 
-        public void printHeader(){
+        public static void printHeader(){
             System.out.println();
             System.out.println();
             System.out.println();
@@ -167,12 +183,75 @@ public class Menu {
                 int duration = Integer.parseInt(reader.nextLine());
 
                 if (path.isEmpty()){
-                    path = "none";
+                    path = System.getProperty("user.dir");;
                 }
 
                 if (filename.isEmpty()){
-                    filename = "test.txt";
+                    filename = "test.nbd";
                 }
+
+                File outputFile = new File(path+"/"+filename);
+
+            System.out.println();
+            System.out.print("    Sorting input data, please wait...");
+
+            ArrayList<Float> data = txtReader.getData();
+
+                float[] x = new float[data.size()/8];
+                float[] y = new float[data.size()/8];
+                float[] z = new float[data.size()/8];
+                float[] vx = new float[data.size()/8];
+                float[] vy = new float[data.size()/8];
+                float[] vz = new float[data.size()/8];
+
+                float m;
+
+                int k = 0;
+                for (int i = 0; i<data.size()/8; i=i+8){
+
+                    x[k] = data.get(i+2);
+                    y[k] = data.get(i+3);
+                    z[k] = data.get(i+4);
+                    vx[k] = data.get(i+5);
+                    vy[k] = data.get(i+6);
+                    vz[k] = data.get(i+7);
+
+
+                            k++;
+                }
+
+                m = data.get(1);
+
+            System.out.println("    [DONE]");
+            System.out.print("    Initializing accelerations, please wait...");
+
+            data = null;
+
+            writer = new BinWriter((short)1, x.length, 1f);
+
+            MultiThreadAlgorithm multiThreadAlgorithm = new MultiThreadAlgorithm(new Object(), x,y,z,vx,vy,vz,m,1, writer, duration);
+
+            System.out.println("    [DONE]");
+            System.out.print("    Initializing writer thread...");
+
+            writerThread = new Thread(writer);
+            threadIsOn = true;
+            boolean v = writer.setFile(outputFile);
+
+            if (v){
+                System.out.println("    [DONE]");
+            }else {
+                System.out.println("    [ERROR]");
+            }
+
+            System.out.println("");
+
+            System.out.print("PRESS ENTER TO START...");
+            reader.nextLine();
+
+
+            writerThread.start();
+            multiThreadAlgorithm.run();
 
 
 

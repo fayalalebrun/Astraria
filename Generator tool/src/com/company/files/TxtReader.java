@@ -12,12 +12,12 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Scanner;
 
-public class FileReader {
+public class TxtReader {
 
     private File file;
     private ArrayList<Float> data;
 
-    public FileReader (File file){
+    public TxtReader(File file){
         this.file = file;
         data = new ArrayList<Float>();
     }
@@ -92,5 +92,9 @@ public class FileReader {
             }
         }
         return k.length()-1;
+    }
+
+    public ArrayList<Float> getData(){
+        return  data;
     }
 }
