@@ -133,6 +133,11 @@ public class PlayBackScreen extends BaseScreen{
         modelBatch.dispose();
     }
 
+    private void setFrame(int frame){
+        for(PlayBackBody body : bodies){
+            body.setPosition(frame);
+        }
+    }
 
     private void loadRecording(String path){
         try {
