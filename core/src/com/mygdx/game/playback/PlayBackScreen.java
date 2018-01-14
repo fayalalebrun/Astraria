@@ -54,7 +54,7 @@ public class PlayBackScreen extends BaseScreen{
     private float bodyScale, maxAccel, minAccel;
 
 
-
+    private float currTime = 0;
 
 
     public PlayBackScreen(Boot boot, String arg) {
@@ -88,13 +88,13 @@ public class PlayBackScreen extends BaseScreen{
 
         camControl = new FirstPersonCameraController(cam);
         Gdx.input.setInputProcessor(camControl);
-
-
-
     }
 
     @Override
     public void render(float delta) {
+        setFrame((int)(currTime*60));
+        currTime+=delta;
+
         camControl.update(delta);
 
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
@@ -155,10 +155,12 @@ public class PlayBackScreen extends BaseScreen{
                 }
                 maxAccel = stream.readFloat();
                 minAccel = stream.readFloat();
-
                 while (ifStream.available()>0){
                     for(int i = 0; i < numberOfBodies; i++){
-                        bodies.get(i).addPosition(new Vector3(stream.readFloat(),stream.readFloat(),stream.readFloat()));
+                        float x = stream.readFloat();
+                        float y = stream.readFloat();
+                        float z = stream.readFloat();
+                        bodies.get(i).addPosition(new Vector3(x,y,z));
                         bodies.get(i).addAcceleration(stream.readFloat());
                     }
                 }
@@ -167,7 +169,7 @@ public class PlayBackScreen extends BaseScreen{
             stream.close();
 
         }catch (Exception e){
-            e.getMessage();
+            e.printStackTrace();
         }
 
     }
