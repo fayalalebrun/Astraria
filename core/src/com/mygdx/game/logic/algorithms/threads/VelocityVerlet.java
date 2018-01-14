@@ -13,7 +13,6 @@ import com.mygdx.game.logic.algorithms.MultiThreadAlgorithm;
 import com.mygdx.game.logic.helpers.Units;
 
 import java.util.Vector;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CountDownLatch;
 
 public class VelocityVerlet implements Runnable {

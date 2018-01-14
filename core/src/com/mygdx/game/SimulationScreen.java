@@ -60,7 +60,7 @@ public class SimulationScreen extends BaseScreen {
     public SimulationScreen(Boot boot, String[] arg) {
         super(boot);
 
-        simSpeed = 1;
+        simSpeed = 1000000;
 
 
         bodies = new Vector<DetailedBody>();
