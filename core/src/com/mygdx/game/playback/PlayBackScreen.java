@@ -149,7 +149,6 @@ public class PlayBackScreen extends BaseScreen{
             if(version==1){
                 numberOfBodies = stream.readInt();
                 bodyScale = stream.readFloat();
-                bodyScale=1;
                 for(int i = 0; i < numberOfBodies; i++){
                     bodies.add(new PlayBackBody(model, bodyScale));
                     toRender.add(bodies.get(i).getModelInstance());
