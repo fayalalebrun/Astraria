@@ -41,11 +41,10 @@ import java.util.concurrent.CountDownLatch;
 
 
 
-
-
             pX = pX + (multiThreadParent.getVx()[thisBody] * delta) + (0.5f * multiThreadParent.getAx()[thisBody] *square(delta));
             pY = pY + (multiThreadParent.getVy()[thisBody] * delta) + (0.5f * multiThreadParent.getAy()[thisBody] *square(delta));
             pZ = pZ + (multiThreadParent.getVz()[thisBody] * delta) + (0.5f * multiThreadParent.getAz()[thisBody] *square(delta));
+
 
             multiThreadParent.getX2()[thisBody] = pX;
             multiThreadParent.getY2()[thisBody] = pY;
@@ -81,7 +80,6 @@ import java.util.concurrent.CountDownLatch;
             multiThreadParent.getAx2()[thisBody] = ax;
             multiThreadParent.getAy2()[thisBody] = ay;
             multiThreadParent.getAz2()[thisBody] = az;
-
 
 
 

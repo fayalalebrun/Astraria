@@ -47,7 +47,6 @@ public abstract class ThreadOrganizer {
                 //System.out.println(tmp);
 
 
-
                 if(PRINT_CALC_SEC) {
                     calcSec++;
                     timeSinceCalcSec += tmp;
@@ -69,7 +68,6 @@ public abstract class ThreadOrganizer {
             }
 
             endThreads();
-            System.out.println("threads ended");
         }
 
 

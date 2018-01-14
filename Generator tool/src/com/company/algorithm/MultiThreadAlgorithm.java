@@ -113,6 +113,7 @@ public class MultiThreadAlgorithm extends ThreadOrganizer{
 
                 float delta = (float) (this.getDelta() * simSpeed);
 
+
                 for (int i = 0; i < x.length; i++) {
 
                     executorService.submit(new VelocityVerlet(countDownLatch, this, i, delta));
@@ -302,6 +303,8 @@ public class MultiThreadAlgorithm extends ThreadOrganizer{
 
                 for (int l = 0; l < i; l++) {
                     parseAcceleration(i, l, x[i], y[i], z[i]);
+
+
                 }
                 for (int l = i + 1; l < x.length; l++) {
                     parseAcceleration(i, l, x[i], y[i], z[i]);
@@ -313,6 +316,7 @@ public class MultiThreadAlgorithm extends ThreadOrganizer{
                 az [i] *= Units.GRAV;
 
             }
+
 
 
     }
