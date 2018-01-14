@@ -204,10 +204,16 @@ public class Menu {
                 float[] vy = new float[data.size()/8];
                 float[] vz = new float[data.size()/8];
 
+
+
                 float m;
 
                 int k = 0;
-                for (int i = 0; i<data.size()/8; i=i+8){
+
+
+
+
+                for (int i = 0; i<data.size(); i=i+8){
 
                     x[k] = data.get(i+2);
                     y[k] = data.get(i+3);
@@ -217,10 +223,12 @@ public class Menu {
                     vz[k] = data.get(i+7);
 
 
-                            k++;
+                    k++;
                 }
 
                 m = data.get(1);
+
+
 
             System.out.println("    [DONE]");
             System.out.print("    Initializing accelerations, please wait...");
@@ -229,7 +237,7 @@ public class Menu {
 
             writer = new BinWriter((short)1, x.length, 1f);
 
-            MultiThreadAlgorithm multiThreadAlgorithm = new MultiThreadAlgorithm(new Object(), x,y,z,vx,vy,vz,m,1, writer, duration);
+            MultiThreadAlgorithm multiThreadAlgorithm = new MultiThreadAlgorithm(new Object(), x,y,z,vx,vy,vz,m,0.1f, writer, duration);
 
             System.out.println("    [DONE]");
             System.out.print("    Initializing writer thread...");
