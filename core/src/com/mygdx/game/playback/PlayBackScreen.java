@@ -70,6 +70,8 @@ public class PlayBackScreen extends BaseScreen{
 
     private ProgressWindow progressWindow;
 
+    private boolean paused;
+
     public PlayBackScreen(Boot boot, String arg) {
         super(boot);
 
@@ -136,9 +138,11 @@ public class PlayBackScreen extends BaseScreen{
 
     @Override
     public void render(float delta) {
-        currFrame = (int)(currTime*60);
-        setFrame(currFrame);
-        currTime+=delta;
+        if(!paused) {
+            currFrame = (int) (currTime * 60);
+            setFrame(currFrame);
+            currTime += delta;
+        }
 
         uiStage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 30f));
         camControl.update(delta);
@@ -237,5 +241,9 @@ public class PlayBackScreen extends BaseScreen{
 
     public void setCurrFrame(int currFrame) {
         this.currFrame = currFrame;
+    }
+
+    public void setPaused(boolean paused) {
+        this.paused = paused;
     }
 }
