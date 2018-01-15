@@ -56,4 +56,8 @@ public class PlayBackBody {
     public ModelInstance getModelInstance() {
         return modelInstance;
     }
+
+    public ArrayList<Vector3> getPositions() {
+        return positions;
+    }
 }
