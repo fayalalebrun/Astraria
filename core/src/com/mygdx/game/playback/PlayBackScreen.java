@@ -22,8 +22,10 @@ import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.kotcrab.vis.ui.widget.VisTable;
+import com.kotcrab.vis.ui.widget.VisWindow;
 import com.mygdx.game.BaseScreen;
 import com.mygdx.game.Boot;
+import com.mygdx.game.playback.ui.ProgressWindow;
 
 import java.io.FileInputStream;
 import java.io.ObjectInputStream;
@@ -66,6 +68,8 @@ public class PlayBackScreen extends BaseScreen{
 
     private Group uiGroup;
 
+    private ProgressWindow progressWindow;
+
     public PlayBackScreen(Boot boot, String arg) {
         super(boot);
 
@@ -99,8 +103,15 @@ public class PlayBackScreen extends BaseScreen{
 
         Gdx.input.setInputProcessor(multiplexer);
 
+        progressWindow = new ProgressWindow(this);
+
+        setWindowPosition();
 
         loadRecording(arg);
+    }
+
+    private void setWindowPosition(){
+        progressWindow.moveBy(Gdx.graphics.getWidth(),Gdx.graphics.getHeight());
     }
 
     @Override
@@ -115,6 +126,7 @@ public class PlayBackScreen extends BaseScreen{
 
         modelBatch = new ModelBatch();
 
+        uiGroup.addActor(progressWindow);
 
     }
 
