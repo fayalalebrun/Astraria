@@ -23,6 +23,10 @@ public abstract class ThreadOrganizer {
 
         private double tmp;
 
+    protected int duration;
+    protected double l;
+    protected double l2;
+
         public static boolean PRINT_CALC_SEC = true;
 
 
@@ -99,7 +103,7 @@ public abstract class ThreadOrganizer {
             System.out.println("Last cycles per second: "+lastCalc);
             System.out.println("Average cycles: "+lastAvg);
             System.out.println("");
-            System.out.println("Generating, please wait...");
+            System.out.println("Generating, please wait... "+"[ "+ (float) (l / ((double) duration * 60D))*100+" % COMPLETE]");
             System.out.println("[PRESS CTR+Z TO CANCEL]");
         }
     }
