@@ -41,11 +41,13 @@ public class ProgressWindow extends VisWindow{
 
     }
 
-    public void update(int currFrame){
-        float newValue = (float)currFrame/playBackScreen.getTotalFrames();
+    @Override
+    public void act(float delta) {
+        float newValue = (float)playBackScreen.getCurrFrame()/playBackScreen.getTotalFrames();
         if(newValue>1){
             return;
         }
         slider.setValue(newValue);
     }
+
 }
