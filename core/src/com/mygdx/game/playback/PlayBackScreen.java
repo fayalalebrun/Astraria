@@ -142,6 +142,10 @@ public class PlayBackScreen extends BaseScreen{
         }
     }
 
+    public int getTotalFrames() {
+        return totalFrames;
+    }
+
     private void loadRecording(String path){
         try {
             FileInputStream ifStream = new FileInputStream(path);
@@ -174,9 +178,11 @@ public class PlayBackScreen extends BaseScreen{
         }catch (Exception e){
             e.printStackTrace();
         }
-        
+
         if(bodies.size()>0){
             totalFrames = bodies.get(0).getPositions().size();
         }
+
+
     }
 }
