@@ -36,6 +36,7 @@ public class ProgressWindow extends VisWindow{
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 myPlayBackScreen.setCurrFrame((int)(myPlayBackScreen.getTotalFrames()*mySlider.getValue()));
+                myPlayBackScreen.setCurrTime((myPlayBackScreen.getTotalFrames()*mySlider.getValue())/60);
             }
         });
 
@@ -44,10 +45,10 @@ public class ProgressWindow extends VisWindow{
     @Override
     public void act(float delta) {
         float newValue = (float)playBackScreen.getCurrFrame()/playBackScreen.getTotalFrames();
-        if(newValue>1){
-            return;
+        if(newValue<1&&!slider.isDragging()){
+            slider.setValue(newValue);
         }
-        slider.setValue(newValue);
+
     }
 
 }
