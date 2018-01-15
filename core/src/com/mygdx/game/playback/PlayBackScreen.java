@@ -231,6 +231,10 @@ public class PlayBackScreen extends BaseScreen{
         }
     }
 
+    public void setCurrTime(float currTime) {
+        this.currTime = currTime;
+    }
+
     public void setCurrFrame(int currFrame) {
         this.currFrame = currFrame;
     }
