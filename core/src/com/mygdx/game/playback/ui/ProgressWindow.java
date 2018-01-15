@@ -50,7 +50,7 @@ public class ProgressWindow extends VisWindow{
         final VisTextButton pauseButton = new VisTextButton("Pause");
 
         pauseButton.addListener(new ChangeListener() {
-            private boolean lastState = true;
+            private boolean lastState = false;
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 lastState=!lastState;
