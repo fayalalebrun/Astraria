@@ -56,6 +56,8 @@ public class PlayBackScreen extends BaseScreen{
 
     private float currTime = 0;
 
+    private int currFrame;
+
 
     public PlayBackScreen(Boot boot, String arg) {
         super(boot);
@@ -92,7 +94,8 @@ public class PlayBackScreen extends BaseScreen{
 
     @Override
     public void render(float delta) {
-        setFrame((int)(currTime*60));
+        currFrame = (int)(currTime*60);
+        setFrame(currFrame);
         currTime+=delta;
 
         camControl.update(delta);
