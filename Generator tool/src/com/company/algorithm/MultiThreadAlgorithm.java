@@ -46,9 +46,7 @@ public class MultiThreadAlgorithm extends ThreadOrganizer{
         private double timer;
         private BinWriter writer;
 
-        private int duration;
-        private                 double l;
-        private double l2;
+
 
 
 
@@ -90,7 +88,7 @@ public class MultiThreadAlgorithm extends ThreadOrganizer{
             timer = (double)System.nanoTime();
             this.writer = writer;
 
-            this.duration = duration;
+            super.duration = duration;
             l = 0;
             l2 = 0;
         }
@@ -156,7 +154,7 @@ public class MultiThreadAlgorithm extends ThreadOrganizer{
                         l2 = 0;
                     }
 
-                    if (l >= (double) (duration*60) ){
+                    if (l >= (duration*60) ){
                         this.terminate();
                     }
                 }
