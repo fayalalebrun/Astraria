@@ -3,6 +3,7 @@ package com.mygdx.game.playback.ui;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.kotcrab.vis.ui.util.TableUtils;
+import com.kotcrab.vis.ui.widget.VisLabel;
 import com.kotcrab.vis.ui.widget.VisSlider;
 import com.kotcrab.vis.ui.widget.VisTextButton;
 import com.kotcrab.vis.ui.widget.VisWindow;
@@ -16,6 +17,7 @@ public class ProgressWindow extends VisWindow{
 
     VisSlider slider;
     PlayBackScreen playBackScreen;
+    VisLabel elapsedTime;
 
     public ProgressWindow(PlayBackScreen playBackScreen) {
         super("Playback Progress");
@@ -29,6 +31,9 @@ public class ProgressWindow extends VisWindow{
 
     private void addWidgets(){
 
+
+        elapsedTime = new VisLabel("99999s");
+        add(elapsedTime);
 
         final VisSlider mySlider = new VisSlider(0f, 1f, 0.01f, false);
         slider = mySlider;
@@ -68,6 +73,7 @@ public class ProgressWindow extends VisWindow{
         if(newValue<1&&!slider.isDragging()){
             slider.setValue(newValue);
         }
+        elapsedTime.setText((int)(playBackScreen.getCurrFrame()/60f)+"s");
 
     }
 
