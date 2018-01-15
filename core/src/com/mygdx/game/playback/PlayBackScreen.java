@@ -1,6 +1,7 @@
 package com.mygdx.game.playback;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -16,8 +17,15 @@ import com.badlogic.gdx.graphics.g3d.decals.DecalMaterial;
 import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.scenes.scene2d.Group;
+import com.badlogic.gdx.scenes.scene2d.InputListener;
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.kotcrab.vis.ui.widget.VisTable;
+import com.kotcrab.vis.ui.widget.VisWindow;
 import com.mygdx.game.BaseScreen;
 import com.mygdx.game.Boot;
+import com.mygdx.game.playback.ui.ProgressWindow;
 
 import java.io.FileInputStream;
 import java.io.ObjectInputStream;
@@ -45,10 +53,6 @@ public class PlayBackScreen extends BaseScreen{
 
     private ArrayList<PlayBackBody> bodies;
 
-    private PlayBackBody body;
-
-    private byte[] recording;
-
     private int numberOfBodies;
 
     private float bodyScale, maxAccel, minAccel;
@@ -56,9 +60,30 @@ public class PlayBackScreen extends BaseScreen{
 
     private float currTime = 0;
 
+    private int currFrame, totalFrames;
+
+    private Stage uiStage;
+
+    private InputListener UIListener;
+
+    private Group uiGroup;
+
+    private ProgressWindow progressWindow;
+
+    private boolean paused;
 
     public PlayBackScreen(Boot boot, String arg) {
         super(boot);
+
+
+        UIListener = new InputListener();
+
+        uiStage = new Stage(new ScreenViewport());
+        uiStage.addListener(UIListener);
+
+        uiGroup = new Group();
+
+        uiStage.addActor(uiGroup);
 
         ModelBuilder modelBuilder = new ModelBuilder();
 
@@ -70,13 +95,32 @@ public class PlayBackScreen extends BaseScreen{
 
         bodies = new ArrayList<PlayBackBody>();
 
+        cam = new PerspectiveCamera(67, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+
+        camControl = new FirstPersonCameraController(cam);
+
+        InputMultiplexer multiplexer = new InputMultiplexer();
+        multiplexer.addProcessor(uiStage);
+        multiplexer.addProcessor(camControl);
+
+        Gdx.input.setInputProcessor(multiplexer);
+
+        progressWindow = new ProgressWindow(this);
+
+        setWindowPosition();
 
         loadRecording(arg);
     }
 
+    private void setWindowPosition(){
+        progressWindow.setX((Gdx.graphics.getWidth()/2)-210);
+        progressWindow.setY(30);
+
+    }
+
     @Override
     public void show() {
-        cam = new PerspectiveCamera(67, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+
 
         cam.near = 0.001f;
         cam.far = 100f;
@@ -86,15 +130,25 @@ public class PlayBackScreen extends BaseScreen{
 
         modelBatch = new ModelBatch();
 
-        camControl = new FirstPersonCameraController(cam);
-        Gdx.input.setInputProcessor(camControl);
+        uiGroup.addActor(progressWindow);
+
+    }
+
+    public int getCurrFrame() {
+        return currFrame;
     }
 
     @Override
     public void render(float delta) {
-        setFrame((int)(currTime*60));
-        currTime+=delta;
+        if(!paused) {
+            currFrame = (int) (currTime * 60);
 
+            currTime += delta;
+        }
+
+        setFrame(currFrame);
+
+        uiStage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 30f));
         camControl.update(delta);
 
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
@@ -105,21 +159,27 @@ public class PlayBackScreen extends BaseScreen{
         modelBatch.begin(cam);
         modelBatch.render(toRender);
         modelBatch.end();
+
+        uiStage.draw();
+
     }
 
     @Override
     public void resize(int width, int height) {
-
+        cam.viewportHeight = height;
+        cam.viewportWidth = width;
+        uiStage.getViewport().update(width,height, true);
+        setWindowPosition();
     }
 
     @Override
     public void pause() {
-
+        setPaused(true);
     }
 
     @Override
     public void resume() {
-
+        setPaused(false);
     }
 
     @Override
@@ -137,6 +197,10 @@ public class PlayBackScreen extends BaseScreen{
         for(PlayBackBody body : bodies){
             body.setFrame(frame);
         }
+    }
+
+    public int getTotalFrames() {
+        return totalFrames;
     }
 
     private void loadRecording(String path){
@@ -172,5 +236,20 @@ public class PlayBackScreen extends BaseScreen{
             e.printStackTrace();
         }
 
+        if(bodies.size()>0){
+            totalFrames = bodies.get(0).getPositions().size();
+        }
+    }
+
+    public void setCurrTime(float currTime) {
+        this.currTime = currTime;
+    }
+
+    public void setCurrFrame(int currFrame) {
+        this.currFrame = currFrame;
+    }
+
+    public void setPaused(boolean paused) {
+        this.paused = paused;
     }
 }
