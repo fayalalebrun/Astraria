@@ -131,7 +131,8 @@ public class PlayBackScreen extends BaseScreen{
 
     @Override
     public void resize(int width, int height) {
-
+        cam.viewportHeight = height;
+        cam.viewportWidth = width;
     }
 
     @Override
