@@ -56,7 +56,7 @@ public class PlayBackScreen extends BaseScreen{
 
     private float currTime = 0;
 
-    private int currFrame;
+    private int currFrame, totalFrames;
 
 
     public PlayBackScreen(Boot boot, String arg) {
@@ -174,6 +174,9 @@ public class PlayBackScreen extends BaseScreen{
         }catch (Exception e){
             e.printStackTrace();
         }
-
+        
+        if(bodies.size()>0){
+            totalFrames = bodies.get(0).getPositions().size();
+        }
     }
 }
