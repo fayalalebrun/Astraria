@@ -45,10 +45,6 @@ public class PlayBackScreen extends BaseScreen{
 
     private ArrayList<PlayBackBody> bodies;
 
-    private PlayBackBody body;
-
-    private byte[] recording;
-
     private int numberOfBodies;
 
     private float bodyScale, maxAccel, minAccel;
