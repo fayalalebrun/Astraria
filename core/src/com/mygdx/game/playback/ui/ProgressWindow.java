@@ -1,0 +1,51 @@
+package com.mygdx.game.playback.ui;
+
+import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
+import com.kotcrab.vis.ui.util.TableUtils;
+import com.kotcrab.vis.ui.widget.VisSlider;
+import com.kotcrab.vis.ui.widget.VisWindow;
+import com.mygdx.game.playback.PlayBackBody;
+import com.mygdx.game.playback.PlayBackScreen;
+
+/**
+ * Created by Fran on 1/14/2018.
+ */
+public class ProgressWindow extends VisWindow{
+
+    VisSlider slider;
+    PlayBackScreen playBackScreen;
+
+    public ProgressWindow(PlayBackScreen playBackScreen) {
+        super("Playback Progress");
+
+        this.playBackScreen = playBackScreen;
+
+        TableUtils.setSpacingDefaults(this);
+        addWidgets();
+        pack();
+    }
+
+    private void addWidgets(){
+        final VisSlider mySlider = new VisSlider(0f, 1f, 0.01f, false);
+        slider = mySlider;
+        add(slider).width(300);
+        final PlayBackScreen myPlayBackScreen = playBackScreen;
+
+        slider.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                myPlayBackScreen.setCurrFrame((int)(myPlayBackScreen.getTotalFrames()*mySlider.getValue()));
+            }
+        });
+
+    }
+
+    public void update(int currFrame){
+        float newValue = (float)currFrame/playBackScreen.getTotalFrames();
+        if(newValue>1){
+            return;
+        }
+        slider.setValue(newValue);
+    }
+}
