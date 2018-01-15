@@ -118,6 +118,10 @@ public class PlayBackScreen extends BaseScreen{
 
     }
 
+    public int getCurrFrame() {
+        return currFrame;
+    }
+
     @Override
     public void render(float delta) {
         currFrame = (int)(currTime*60);
@@ -137,6 +141,7 @@ public class PlayBackScreen extends BaseScreen{
         modelBatch.end();
 
         uiStage.draw();
+
     }
 
     @Override
