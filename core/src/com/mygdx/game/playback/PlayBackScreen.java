@@ -170,12 +170,12 @@ public class PlayBackScreen extends BaseScreen{
 
     @Override
     public void pause() {
-
+        setPaused(true);
     }
 
     @Override
     public void resume() {
-
+        setPaused(false);
     }
 
     @Override
