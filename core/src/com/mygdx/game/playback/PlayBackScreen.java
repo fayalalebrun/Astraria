@@ -1,6 +1,7 @@
 package com.mygdx.game.playback;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -16,6 +17,9 @@ import com.badlogic.gdx.graphics.g3d.decals.DecalMaterial;
 import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.scenes.scene2d.InputListener;
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.mygdx.game.BaseScreen;
 import com.mygdx.game.Boot;
 
@@ -54,9 +58,19 @@ public class PlayBackScreen extends BaseScreen{
 
     private int currFrame, totalFrames;
 
+    private Stage uiStage;
+
+    private InputListener UIListener;
 
     public PlayBackScreen(Boot boot, String arg) {
         super(boot);
+
+
+        UIListener = new InputListener();
+
+        uiStage = new Stage(new ScreenViewport());
+        uiStage.addListener(UIListener);
+
 
         ModelBuilder modelBuilder = new ModelBuilder();
 
@@ -68,13 +82,23 @@ public class PlayBackScreen extends BaseScreen{
 
         bodies = new ArrayList<PlayBackBody>();
 
+        cam = new PerspectiveCamera(67, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+
+        camControl = new FirstPersonCameraController(cam);
+
+        InputMultiplexer multiplexer = new InputMultiplexer();
+        multiplexer.addProcessor(uiStage);
+        multiplexer.addProcessor(camControl);
+
+        Gdx.input.setInputProcessor(multiplexer);
+
 
         loadRecording(arg);
     }
 
     @Override
     public void show() {
-        cam = new PerspectiveCamera(67, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+
 
         cam.near = 0.001f;
         cam.far = 100f;
@@ -84,8 +108,7 @@ public class PlayBackScreen extends BaseScreen{
 
         modelBatch = new ModelBatch();
 
-        camControl = new FirstPersonCameraController(cam);
-        Gdx.input.setInputProcessor(camControl);
+
     }
 
     @Override
