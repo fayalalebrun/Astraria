@@ -124,6 +124,7 @@ public class PlayBackScreen extends BaseScreen{
         setFrame(currFrame);
         currTime+=delta;
 
+        uiStage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 30f));
         camControl.update(delta);
 
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
@@ -134,6 +135,8 @@ public class PlayBackScreen extends BaseScreen{
         modelBatch.begin(cam);
         modelBatch.render(toRender);
         modelBatch.end();
+
+        uiStage.draw();
     }
 
     @Override
