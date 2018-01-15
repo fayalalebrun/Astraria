@@ -140,9 +140,11 @@ public class PlayBackScreen extends BaseScreen{
     public void render(float delta) {
         if(!paused) {
             currFrame = (int) (currTime * 60);
-            setFrame(currFrame);
+
             currTime += delta;
         }
+
+        setFrame(currFrame);
 
         uiStage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 30f));
         camControl.update(delta);
