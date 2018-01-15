@@ -164,6 +164,8 @@ public class PlayBackScreen extends BaseScreen{
     public void resize(int width, int height) {
         cam.viewportHeight = height;
         cam.viewportWidth = width;
+        uiStage.getViewport().update(width,height, true);
+
     }
 
     @Override
