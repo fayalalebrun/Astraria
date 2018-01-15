@@ -182,7 +182,9 @@ public class PlayBackScreen extends BaseScreen{
         if(bodies.size()>0){
             totalFrames = bodies.get(0).getPositions().size();
         }
+    }
 
-
+    public void setCurrFrame(int currFrame) {
+        this.currFrame = currFrame;
     }
 }
