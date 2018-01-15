@@ -113,7 +113,7 @@ public class PlayBackScreen extends BaseScreen{
     }
 
     private void setWindowPosition(){
-        progressWindow.moveBy(Gdx.graphics.getWidth(),Gdx.graphics.getHeight());
+        progressWindow.moveBy((Gdx.graphics.getWidth()/2)-210,30);
     }
 
     @Override
