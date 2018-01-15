@@ -20,7 +20,7 @@ public class ProgressWindow extends VisWindow{
     VisLabel elapsedTime;
 
     public ProgressWindow(PlayBackScreen playBackScreen) {
-        super("Playback Progress");
+        super("" );
 
         this.playBackScreen = playBackScreen;
 
