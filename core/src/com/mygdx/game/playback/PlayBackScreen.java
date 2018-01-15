@@ -17,9 +17,11 @@ import com.badlogic.gdx.graphics.g3d.decals.DecalMaterial;
 import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.scenes.scene2d.Group;
 import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.kotcrab.vis.ui.widget.VisTable;
 import com.mygdx.game.BaseScreen;
 import com.mygdx.game.Boot;
 
@@ -62,6 +64,8 @@ public class PlayBackScreen extends BaseScreen{
 
     private InputListener UIListener;
 
+    private Group uiGroup;
+
     public PlayBackScreen(Boot boot, String arg) {
         super(boot);
 
@@ -71,6 +75,9 @@ public class PlayBackScreen extends BaseScreen{
         uiStage = new Stage(new ScreenViewport());
         uiStage.addListener(UIListener);
 
+        uiGroup = new Group();
+
+        uiStage.addActor(uiGroup);
 
         ModelBuilder modelBuilder = new ModelBuilder();
 
