@@ -16,6 +16,7 @@ public class TxtReader {
 
     private File file;
     private ArrayList<Float> data;
+    private int v;
 
     public TxtReader(File file){
         this.file = file;
@@ -24,7 +25,6 @@ public class TxtReader {
 
     public void read(){
 
-        int v =0;
 
         try {
             Scanner reader = new Scanner(file);
@@ -37,21 +37,44 @@ public class TxtReader {
                 if (k.length()>1){
                     if (!(k.charAt(0)=='#'&&k.charAt(1)=='#')){
 
-                        if (k.charAt(0)=='['&&k.charAt(1)=='1'){
+                        if ((k.charAt(0)=='['&&(k.charAt(1)=='1'))){
                             //version 1
                              v = 1;
-                        }else if (v == 1){
+                        }else if (v == 1||v==2||v==3){
                             readLineV1(k);
 
+                        }else if (k.charAt(0)=='['&&k.charAt(1)=='2'){
+                            v = 2;
+                        }else if (k.charAt(0)=='['&&k.charAt(1)=='3'){
+                            v = 3;
                         }
 
                     }
                 }
 
             }
-            System.out.println("    CORRECT: Initial condition file successfully loaded");
-            System.out.println("        File contains "+data.size()/8+" bodies");
-            Menu.iniLoaded = true;
+
+            if (v==1){
+                System.out.println("    CORRECT: Initial condition file successfully loaded");
+
+                System.out.println("        File contains "+data.size()/8+" bodies");
+                Menu.iniLoaded = true;
+
+            }else if (v==2){
+                System.out.println("    CORRECT: Initial condition file successfully loaded");
+
+                System.out.println("        File contains "+data.size()/7+" bodies");
+                Menu.iniLoaded = true;
+
+            }else if (v==3){
+                System.out.println("    CORRECT: Initial condition file successfully loaded");
+
+                System.out.println("        File contains "+data.size()/11+" bodies");
+                Menu.iniLoaded = true;
+
+            }else {
+                System.out.println("ERROR: FILE FORMAT NOT SUPPORTED");
+            }
 
         }catch (Exception e){
             System.out.println("    ERROR: Exception while reading file. ");
@@ -87,7 +110,7 @@ public class TxtReader {
 
     private int getNumberV1(int a, String k){
         for (int i = a; i < k.length(); i++){
-            if (k.charAt(i)==' '){
+            if (k.charAt(i)==' '||k.charAt(i)==','){
                 return i;
             }
         }
@@ -96,5 +119,9 @@ public class TxtReader {
 
     public ArrayList<Float> getData(){
         return  data;
+    }
+
+    public int getV(){
+        return v;
     }
 }

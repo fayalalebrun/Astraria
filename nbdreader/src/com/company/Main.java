@@ -9,7 +9,7 @@ public class Main {
     public static void main(String[] args) {
 	// write your code here
 try {
-    ObjectInputStream stream = new ObjectInputStream(new FileInputStream("/Users/davrockenzahn19/orbit-simulator-2/Generator tool/100%functional.nbd"));
+    ObjectInputStream stream = new ObjectInputStream(new FileInputStream("/Users/davrockenzahn19/orbit-simulator-2/initial conditions/test1.nbd"));
 
 
     System.out.println(stream.readShort());

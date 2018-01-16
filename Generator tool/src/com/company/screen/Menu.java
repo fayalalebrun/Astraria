@@ -21,7 +21,7 @@ public class Menu {
     private static String filePath;
     private Scanner reader;
     private File file;
-    private String outputPath;
+    public static String outputPath;
     private int duration;
     public static boolean iniLoaded;
     private TxtReader txtReader;
@@ -175,63 +175,117 @@ public class Menu {
         private void generateSimulation(){
                 printHeader();
 
-                System.out.println("    OUTPUT PATH: (Current by default. Enter to leave it as is.)");
+                System.out.println("    OUTPUT PATH: (Current by default. Enter to leave it as is.) ");
                 String path = reader.nextLine();
-                System.out.print("    FILE NAME: (test.txt by default. Enter to leave it as is.)");
+            if (path.isEmpty()){
+                path = System.getProperty("user.dir");;
+                System.out.println(path);
+            }
+                System.out.print("    FILE NAME: (\"mySimulation\" by default. Enter to leave it as is.) ");
                 String filename = reader.nextLine();
+            if (filename.isEmpty()){
+                filename = "mySimulation.nbd";
+                System.out.println(filename);
+            }else {
+                filename+=".nbd";
+            }
                 System.out.print("    DURATION (seconds): ");
                 int duration = Integer.parseInt(reader.nextLine());
 
-                if (path.isEmpty()){
-                    path = System.getProperty("user.dir");;
-                }
 
-                if (filename.isEmpty()){
-                    filename = "test.nbd";
-                }
+
+
 
                 File outputFile = new File(path+"/"+filename);
+                outputPath = path+"/"+filename;
 
             System.out.println();
             System.out.print("    Sorting input data, please wait...");
 
             ArrayList<Float> data = txtReader.getData();
 
-                float[] x = new float[data.size()/8];
-                float[] y = new float[data.size()/8];
-                float[] z = new float[data.size()/8];
-                float[] vx = new float[data.size()/8];
-                float[] vy = new float[data.size()/8];
-                float[] vz = new float[data.size()/8];
+            int yot = 0;
+            int s = 0;
+
+            float m;
+            int k = 0;
+
+            float[] x;
+            float[] y;
+            float[] z;
+            float[] vx;
+            float[] vy;
+            float[] vz;
+
+
+            if (txtReader.getV()==1||txtReader.getV()==2){
+                if (txtReader.getV()==1){
+                    yot = 0;
+                    s = 8;
+                }else if (txtReader.getV()==2){
+                    yot = 1;
+                    s = 7;
+                }
+
+                x = new float[data.size()/s];
+                y = new float[data.size()/s];
+                z = new float[data.size()/s];
+                vx = new float[data.size()/s];
+                vy = new float[data.size()/s];
+                vz = new float[data.size()/s];
 
 
 
-                float m;
-
-                int k = 0;
 
 
 
 
-                for (int i = 0; i<data.size(); i=i+8){
 
-                    x[k] = data.get(i+2);
-                    y[k] = data.get(i+3);
-                    z[k] = data.get(i+4);
-                    vx[k] = data.get(i+5);
-                    vy[k] = data.get(i+6);
-                    vz[k] = data.get(i+7);
+                for (int i = 0; i<data.size(); i=i+s){
+
+                    x[k] = data.get(i+2-yot);
+                    y[k] = data.get(i+3-yot);
+                    z[k] = data.get(i+4-yot);
+                    vx[k] = data.get(i+5-yot);
+                    vy[k] = data.get(i+6-yot);
+                    vz[k] = data.get(i+7-yot);
 
 
                     k++;
                 }
 
-                m = data.get(1);
+                m = data.get(1-yot);
+            }else{
+                x = new float[data.size()/11];
+                y = new float[data.size()/11];
+                z = new float[data.size()/11];
+                vx = new float[data.size()/11];
+                vy = new float[data.size()/11];
+                vz = new float[data.size()/11];
+
+                m = data.get(4);
+
+                for (int i = 0; i<data.size(); i=i+11){
+
+                    x[k] = data.get(i+5-yot);
+                    y[k] = data.get(i+6-yot);
+                    z[k] = data.get(i+7-yot);
+                    vx[k] = data.get(i+8-yot);
+                    vy[k] = data.get(i+9-yot);
+                    vz[k] = data.get(i+10-yot);
+
+
+                    k++;
+                }
+            }
 
 
 
-            System.out.println("    [DONE]");
+
+
+                                                 System.out.println("           [DONE]");
             System.out.print("    Initializing accelerations, please wait...");
+
 
             data = null;
 
@@ -239,7 +293,7 @@ public class Menu {
 
             MultiThreadAlgorithm multiThreadAlgorithm = new MultiThreadAlgorithm(new Object(), x,y,z,vx,vy,vz,m,0.1f, writer, duration);
 
-            System.out.println("    [DONE]");
+            System.out.println("   [DONE]");
             System.out.print("    Initializing writer thread...");
 
             writerThread = new Thread(writer);
@@ -247,9 +301,9 @@ public class Menu {
             boolean v = writer.setFile(outputFile);
 
             if (v){
-                System.out.println("    [DONE]");
+                System.out.println("                [DONE]");
             }else {
-                System.out.println("    [ERROR]");
+                System.out.println("                [ERROR]");
             }
 
             System.out.println("");

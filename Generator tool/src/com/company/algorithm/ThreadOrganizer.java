@@ -100,10 +100,16 @@ public abstract class ThreadOrganizer {
 
             Menu.printHeader();
 
-            System.out.println("Last cycles per second: "+lastCalc);
-            System.out.println("Average cycles: "+lastAvg);
+            System.out.println("    Output file: "+Menu.outputPath);
             System.out.println("");
-            System.out.println("Generating, please wait... "+"[ "+ (float) (l / ((double) duration * 60D))*100+" % COMPLETE]");
+            System.out.println("");
+
+            System.out.println("    Last algorithm cycles per second:     "+lastCalc);
+            System.out.println("    Average algorithm cycles per second:  "+lastAvg);
+            System.out.println("");
+            System.out.println("    Generating, please wait... "+"         [ "+ (float) (l / ((double) duration * 60D))*100+" % COMPLETE]");
+            System.out.println("");
+            System.out.println("");
             System.out.println("[PRESS CTR+Z TO CANCEL]");
         }
     }
