@@ -1,10 +1,12 @@
 ## 								ORBIT SIMULATOR - NBODY DATA FILE
-## 								16 OBJECTS - INITIAL CONDITIONS
-##									FILE FORMAT: 01
+## 								[2] OBJECTS - INITIAL CONDITIONS
+##									FILE FORMAT: [01]
 ##
 ##
 ##	Notice: Any line starting with “##” will be omitted by the program, and are safe to edit. Any other change to the file may cause 
 ##	corruption.
+##
+##	SOURCE: [Orbit simulator - generated]
 ##
 [1]
 -1 1 0  0  0.5 0  0.70710678118  0

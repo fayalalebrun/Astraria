@@ -1,4 +1,12 @@
-## testfile
+## 								ORBIT SIMULATOR - NBODY DATA FILE
+## 								[1024] OBJECTS - INITIAL CONDITIONS
+##									FILE FORMAT: [1]
+##
+## SOURCE: [NBabel.org - http://nbabel.org/input]
+##
+##
+##	Notice: Any line starting with “##” will be omitted by the program, and are safe to edit. Any other change to the file may cause 
+##	corruption.
 ##
 [1]
 -1 0.0009765625 0.926060989309851146  -0.384678263510366214  0.452999012332044204 -0.495923062751886745  0.0654360739738478747  -0.33074524933522792

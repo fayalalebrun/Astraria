@@ -1,11 +1,29 @@
 ## 								ORBIT SIMULATOR - NBODY DATA FILE
-## 								16 OBJECTS - INITIAL CONDITIONS
-##									FILE FORMAT: 01
+## 								[number of objects] OBJECTS - INITIAL CONDITIONS
+##									FILE FORMAT: [version]
+##
+## SOURCE: [where this file is from]
 ##
 ##
 ##	Notice: Any line starting with “##” will be omitted by the program, and are safe to edit. Any other change to the file may cause 
 ##	corruption.
 ##
+##[version 1]
+##-1 m x  y  z  vx  vy  vz
+##-1 m x  y  z  vx  vy  vz
+##-1 m x  y  z  vx  vy  vz
+##-1 m x  y  z  vx  vy  vz
+##-1 m x  y  z  vx  vy  vz
+##-1 m x  y  z  vx  vy  vz
+##-1 m x  y  z  vx  vy  vz
+##-1 m x  y  z  vx  vy  vz
+##-1 m x  y  z  vx  vy  vz
+##-1 m x  y  z  vx  vy  vz
+##-1 m x  y  z  vx  vy  vz
+##-1 m x  y  z  vx  vy  vz
+##-1 m x  y  z  vx  vy  vz
+##
+##Example:
 [1]
 -1 0.0625 0.214835865608654947  -0.120469325327368135  -0.2661811268232539 0.757849421156586822  0.157644506165220161  -0.0715602005208729741
 -1 0.0625 -0.129919123158631022  0.116379094303405983  0.133080554128754053 0.486052966602537106  0.395427627261877745  -0.734692224692122475
