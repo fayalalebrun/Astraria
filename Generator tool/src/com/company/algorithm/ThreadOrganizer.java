@@ -9,6 +9,7 @@ package com.company.algorithm;/*
 
 import com.company.screen.Menu;
 
+import javax.jws.soap.SOAPBinding;
 import java.util.Random;
 import java.util.Vector;
 
@@ -21,17 +22,28 @@ public abstract class ThreadOrganizer {
         private double lastTime;
         protected final Object lock;
 
-        private double tmp;
+        protected boolean fixedDelta;
 
-    protected int duration;
+
+        private double tmp;
+        protected double cycles;
+        protected int duration;
+        private double deltaConst;
+
+
     protected double l;
     protected double l2;
 
         public static boolean PRINT_CALC_SEC = true;
 
 
-        public ThreadOrganizer(Object lock) {
+        public ThreadOrganizer(Object lock, boolean fixedDelta, double cycles, int duration) {
             this.lock = lock;
+            this.fixedDelta = fixedDelta;
+            this.cycles = cycles;
+            this.duration = duration;
+            deltaConst = 1/cycles;
+
 
         }
 
@@ -84,6 +96,7 @@ public abstract class ThreadOrganizer {
         protected abstract void endThreads();
 
         protected double getDelta(){
+
             double currTime = (double)System.nanoTime()/1000000000.0;
             if(lastTime==0){
                 lastTime = currTime;
@@ -93,7 +106,15 @@ public abstract class ThreadOrganizer {
 
             this.tmp = temp;
 
-            return temp;
+
+            if (fixedDelta){
+                return deltaConst;
+            }else {
+                return temp;
+            }
+
+
+
         }
 
         public void printStatus(){
@@ -104,8 +125,18 @@ public abstract class ThreadOrganizer {
             System.out.println("");
             System.out.println("");
 
-            System.out.println("    Last algorithm cycles per second:     "+lastCalc);
-            System.out.println("    Average algorithm cycles per second:  "+lastAvg);
+            if (fixedDelta){
+                System.out.println("    PROCESSOR CYCLES PER SECOND (AVG): "+lastAvg);
+                System.out.println("    SIMULATION CYCLES PER FRAME: "+cycles);
+                System.out.println("    SIMULATION DURATION: "+duration+" seconds");
+                System.out.println("    GENERATION ESTIMATED DURATION: "+ (int) (cycles/lastAvg)*duration+" seconds");
+            }else {
+                System.out.println("    LAST CYCLES PER SECOND:     "+lastCalc);
+                System.out.println("    AVERAGE CYCLES PER SECOND:  "+lastAvg);
+                System.out.println("    SIMULATION DURATION: "+duration);
+            }
+
+
             System.out.println("");
             System.out.println("    Generating, please wait... "+"         [ "+ (float) (l / ((double) duration * 60D))*100+" % COMPLETE]");
             System.out.println("");

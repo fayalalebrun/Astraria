@@ -10,6 +10,6 @@ package com.company.algorithm.helpers;/*
 public class Units {
 
 
-    public static final float GRAV = 1;
+    public static float GRAV = 1;
 
 }
