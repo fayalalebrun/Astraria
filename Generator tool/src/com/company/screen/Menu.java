@@ -8,8 +8,10 @@ package com.company.screen;/*
 */
 
 import com.company.algorithm.MultiThreadAlgorithm;
+import com.company.algorithm.helpers.Units;
 import com.company.files.BinWriter;
 import com.company.files.TxtReader;
+import com.sun.org.apache.bcel.internal.generic.IF_ACMPEQ;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -53,9 +55,10 @@ public class Menu {
                 System.out.println("    [1] - Set initial conditions file from argument");
                 System.out.println("    [2] - Set initial condition file from path");
                 System.out.println("    [3] - Load initial conditions to memory");
-                System.out.println("    [4] - Generate simulation");
-                System.out.println("    [5] - Initial conditions conversion tools");
-                System.out.println("    [6] - Exit");
+                System.out.println("    [4] - Generate simulation (variable delta)");
+                System.out.println("    [5] - Generate simulaton (fixed delta)");
+                System.out.println("    [6] - Initial conditions conversion tools");
+                System.out.println("    [7] - Exit");
 
                 String command = "";
                 System.out.println("");
@@ -82,13 +85,18 @@ public class Menu {
                 }else if (command.trim().equals("4")){
                     printHeader();
                     if (iniLoaded){
-                        generateSimulation();
+                        generateSimulation(false);
                     }else {
                         System.out.println("ERROR: No initial condition file has been loaded into memory");
                     }
                 }else if (command.trim().equals("5")){
-
-                }else if (command.trim().equals("6")){
+                    printHeader();
+                    if (iniLoaded){
+                        generateSimulation(true);
+                    }else {
+                        System.out.println("ERROR: No initial condition file has been loaded into memory");
+                    }
+                }else if (command.trim().equals("7")){
 
                     if (threadIsOn){
                         writer.terminate();
@@ -172,7 +180,7 @@ public class Menu {
             }
         }
 
-        private void generateSimulation(){
+        private void generateSimulation(boolean fixedDelta){
                 printHeader();
 
                 System.out.println("    OUTPUT PATH: (Current by default. Enter to leave it as is.) ");
@@ -189,8 +197,52 @@ public class Menu {
             }else {
                 filename+=".nbd";
             }
-                System.out.print("    DURATION (seconds): ");
-                int duration = Integer.parseInt(reader.nextLine());
+
+double cycles = 0;
+            System.out.print("    DURATION OF SIMULATION (seconds): ");
+
+                String input = reader.nextLine();
+                if(input.isEmpty()){
+                    input = "10";
+                }
+                int duration = Integer.parseInt(input);
+
+                if (fixedDelta){
+                    System.out.print("    CYCLES PER SECOND: ");
+
+                    input = reader.nextLine();
+
+                    cycles = Double.parseDouble(input);
+                }
+
+            System.out.print("    GRAVITATIONAL CONSTANT (defualt is 1): ");
+                input = reader.nextLine();
+
+                if (input.isEmpty()){
+                    input="1";
+                }
+
+                float grav = Float.parseFloat(input);
+
+            Units.GRAV = grav;
+
+            System.out.print("    BODY SCALE (default is 1): ");
+                input  =reader.nextLine();
+
+                if (input.isEmpty()){
+                    input="1";
+                }
+
+                float bodyScale = Float.parseFloat(input);
+
+            System.out.print("    SIMULATION SPEED (default is 1): ");
+            input = reader.nextLine();
+
+            if (input.isEmpty()){
+                input = "1";
+            }
+
+                float simSpeed = Float.parseFloat(input);
 
 
 
@@ -289,9 +341,11 @@ public class Menu {
 
             data = null;
 
-            writer = new BinWriter((short)1, x.length, 1f);
+            writer = new BinWriter((short)1, x.length, bodyScale);
 
-            MultiThreadAlgorithm multiThreadAlgorithm = new MultiThreadAlgorithm(new Object(), x,y,z,vx,vy,vz,m,0.1f, writer, duration);
+                MultiThreadAlgorithm multiThreadAlgorithm = new MultiThreadAlgorithm(new Object(), x,y,z,vx,vy,vz,m,simSpeed, writer, duration, fixedDelta, cycles);
+
+
 
             System.out.println("   [DONE]");
             System.out.print("    Initializing writer thread...");

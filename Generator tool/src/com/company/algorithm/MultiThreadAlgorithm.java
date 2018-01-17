@@ -46,18 +46,25 @@ public class MultiThreadAlgorithm extends ThreadOrganizer{
         private double timer;
         private BinWriter writer;
 
+        private double ops;
 
 
 
 
 
 
-    public MultiThreadAlgorithm(Object lock, float[] x, float[] y, float[] z, float[] vx, float[] vy, float[] vz, float m, float simSpeed, BinWriter writer, int duration){
-            super(lock);
+
+
+    public MultiThreadAlgorithm(Object lock, float[] x, float[] y, float[] z, float[] vx, float[] vy, float[] vz, float m, float simSpeed, BinWriter writer, int duration, boolean fixedDelta, double cycles){
+            super(lock, fixedDelta, cycles, duration);
             this.amountOfThreads = Runtime.getRuntime().availableProcessors()-1;
 
             executorService = Executors.newFixedThreadPool(this.amountOfThreads);
             int k = x.length;
+
+            this.fixedDelta = fixedDelta;
+            ops = 0;
+
 
             this.x = x;
             this.y = y;
@@ -88,7 +95,6 @@ public class MultiThreadAlgorithm extends ThreadOrganizer{
             timer = (double)System.nanoTime();
             this.writer = writer;
 
-            super.duration = duration;
             l = 0;
             l2 = 0;
         }
@@ -133,31 +139,65 @@ public class MultiThreadAlgorithm extends ThreadOrganizer{
 
                 updateBodies();
 
-                if (((double)System.nanoTime())-timer>=16666666.6667){
-                    timer = (double)System.nanoTime();
-                    l++;
-                    l2++;
+                if (!fixedDelta){
+                    if (((double)System.nanoTime())-timer>=16666666.6667){
+                        timer = (double)System.nanoTime();
+                        l++;
+                        l2++;
 
 
-                    for (int a = 0; a<x.length; a++){
-                        writer.getQueue().add(x[a]);
-                        writer.getQueue().add(y[a]);
-                        writer.getQueue().add(z[a]);
+                        for (int a = 0; a<x.length; a++){
+                            writer.getQueue().add(x[a]);
+                            writer.getQueue().add(y[a]);
+                            writer.getQueue().add(z[a]);
 
-                        writer.getQueue().add(50f);
+                            writer.getQueue().add(50f);
+                        }
+
+                        ;
+
+                        if (l2 >= 60*3){
+                            printStatus();
+                            l2 = 0;
+                        }
+
+                        if (l >= (duration*60) ){
+                            this.terminate();
+                        }
+                    }
+                }else {
+                    if (ops >= cycles/60){
+                        l++;
+
+                        ops = 0;
+
+
+                        for (int a = 0; a<x.length; a++){
+                            writer.getQueue().add(x[a]);
+                            writer.getQueue().add(y[a]);
+                            writer.getQueue().add(z[a]);
+
+                            writer.getQueue().add(50f);
+                        }
+
+                        ;
+
+
+
+                        if (l >= (duration*60) ){
+                            this.terminate();
+                        }
+                    }else {
+                        ops++;
                     }
 
-                    ;
-
-                    if (l2 >= 60*3){
+                    if (((double) System.nanoTime()) - timer >= 3000000000D){
+                        timer = (double) System.nanoTime();
                         printStatus();
-                        l2 = 0;
-                    }
-
-                    if (l >= (duration*60) ){
-                        this.terminate();
                     }
                 }
+
+
 
 
             }
