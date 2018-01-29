@@ -33,6 +33,11 @@ import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
+import java.util.Comparator;
+
+import static com.badlogic.gdx.graphics.GL20.GL_BLEND;
+import static com.badlogic.gdx.graphics.GL20.GL_ONE_MINUS_SRC_ALPHA;
+import static com.badlogic.gdx.graphics.GL20.GL_SRC_ALPHA;
 
 /**
  * Created by fraayala19 on 1/11/18.
@@ -42,14 +47,11 @@ public class PlayBackScreen extends BaseScreen{
     private PerspectiveCamera cam;
 
 
-    private ArrayList<ModelInstance> toRender;
 
 
     private FirstPersonCameraController camControl;
 
-    private Model model;
-
-    private ModelBatch modelBatch;
+    private DecalBatch decalBatch;
 
     private ArrayList<PlayBackBody> bodies;
 
@@ -72,6 +74,10 @@ public class PlayBackScreen extends BaseScreen{
 
     private boolean paused;
 
+    private Decal decal;
+
+    private ArrayList<Decal> decals = new ArrayList<Decal>();
+
     public PlayBackScreen(Boot boot, String arg) {
         super(boot);
 
@@ -85,13 +91,6 @@ public class PlayBackScreen extends BaseScreen{
 
         uiStage.addActor(uiGroup);
 
-        ModelBuilder modelBuilder = new ModelBuilder();
-
-        toRender = new ArrayList<ModelInstance>();
-
-        final Material material = new Material(ColorAttribute.createDiffuse(Color.WHITE));
-        final long attributes = VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal;
-        model = modelBuilder.createSphere(1, 1, 1, 24, 24, material, attributes);
 
         bodies = new ArrayList<PlayBackBody>();
 
@@ -106,6 +105,13 @@ public class PlayBackScreen extends BaseScreen{
         Gdx.input.setInputProcessor(multiplexer);
 
         progressWindow = new ProgressWindow(this);
+
+        decalBatch = new DecalBatch(new CameraGroupStrategy(cam, new Comparator<Decal>() {
+            @Override
+            public int compare(Decal decal, Decal t1) {
+                return 0;
+            }
+        }));
 
         setWindowPosition();
 
@@ -123,14 +129,15 @@ public class PlayBackScreen extends BaseScreen{
 
 
         cam.near = 0.001f;
-        cam.far = 100f;
+        cam.far = 1000000f;
         cam.position.set(3,0,0);
         cam.lookAt(0,0,0);
         cam.update();
 
-        modelBatch = new ModelBatch();
 
         uiGroup.addActor(progressWindow);
+
+
 
     }
 
@@ -146,7 +153,6 @@ public class PlayBackScreen extends BaseScreen{
             currTime += delta;
         }
 
-        setFrame(currFrame);
 
         uiStage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 30f));
         camControl.update(delta);
@@ -154,11 +160,20 @@ public class PlayBackScreen extends BaseScreen{
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
         Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
 
+        Gdx.gl.glEnable(GL20.GL_BLEND);
+        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+
+
         cam.update();
 
-        modelBatch.begin(cam);
-        modelBatch.render(toRender);
-        modelBatch.end();
+
+
+        for(PlayBackBody body : this.bodies) {
+
+            body.setFrame(currFrame, cam, 50f);
+            decalBatch.add(body.getDecal());
+        }
+        decalBatch.flush();
 
         uiStage.draw();
 
@@ -189,15 +204,9 @@ public class PlayBackScreen extends BaseScreen{
 
     @Override
     public void dispose() {
-        model.dispose();
-        modelBatch.dispose();
+        decalBatch.dispose();
     }
 
-    private void setFrame(int frame){
-        for(PlayBackBody body : bodies){
-            body.setFrame(frame);
-        }
-    }
 
     public int getTotalFrames() {
         return totalFrames;
@@ -214,8 +223,8 @@ public class PlayBackScreen extends BaseScreen{
                 numberOfBodies = stream.readInt();
                 bodyScale = stream.readFloat();
                 for(int i = 0; i < numberOfBodies; i++){
-                    bodies.add(new PlayBackBody(model, bodyScale));
-                    toRender.add(bodies.get(i).getModelInstance());
+                    bodies.add(new PlayBackBody(Decal.newDecal(new TextureRegion(Boot.manager.get("particle.png",
+                            Texture.class)),true),bodyScale));
                 }
                 maxAccel = stream.readFloat();
                 minAccel = stream.readFloat();
