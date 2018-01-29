@@ -108,8 +108,10 @@ public class PlayBackScreen extends BaseScreen{
 
         decalBatch = new DecalBatch(new CameraGroupStrategy(cam, new Comparator<Decal>() {
             @Override
-            public int compare(Decal decal, Decal t1) {
-                return 0;
+            public int compare(Decal o1, Decal o2) {
+                float dist1 = cam.position.dst(o1.getPosition());
+                float dist2 = cam.position.dst(o2.getPosition());
+                return (int)Math.signum(dist2 - dist1);
             }
         }));
 
