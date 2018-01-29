@@ -1,12 +1,15 @@
 package com.mygdx.game.playback;
 
+import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
+import com.badlogic.gdx.graphics.g3d.decals.Decal;
 import com.badlogic.gdx.math.Vector3;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 /**
  * Created by fraayala19 on 1/11/18.
@@ -14,16 +17,20 @@ import java.util.ArrayList;
 public class PlayBackBody {
     private ArrayList<Vector3> positions;
     private ArrayList<Float> acceleration;
-    private ModelInstance modelInstance;
+    private Color color;
+    private Decal decal;
+    private Vector3 temp1, temp2;
+    private Random rand;
 
-    private Vector3 tempPos;
-
-    public PlayBackBody(Model model, float size) {
-        modelInstance = new ModelInstance(model);
-        tempPos = new Vector3();
-        modelInstance.transform.scale(size,size,size);
+    public PlayBackBody(Decal decal, float size) {
         positions = new ArrayList<Vector3>();
         acceleration = new ArrayList<Float>();
+        temp1 = new Vector3();
+        temp2 = new Vector3();
+        this.decal = decal;
+        decal.setScale(0.01f);
+        //rand = new Random();
+        //color = new Color(rand.nextFloat(),rand.nextFloat(),rand.nextFloat(),1);
     }
 
     public void addPosition(Vector3 pos){
@@ -31,21 +38,15 @@ public class PlayBackBody {
     }
 
     public void changeColor(Color color){
-        modelInstance.materials.get(0).set(ColorAttribute.createDiffuse(color));
+        this.color = color;
     }
 
-    private void setPosition(int index){
-        Vector3 posNew = positions.get(index);
-        modelInstance.transform.getTranslation(tempPos);
-        modelInstance.transform.trn(-tempPos.x, -tempPos.y, -tempPos.z);
-        modelInstance.transform.trn(posNew.x, posNew.y, posNew.z);
-    }
 
-    public boolean setFrame(int frame){
+    public boolean setFrame(int frame, Camera cam, float camDistance){
         if(frame>=positions.size()){
             return false;
         }
-        setPosition(frame);
+        setPosition(frame, cam, camDistance);
         return true;
     }
 
@@ -53,11 +54,21 @@ public class PlayBackBody {
         acceleration.add(accel);
     }
 
-    public ModelInstance getModelInstance() {
-        return modelInstance;
+    private void setPosition(int frame, Camera cam, float camDistance){
+        //decal.setColor(new Color(rand.nextFloat(),rand.nextFloat(),rand.nextFloat(),1));
+        temp1 = positions.get(frame).cpy().sub(cam.position);
+        temp1.nor();
+        temp2 = new Vector3(temp1.x*camDistance,temp1.y*camDistance,temp1.z*camDistance);
+        decal.setPosition(new Vector3(cam.position.x+temp2.x,cam.position.y+temp2.y,cam.position.z+temp2.z));
+        decal.lookAt(cam.position,cam.up);
     }
+
 
     public ArrayList<Vector3> getPositions() {
         return positions;
+    }
+
+    public Decal getDecal() {
+        return decal;
     }
 }
