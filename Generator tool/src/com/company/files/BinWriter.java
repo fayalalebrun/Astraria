@@ -53,7 +53,7 @@ public class BinWriter implements Runnable {
             System.out.println(e.getMessage());
         }
 
-        while (!terminate){
+        while (!terminate || !queue.isEmpty()){
 
             if (!queue.isEmpty()){
                 try {
