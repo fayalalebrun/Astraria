@@ -315,7 +315,7 @@ double cycles = 0;
                 vy = new float[data.size()/11];
                 vz = new float[data.size()/11];
 
-                m = data.get(4);
+                m = data.get(15);
 
                 for (int i = 0; i<data.size(); i=i+11){
 
