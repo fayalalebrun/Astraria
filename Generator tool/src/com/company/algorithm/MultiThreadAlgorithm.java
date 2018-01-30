@@ -151,7 +151,9 @@ public class MultiThreadAlgorithm extends ThreadOrganizer{
                             writer.getQueue().add(y[a]);
                             writer.getQueue().add(z[a]);
 
-                            writer.getQueue().add(50f);
+                            writer.getQueue().add(ax[a]);
+                            writer.getQueue().add(ay[a]);
+                            writer.getQueue().add(az[a]);
                         }
 
                         ;
@@ -372,11 +374,11 @@ public class MultiThreadAlgorithm extends ThreadOrganizer{
 
     }
 
-    private float cubed(float x){
+    public static float cubed(float x){
             return x*x*x;
     }
 
-    private float square(float x){
+    public static float square(float x){
         return x*x;
     }
 }
