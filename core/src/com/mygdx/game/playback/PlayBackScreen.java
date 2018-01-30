@@ -4,6 +4,8 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.*;
+import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.g3d.Material;
 import com.badlogic.gdx.graphics.g3d.Model;
@@ -51,7 +53,7 @@ public class PlayBackScreen extends BaseScreen{
 
     private FirstPersonCameraController camControl;
 
-    private DecalBatch decalBatch;
+    private SpriteBatch spriteBatch;
 
     private ArrayList<PlayBackBody> bodies;
 
@@ -73,16 +75,15 @@ public class PlayBackScreen extends BaseScreen{
     private ProgressWindow progressWindow;
 
     private boolean paused;
+    
 
-    private Decal decal;
-
-    private ArrayList<Decal> decals = new ArrayList<Decal>();
 
     public PlayBackScreen(Boot boot, String arg) {
         super(boot);
 
 
         UIListener = new InputListener();
+
 
         uiStage = new Stage(new ScreenViewport());
         uiStage.addListener(UIListener);
@@ -106,14 +107,7 @@ public class PlayBackScreen extends BaseScreen{
 
         progressWindow = new ProgressWindow(this);
 
-        decalBatch = new DecalBatch(new CameraGroupStrategy(cam, new Comparator<Decal>() {
-            @Override
-            public int compare(Decal o1, Decal o2) {
-                float dist1 = cam.position.dst(o1.getPosition());
-                float dist2 = cam.position.dst(o2.getPosition());
-                return (int)Math.signum(dist2 - dist1);
-            }
-        }));
+        spriteBatch = new SpriteBatch();
 
         setWindowPosition();
 
@@ -130,7 +124,7 @@ public class PlayBackScreen extends BaseScreen{
     public void show() {
 
 
-        cam.near = 0.001f;
+        cam.near = 0.0001f;
         cam.far = 1000000f;
         cam.position.set(3,0,0);
         cam.lookAt(0,0,0);
@@ -163,19 +157,18 @@ public class PlayBackScreen extends BaseScreen{
         Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
 
         Gdx.gl.glEnable(GL20.GL_BLEND);
-        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE);
 
 
         cam.update();
 
-
-
+        spriteBatch.enableBlending();
+        spriteBatch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE);
+        spriteBatch.begin();
         for(PlayBackBody body : this.bodies) {
-
-            body.setFrame(currFrame, cam, 50f);
-            decalBatch.add(body.getDecal());
+            body.setFrame(currFrame, cam, spriteBatch);
         }
-        decalBatch.flush();
+        spriteBatch.end();
 
         uiStage.draw();
 
@@ -185,6 +178,7 @@ public class PlayBackScreen extends BaseScreen{
     public void resize(int width, int height) {
         cam.viewportHeight = height;
         cam.viewportWidth = width;
+        spriteBatch = new SpriteBatch();
         uiStage.getViewport().update(width,height, true);
         setWindowPosition();
     }
@@ -206,7 +200,7 @@ public class PlayBackScreen extends BaseScreen{
 
     @Override
     public void dispose() {
-        decalBatch.dispose();
+        spriteBatch.dispose();
     }
 
 
@@ -225,8 +219,8 @@ public class PlayBackScreen extends BaseScreen{
                 numberOfBodies = stream.readInt();
                 bodyScale = stream.readFloat();
                 for(int i = 0; i < numberOfBodies; i++){
-                    bodies.add(new PlayBackBody(Decal.newDecal(new TextureRegion(Boot.manager.get("particle.png",
-                            Texture.class)),true),bodyScale));
+                    bodies.add(new PlayBackBody(new Sprite(Boot.manager.get("particle.png",
+                            Texture.class)),bodyScale));
                 }
                 maxAccel = stream.readFloat();
                 minAccel = stream.readFloat();

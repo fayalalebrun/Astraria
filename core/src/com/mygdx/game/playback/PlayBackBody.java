@@ -1,7 +1,10 @@
 package com.mygdx.game.playback;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
@@ -18,19 +21,20 @@ public class PlayBackBody {
     private ArrayList<Vector3> positions;
     private ArrayList<Float> acceleration;
     private Color color;
-    private Decal decal;
+    private Sprite sprite;
     private Vector3 temp1, temp2;
     private Random rand;
 
-    public PlayBackBody(Decal decal, float size) {
+    public PlayBackBody(Sprite sprite, float size) {
         positions = new ArrayList<Vector3>();
         acceleration = new ArrayList<Float>();
         temp1 = new Vector3();
         temp2 = new Vector3();
-        this.decal = decal;
-        decal.setScale(0.01f);
-        //rand = new Random();
-        //color = new Color(rand.nextFloat(),rand.nextFloat(),rand.nextFloat(),1);
+        this.sprite = sprite;
+        sprite.setScale(0.05f);
+        rand = new Random();
+        color = new Color(rand.nextFloat(),rand.nextFloat(),rand.nextFloat(),1);
+
     }
 
     public void addPosition(Vector3 pos){
@@ -42,25 +46,40 @@ public class PlayBackBody {
     }
 
 
-    public boolean setFrame(int frame, Camera cam, float camDistance){
-        if(frame>=positions.size()){
-            return false;
+    public void setFrame(int frame, Camera cam, SpriteBatch batch){
+        if(frame<positions.size()){
+            setPosition(frame, cam);
+            if(cam.frustum.pointInFrustum(positions.get(frame))){
+                draw(batch);
+            }
+        }else{
+            if(cam.frustum.pointInFrustum(positions.get(positions.size()-1))){
+                setPosition(positions.size()-1,cam);
+                draw(batch);
+            }
         }
-        setPosition(frame, cam, camDistance);
-        return true;
+
+    }
+
+    public void draw(SpriteBatch batch){
+        sprite.draw(batch);
     }
 
     public void addAcceleration(float accel){
         acceleration.add(accel);
     }
 
-    private void setPosition(int frame, Camera cam, float camDistance){
-        //decal.setColor(new Color(rand.nextFloat(),rand.nextFloat(),rand.nextFloat(),1));
-        temp1 = positions.get(frame).cpy().sub(cam.position);
-        temp1.nor();
-        temp2 = new Vector3(temp1.x*camDistance,temp1.y*camDistance,temp1.z*camDistance);
-        decal.setPosition(new Vector3(cam.position.x+temp2.x,cam.position.y+temp2.y,cam.position.z+temp2.z));
-        decal.lookAt(cam.position,cam.up);
+    private void setPosition(int frame, Camera cam){
+        sprite.setColor(color);
+        Vector3 pos = positions.get(frame).cpy();
+        cam.project(pos);
+        //pos.x = pos.x - (sprite.getWidth()*sprite.getScaleX())*0.5f;
+        //pos.y = pos.y - (sprite.getHeight()*sprite.getScaleY())*0.5f;
+        //pos.x -= Gdx.graphics.getWidth()/2;
+        //pos.y -= Gdx.graphics.getHeight()/2;
+        System.out.println(pos.x+" "+pos.y);
+        System.out.println(Gdx.graphics.getWidth()+" "+Gdx.graphics.getHeight());
+        sprite.setPosition(pos.x,pos.y);
     }
 
 
@@ -68,7 +87,7 @@ public class PlayBackBody {
         return positions;
     }
 
-    public Decal getDecal() {
-        return decal;
+    public Sprite getSprite() {
+        return sprite;
     }
 }
