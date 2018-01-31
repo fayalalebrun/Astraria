@@ -18,11 +18,17 @@ import com.badlogic.gdx.graphics.g3d.decals.DecalBatch;
 import com.badlogic.gdx.graphics.g3d.decals.DecalMaterial;
 import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
+import com.badlogic.gdx.math.Matrix4;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Group;
 import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Image;
+import com.badlogic.gdx.utils.viewport.ExtendViewport;
+import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.badlogic.gdx.utils.viewport.Viewport;
 import com.kotcrab.vis.ui.widget.VisTable;
 import com.kotcrab.vis.ui.widget.VisWindow;
 import com.mygdx.game.BaseScreen;
@@ -75,7 +81,11 @@ public class PlayBackScreen extends BaseScreen{
     private ProgressWindow progressWindow;
 
     private boolean paused;
-    
+
+
+    OrthographicCamera testCamera;
+
+    Viewport testViewport;
 
 
     public PlayBackScreen(Boot boot, String arg) {
@@ -93,9 +103,14 @@ public class PlayBackScreen extends BaseScreen{
         uiStage.addActor(uiGroup);
 
 
+
         bodies = new ArrayList<PlayBackBody>();
 
         cam = new PerspectiveCamera(67, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+
+        testCamera = new OrthographicCamera();
+        testViewport = new ScreenViewport(testCamera);
+        testViewport.apply();
 
         camControl = new FirstPersonCameraController(cam);
 
@@ -109,6 +124,7 @@ public class PlayBackScreen extends BaseScreen{
 
         spriteBatch = new SpriteBatch();
 
+
         setWindowPosition();
 
         loadRecording(arg);
@@ -117,12 +133,10 @@ public class PlayBackScreen extends BaseScreen{
     private void setWindowPosition(){
         progressWindow.setX((Gdx.graphics.getWidth()/2)-210);
         progressWindow.setY(30);
-
     }
 
     @Override
     public void show() {
-
 
         cam.near = 0.0001f;
         cam.far = 1000000f;
@@ -132,8 +146,6 @@ public class PlayBackScreen extends BaseScreen{
 
 
         uiGroup.addActor(progressWindow);
-
-
 
     }
 
@@ -153,17 +165,16 @@ public class PlayBackScreen extends BaseScreen{
         uiStage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 30f));
         camControl.update(delta);
 
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
-        Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
+        cam.update();
+        testCamera.update();
+
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         Gdx.gl.glEnable(GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE);
 
-
-        cam.update();
-
-        spriteBatch.enableBlending();
         spriteBatch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE);
+        spriteBatch.setProjectionMatrix(testCamera.combined);
         spriteBatch.begin();
         for(PlayBackBody body : this.bodies) {
             body.setFrame(currFrame, cam, spriteBatch);
@@ -179,6 +190,7 @@ public class PlayBackScreen extends BaseScreen{
         cam.viewportHeight = height;
         cam.viewportWidth = width;
         spriteBatch = new SpriteBatch();
+        testViewport.update(width,height,true);
         uiStage.getViewport().update(width,height, true);
         setWindowPosition();
     }

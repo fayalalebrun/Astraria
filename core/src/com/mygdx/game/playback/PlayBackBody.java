@@ -10,6 +10,7 @@ import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.decals.Decal;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -17,13 +18,15 @@ import java.util.Random;
 /**
  * Created by fraayala19 on 1/11/18.
  */
-public class PlayBackBody {
+public class PlayBackBody extends Actor{
     private ArrayList<Vector3> positions;
     private ArrayList<Float> acceleration;
     private Color color;
     private Sprite sprite;
     private Vector3 temp1, temp2;
     private Random rand;
+
+
 
     public PlayBackBody(Sprite sprite, float size) {
         positions = new ArrayList<Vector3>();
@@ -62,7 +65,8 @@ public class PlayBackBody {
     }
 
     public void draw(SpriteBatch batch){
-        sprite.draw(batch);
+        batch.setColor(color);
+        batch.draw(sprite.getTexture(),sprite.getX(),sprite.getY(),sprite.getWidth()*sprite.getScaleX(),sprite.getHeight()*sprite.getScaleY());
     }
 
     public void addAcceleration(float accel){
@@ -75,10 +79,8 @@ public class PlayBackBody {
         cam.project(pos);
         //pos.x = pos.x - (sprite.getWidth()*sprite.getScaleX())*0.5f;
         //pos.y = pos.y - (sprite.getHeight()*sprite.getScaleY())*0.5f;
-        //pos.x -= Gdx.graphics.getWidth()/2;
-        //pos.y -= Gdx.graphics.getHeight()/2;
-        System.out.println(pos.x+" "+pos.y);
-        System.out.println(Gdx.graphics.getWidth()+" "+Gdx.graphics.getHeight());
+        //pos.x -= Gdx.graphics.getWidth()*0.33125;
+        //pos.y -= Gdx.graphics.getHeight()*0.5666666667;
         sprite.setPosition(pos.x,pos.y);
     }
 
