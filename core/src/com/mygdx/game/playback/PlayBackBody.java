@@ -60,7 +60,7 @@ public class PlayBackBody extends Actor{
             if(cam.frustum.pointInFrustum(positions.get(positions.size()-1))){
                 setPosition(positions.size()-1,cam);
 
-                setColor(frame, minAccel, maxAccel);
+                setColor(positions.size()-1, minAccel, maxAccel);
                 draw(batch);
             }
         }
