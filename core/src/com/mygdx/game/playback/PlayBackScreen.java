@@ -270,4 +270,19 @@ public class PlayBackScreen extends BaseScreen{
     public void setPaused(boolean paused) {
         this.paused = paused;
     }
+
+    public float getMaxAccel() {
+        return maxAccel;
+    }
+
+    public float getMinAccel() {
+        return minAccel;
+    }
+
+    public static Color getGradientColor(Color from, Color to, float percent){
+        return new Color(from.r*percent+to.r*(1-percent),
+                from.g*to.g+to.g*(1-percent),
+                from.b*to.b+to.b*(1-percent),
+                1);
+    }
 }

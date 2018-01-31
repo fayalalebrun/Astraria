@@ -49,20 +49,29 @@ public class PlayBackBody extends Actor{
     }
 
 
-    public void setFrame(int frame, Camera cam, SpriteBatch batch){
+    public void setFrame(int frame, Camera cam, SpriteBatch batch, float minAccel, float maxAccel){
         if(frame<positions.size()){
             setPosition(frame, cam);
             if(cam.frustum.pointInFrustum(positions.get(frame))){
-
+                setColor(frame, minAccel, maxAccel);
                 draw(batch);
             }
         }else{
             if(cam.frustum.pointInFrustum(positions.get(positions.size()-1))){
                 setPosition(positions.size()-1,cam);
+
+                setColor(frame, minAccel, maxAccel);
                 draw(batch);
             }
         }
 
+    }
+
+    private void setColor(int frame, float minAccel, float maxAccel){
+        float range = maxAccel-minAccel;
+        float p = (acceleration.get(frame)-minAccel)/range;
+
+        color = PlayBackScreen.getGradientColor(Color.CYAN,Color.RED,p);
     }
 
     public void draw(SpriteBatch batch){
