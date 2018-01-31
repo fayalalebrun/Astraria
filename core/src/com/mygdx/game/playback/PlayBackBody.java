@@ -53,6 +53,7 @@ public class PlayBackBody extends Actor{
         if(frame<positions.size()){
             setPosition(frame, cam);
             if(cam.frustum.pointInFrustum(positions.get(frame))){
+
                 draw(batch);
             }
         }else{
@@ -77,8 +78,8 @@ public class PlayBackBody extends Actor{
         sprite.setColor(color);
         Vector3 pos = positions.get(frame).cpy();
         cam.project(pos);
-        //pos.x = pos.x - (sprite.getWidth()*sprite.getScaleX())*0.5f;
-        //pos.y = pos.y - (sprite.getHeight()*sprite.getScaleY())*0.5f;
+        pos.x = pos.x - (sprite.getWidth()*sprite.getScaleX())*0.5f;
+        pos.y = pos.y - (sprite.getHeight()*sprite.getScaleY())*0.5f;
         //pos.x -= Gdx.graphics.getWidth()*0.33125;
         //pos.y -= Gdx.graphics.getHeight()*0.5666666667;
         sprite.setPosition(pos.x,pos.y);

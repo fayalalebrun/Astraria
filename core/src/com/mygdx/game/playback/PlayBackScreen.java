@@ -113,6 +113,7 @@ public class PlayBackScreen extends BaseScreen{
         testViewport.apply();
 
         camControl = new FirstPersonCameraController(cam);
+        camControl.setVelocity(1000f);
 
         InputMultiplexer multiplexer = new InputMultiplexer();
         multiplexer.addProcessor(uiStage);
@@ -138,9 +139,9 @@ public class PlayBackScreen extends BaseScreen{
     @Override
     public void show() {
 
-        cam.near = 0.0001f;
-        cam.far = 1000000f;
-        cam.position.set(3,0,0);
+        cam.near = 1f;
+        cam.far = 100000f;
+        cam.position.set(300,0,0);
         cam.lookAt(0,0,0);
         cam.update();
 
@@ -174,7 +175,6 @@ public class PlayBackScreen extends BaseScreen{
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE);
 
         spriteBatch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE);
-        spriteBatch.setProjectionMatrix(testCamera.combined);
         spriteBatch.begin();
         for(PlayBackBody body : this.bodies) {
             body.setFrame(currFrame, cam, spriteBatch);
@@ -238,9 +238,9 @@ public class PlayBackScreen extends BaseScreen{
                 minAccel = stream.readFloat();
                 while (ifStream.available()>0){
                     for(int i = 0; i < numberOfBodies; i++){
-                        float x = stream.readFloat();
-                        float y = stream.readFloat();
-                        float z = stream.readFloat();
+                        float x = stream.readFloat()*100;
+                        float y = stream.readFloat()*100;
+                        float z = stream.readFloat()*100;
                         bodies.get(i).addPosition(new Vector3(x,y,z));
                         bodies.get(i).addAcceleration(stream.readFloat());
                     }
