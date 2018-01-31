@@ -177,7 +177,7 @@ public class PlayBackScreen extends BaseScreen{
         spriteBatch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE);
         spriteBatch.begin();
         for(PlayBackBody body : this.bodies) {
-            body.setFrame(currFrame, cam, spriteBatch);
+            body.setFrame(currFrame, cam, spriteBatch,minAccel,maxAccel);
         }
         spriteBatch.end();
 
