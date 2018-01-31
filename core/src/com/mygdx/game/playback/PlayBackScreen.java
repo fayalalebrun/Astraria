@@ -234,8 +234,7 @@ public class PlayBackScreen extends BaseScreen{
                     bodies.add(new PlayBackBody(new Sprite(Boot.manager.get("particle.png",
                             Texture.class)),bodyScale));
                 }
-                maxAccel = stream.readFloat();
-                minAccel = stream.readFloat();
+
                 while (ifStream.available()>0){
                     for(int i = 0; i < numberOfBodies; i++){
                         float x = stream.readFloat()*100;
@@ -245,6 +244,8 @@ public class PlayBackScreen extends BaseScreen{
                         bodies.get(i).addAcceleration(stream.readFloat());
                     }
                 }
+                maxAccel = stream.readFloat();
+                minAccel = stream.readFloat();
             }
 
             stream.close();
