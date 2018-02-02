@@ -4,6 +4,8 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.*;
+import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.g3d.Material;
 import com.badlogic.gdx.graphics.g3d.Model;
@@ -16,11 +18,17 @@ import com.badlogic.gdx.graphics.g3d.decals.DecalBatch;
 import com.badlogic.gdx.graphics.g3d.decals.DecalMaterial;
 import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
+import com.badlogic.gdx.math.Matrix4;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Group;
 import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Image;
+import com.badlogic.gdx.utils.viewport.ExtendViewport;
+import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.badlogic.gdx.utils.viewport.Viewport;
 import com.kotcrab.vis.ui.widget.VisTable;
 import com.kotcrab.vis.ui.widget.VisWindow;
 import com.mygdx.game.BaseScreen;
@@ -51,7 +59,7 @@ public class PlayBackScreen extends BaseScreen{
 
     private FirstPersonCameraController camControl;
 
-    private DecalBatch decalBatch;
+    private SpriteBatch spriteBatch;
 
     private ArrayList<PlayBackBody> bodies;
 
@@ -74,15 +82,18 @@ public class PlayBackScreen extends BaseScreen{
 
     private boolean paused;
 
-    private Decal decal;
 
-    private ArrayList<Decal> decals = new ArrayList<Decal>();
+    OrthographicCamera testCamera;
+
+    Viewport testViewport;
+
 
     public PlayBackScreen(Boot boot, String arg) {
         super(boot);
 
 
         UIListener = new InputListener();
+
 
         uiStage = new Stage(new ScreenViewport());
         uiStage.addListener(UIListener);
@@ -92,11 +103,17 @@ public class PlayBackScreen extends BaseScreen{
         uiStage.addActor(uiGroup);
 
 
+
         bodies = new ArrayList<PlayBackBody>();
 
         cam = new PerspectiveCamera(67, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
+        testCamera = new OrthographicCamera();
+        testViewport = new ScreenViewport(testCamera);
+        testViewport.apply();
+
         camControl = new FirstPersonCameraController(cam);
+        camControl.setVelocity(1000f);
 
         InputMultiplexer multiplexer = new InputMultiplexer();
         multiplexer.addProcessor(uiStage);
@@ -106,12 +123,8 @@ public class PlayBackScreen extends BaseScreen{
 
         progressWindow = new ProgressWindow(this);
 
-        decalBatch = new DecalBatch(new CameraGroupStrategy(cam, new Comparator<Decal>() {
-            @Override
-            public int compare(Decal decal, Decal t1) {
-                return 0;
-            }
-        }));
+        spriteBatch = new SpriteBatch();
+
 
         setWindowPosition();
 
@@ -121,23 +134,19 @@ public class PlayBackScreen extends BaseScreen{
     private void setWindowPosition(){
         progressWindow.setX((Gdx.graphics.getWidth()/2)-210);
         progressWindow.setY(30);
-
     }
 
     @Override
     public void show() {
 
-
-        cam.near = 0.001f;
-        cam.far = 1000000f;
-        cam.position.set(3,0,0);
+        cam.near = 1f;
+        cam.far = 100000f;
+        cam.position.set(300,0,0);
         cam.lookAt(0,0,0);
         cam.update();
 
 
         uiGroup.addActor(progressWindow);
-
-
 
     }
 
@@ -157,23 +166,20 @@ public class PlayBackScreen extends BaseScreen{
         uiStage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 30f));
         camControl.update(delta);
 
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
-        Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
+        cam.update();
+        testCamera.update();
+
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         Gdx.gl.glEnable(GL20.GL_BLEND);
-        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE);
 
-
-        cam.update();
-
-
-
+        spriteBatch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE);
+        spriteBatch.begin();
         for(PlayBackBody body : this.bodies) {
-
-            body.setFrame(currFrame, cam, 50f);
-            decalBatch.add(body.getDecal());
+            body.setFrame(currFrame, cam, spriteBatch,minAccel,maxAccel);
         }
-        decalBatch.flush();
+        spriteBatch.end();
 
         uiStage.draw();
 
@@ -183,6 +189,8 @@ public class PlayBackScreen extends BaseScreen{
     public void resize(int width, int height) {
         cam.viewportHeight = height;
         cam.viewportWidth = width;
+        spriteBatch = new SpriteBatch();
+        testViewport.update(width,height,true);
         uiStage.getViewport().update(width,height, true);
         setWindowPosition();
     }
@@ -204,7 +212,7 @@ public class PlayBackScreen extends BaseScreen{
 
     @Override
     public void dispose() {
-        decalBatch.dispose();
+        spriteBatch.dispose();
     }
 
 
@@ -223,20 +231,21 @@ public class PlayBackScreen extends BaseScreen{
                 numberOfBodies = stream.readInt();
                 bodyScale = stream.readFloat();
                 for(int i = 0; i < numberOfBodies; i++){
-                    bodies.add(new PlayBackBody(Decal.newDecal(new TextureRegion(Boot.manager.get("particle.png",
-                            Texture.class)),true),bodyScale));
+                    bodies.add(new PlayBackBody(new Sprite(Boot.manager.get("particle.png",
+                            Texture.class)),bodyScale));
                 }
-                maxAccel = stream.readFloat();
-                minAccel = stream.readFloat();
+
                 while (ifStream.available()>0){
                     for(int i = 0; i < numberOfBodies; i++){
-                        float x = stream.readFloat();
-                        float y = stream.readFloat();
-                        float z = stream.readFloat();
+                        float x = stream.readFloat()*100;
+                        float y = stream.readFloat()*100;
+                        float z = stream.readFloat()*100;
                         bodies.get(i).addPosition(new Vector3(x,y,z));
                         bodies.get(i).addAcceleration(stream.readFloat());
                     }
                 }
+                maxAccel = stream.readFloat();
+                minAccel = stream.readFloat();
             }
 
             stream.close();
@@ -260,5 +269,20 @@ public class PlayBackScreen extends BaseScreen{
 
     public void setPaused(boolean paused) {
         this.paused = paused;
+    }
+
+    public float getMaxAccel() {
+        return maxAccel;
+    }
+
+    public float getMinAccel() {
+        return minAccel;
+    }
+
+    public static Color getGradientColor(Color from, Color to, float percent){
+        return new Color(from.r*percent+to.r*(1-percent),
+                from.g*to.g+to.g*(1-percent),
+                from.b*to.b+to.b*(1-percent),
+                1);
     }
 }
