@@ -68,10 +68,12 @@ public class PlayBackBody extends Actor{
     }
 
     private void setColor(int frame, float minAccel, float maxAccel){
+        maxAccel = 2;
         float range = maxAccel-minAccel;
         float p = (acceleration.get(frame)-minAccel)/range;
 
-        color = PlayBackScreen.getGradientColor(Color.CYAN,Color.RED,p);
+
+        color = PlayBackScreen.getGradientColor(Color.RED,Color.CYAN,p);
     }
 
     public void draw(SpriteBatch batch){
@@ -89,8 +91,6 @@ public class PlayBackBody extends Actor{
         cam.project(pos);
         pos.x = pos.x - (sprite.getWidth()*sprite.getScaleX())*0.5f;
         pos.y = pos.y - (sprite.getHeight()*sprite.getScaleY())*0.5f;
-        //pos.x -= Gdx.graphics.getWidth()*0.33125;
-        //pos.y -= Gdx.graphics.getHeight()*0.5666666667;
         sprite.setPosition(pos.x,pos.y);
     }
 
