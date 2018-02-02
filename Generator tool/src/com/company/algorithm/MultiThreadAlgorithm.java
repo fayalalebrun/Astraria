@@ -55,7 +55,7 @@ public class MultiThreadAlgorithm extends ThreadOrganizer{
 
 
 
-    public MultiThreadAlgorithm(Object lock, float[] x, float[] y, float[] z, float[] vx, float[] vy, float[] vz, float m, float simSpeed, BinWriter writer, int duration, boolean fixedDelta, double cycles){
+    public MultiThreadAlgorithm(Object lock, float[] x, float[] y, float[] z, float[] vx, float[] vy, float[] vz, float m, float simSpeed, BinWriter writer, float duration, boolean fixedDelta, double cycles){
             super(lock, fixedDelta, cycles, duration);
             this.amountOfThreads = Runtime.getRuntime().availableProcessors()-1;
 
@@ -156,7 +156,7 @@ public class MultiThreadAlgorithm extends ThreadOrganizer{
                             writer.getQueue().add(az[a]);
                         }
 
-                        ;
+
 
                         if (l2 >= 60*3){
                             printStatus();
@@ -179,10 +179,12 @@ public class MultiThreadAlgorithm extends ThreadOrganizer{
                             writer.getQueue().add(y[a]);
                             writer.getQueue().add(z[a]);
 
-                            writer.getQueue().add(50f);
+                            writer.getQueue().add(ax[a]);
+                            writer.getQueue().add(ay[a]);
+                            writer.getQueue().add(az[a]);
                         }
 
-                        ;
+
 
 
 

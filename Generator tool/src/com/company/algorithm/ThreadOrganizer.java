@@ -27,7 +27,7 @@ public abstract class ThreadOrganizer {
 
         private double tmp;
         protected double cycles;
-        protected int duration;
+        protected float duration;
         private double deltaConst;
 
 
@@ -37,7 +37,7 @@ public abstract class ThreadOrganizer {
         public static boolean PRINT_CALC_SEC = true;
 
 
-        public ThreadOrganizer(Object lock, boolean fixedDelta, double cycles, int duration) {
+        public ThreadOrganizer(Object lock, boolean fixedDelta, double cycles, float duration) {
             this.lock = lock;
             this.fixedDelta = fixedDelta;
             this.cycles = cycles;

@@ -14,12 +14,11 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.*;
 
 public class BinWriter implements Runnable {
 
-    private ConcurrentLinkedQueue<Float> queue;
-    private ConcurrentLinkedQueue<Float> accelqueue;
+    private LinkedBlockingQueue<Float> queue;
     private boolean terminate;
     private ObjectOutputStream stream;
 
@@ -31,8 +30,7 @@ public class BinWriter implements Runnable {
     private float minAcceleration;
 
     public BinWriter(short version, int bodies, float scale){
-        queue = new ConcurrentLinkedQueue<Float>();
-        accelqueue = new ConcurrentLinkedQueue<Float>();
+        queue = new LinkedBlockingQueue<Float>();
         terminate = false;
 
         this.version = version;
@@ -73,9 +71,9 @@ public class BinWriter implements Runnable {
                     if (i>=3){
                         i=0;
 
-                        float ax = queue.poll();
-                        float ay = queue.poll();
-                        float az = queue.poll();
+                        float ax = queue.take();
+                        float ay = queue.take();
+                        float az = queue.take();
 
                         float currAcc = (float) Math.sqrt(MultiThreadAlgorithm.square(ax)+MultiThreadAlgorithm.square(ay)+MultiThreadAlgorithm.square(az));
 
@@ -86,10 +84,12 @@ public class BinWriter implements Runnable {
                             minAcceleration = currAcc;
                         }
 
+                        System.out.println("acc: "+currAcc);
+
                         stream.writeFloat(currAcc);
                     }else {
-                        float f = queue.poll();
-                        //System.out.println(f);
+                        float f = queue.take();
+                        System.out.println("pos: "+f);
                         stream.writeFloat(f);
                         i++;
                     }
@@ -133,7 +133,7 @@ public class BinWriter implements Runnable {
         }
     }
 
-    public ConcurrentLinkedQueue<Float> getQueue(){
+    public LinkedBlockingQueue<Float> getQueue(){
         return queue;
     }
 
