@@ -213,6 +213,7 @@ public class PlayBackScreen extends BaseScreen{
     @Override
     public void dispose() {
         spriteBatch.dispose();
+        uiStage.dispose();
     }
 
 
@@ -226,7 +227,6 @@ public class PlayBackScreen extends BaseScreen{
             ObjectInputStream stream = new ObjectInputStream(ifStream);
 
             short version = stream.readShort();
-
             if(version==1){
                 numberOfBodies = stream.readInt();
                 bodyScale = stream.readFloat();
@@ -235,7 +235,8 @@ public class PlayBackScreen extends BaseScreen{
                             Texture.class)),bodyScale));
                 }
 
-                while (ifStream.available()>0){
+                while (ifStream.available()>15){
+                    //System.out.println(ifStream.available());
                     for(int i = 0; i < numberOfBodies; i++){
                         float x = stream.readFloat()*100;
                         float y = stream.readFloat()*100;
@@ -246,6 +247,7 @@ public class PlayBackScreen extends BaseScreen{
                 }
                 maxAccel = stream.readFloat();
                 minAccel = stream.readFloat();
+
             }
 
             stream.close();
@@ -281,8 +283,8 @@ public class PlayBackScreen extends BaseScreen{
 
     public static Color getGradientColor(Color from, Color to, float percent){
         return new Color(from.r*percent+to.r*(1-percent),
-                from.g*to.g+to.g*(1-percent),
-                from.b*to.b+to.b*(1-percent),
+                from.g*percent+to.g*(1-percent),
+                from.b*percent+to.b*(1-percent),
                 1);
     }
 }
