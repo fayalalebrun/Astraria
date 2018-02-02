@@ -205,7 +205,7 @@ double cycles = 0;
                 if(input.isEmpty()){
                     input = "10";
                 }
-                int duration = Integer.parseInt(input);
+                float duration = Float.parseFloat(input);
 
                 if (fixedDelta){
                     System.out.print("    CYCLES PER SECOND: ");
