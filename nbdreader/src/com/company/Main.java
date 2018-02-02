@@ -11,7 +11,7 @@ public class Main {
 	// write your code here
 try {
 
-    FileInputStream fileStream = new FileInputStream("/Users/davrockenzahn19/orbit-simulator-2/initial conditions/sim_65k.nbd");
+    FileInputStream fileStream = new FileInputStream("/Users/davrockenzahn19/orbit-simulator-2/initial conditions/sim_128.nbd");
 
     ObjectInputStream stream = new ObjectInputStream(fileStream);
 
@@ -22,16 +22,20 @@ try {
 
     ArrayList<Float> k = new ArrayList<Float>();
 
-    while (fileStream.available() > 0){
+    int l = 0;
+    while (l < 600){
 
         float i = stream.readFloat();
 
     k.add(i);
 
+    l++;
+
 
     }
 
-    System.out.println(k.get(0));
+    System.out.println(l);
+    System.out.println(k.get(l-1));
     System.out.println(k.size());
 
 

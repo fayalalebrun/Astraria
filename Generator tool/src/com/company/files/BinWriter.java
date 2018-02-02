@@ -22,6 +22,8 @@ public class BinWriter implements Runnable {
     private boolean terminate;
     private ObjectOutputStream stream;
 
+    private Object lock;
+
     private short version;
     private int bodies;
     private float scale;
@@ -39,87 +41,97 @@ public class BinWriter implements Runnable {
 
         maxAcceleration = Float.MIN_VALUE;
         minAcceleration = Float.MAX_VALUE;
+
+        lock = new Object();
     }
 
     @Override
     public void run() {
-        try {
 
-        //    System.out.println(version);
-          //  System.out.println(bodies);
-            //System.out.println(scale);
-            //System.out.println(100f);
-            //System.out.println(0f);
-
-             stream.writeShort(version);
-             stream.writeInt(bodies);
-             stream.writeFloat(scale);
+        synchronized (lock) {
 
 
+            try {
 
-            }catch (Exception e){
-            System.out.println(e.getMessage());
-        }
+                //    System.out.println(version);
+                //  System.out.println(bodies);
+                //System.out.println(scale);
+                //System.out.println(100f);
+                //System.out.println(0f);
 
-        int i = 0;
+                stream.writeShort(version);
+                stream.writeInt(bodies);
+                stream.writeFloat(scale);
 
-        while (!terminate || !queue.isEmpty()){
 
-            if (!queue.isEmpty()){
-                try {
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+            }
 
-                    if (i>=3){
-                        i=0;
+            int i = 0;
 
-                        float ax = queue.take();
-                        float ay = queue.take();
-                        float az = queue.take();
+            while (!terminate || !queue.isEmpty()) {
 
-                        float currAcc = (float) Math.sqrt(MultiThreadAlgorithm.square(ax)+MultiThreadAlgorithm.square(ay)+MultiThreadAlgorithm.square(az));
+                if (!queue.isEmpty()) {
+                    try {
 
-                        if (currAcc > maxAcceleration){
-                            maxAcceleration = currAcc;
+                        if (i >= 3) {
+                            i = 0;
+
+                            float ax = queue.take();
+                            float ay = queue.take();
+                            float az = queue.take();
+
+                            float currAcc = (float) Math.sqrt(MultiThreadAlgorithm.square(ax) + MultiThreadAlgorithm.square(ay) + MultiThreadAlgorithm.square(az));
+
+                            if (currAcc > maxAcceleration) {
+                                maxAcceleration = currAcc;
+                            }
+                            if (currAcc < minAcceleration) {
+                                minAcceleration = currAcc;
+                            }
+
+
+                            stream.writeFloat(currAcc);
+                        } else {
+                            float f = queue.take();
+                            stream.writeFloat(f);
+                            i++;
                         }
-                        if (currAcc < minAcceleration){
-                            minAcceleration = currAcc;
-                        }
 
-                        System.out.println("acc: "+currAcc);
 
-                        stream.writeFloat(currAcc);
-                    }else {
-                        float f = queue.take();
-                        System.out.println("pos: "+f);
-                        stream.writeFloat(f);
-                        i++;
+                    } catch (Exception e) {
+                        System.out.println("ERROR: Unable to write: " + e.getMessage());
                     }
-
-
-
-                }catch (Exception e){
-                    System.out.println("ERROR: Unable to write: "+e.getMessage());
                 }
+            }
+
+            try {
+                System.out.println(maxAcceleration);
+                stream.writeFloat(maxAcceleration);
+                stream.writeFloat(minAcceleration);
+                System.out.println(minAcceleration);
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+            }
+
+            try {
+                stream.close();
+
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
             }
         }
 
-        try {
-            stream.writeFloat(maxAcceleration);
-            stream.writeFloat(minAcceleration);
-        }catch (Exception e){
-            System.out.println(e.getMessage());
-        }
+    }
 
-
+    public Object getLock(){
+        return lock;
     }
 
     public void terminate(){
         terminate=true;
-        try {
-            stream.close();
 
-        }catch (Exception e){
-            System.out.println(e.getMessage());
-        }
     }
 
     public boolean setFile(File output){

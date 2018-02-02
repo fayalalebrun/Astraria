@@ -100,7 +100,12 @@ public class Menu {
 
                     if (threadIsOn){
                         writer.terminate();
-                        writerThread.interrupt();
+
+                        synchronized (writer.getLock()){
+                            writerThread.interrupt();
+
+                        }
+
                     }
 
                     break;
