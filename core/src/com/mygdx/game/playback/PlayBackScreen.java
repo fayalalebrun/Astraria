@@ -29,10 +29,13 @@ import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import com.kotcrab.vis.ui.widget.Menu;
+import com.kotcrab.vis.ui.widget.MenuBar;
 import com.kotcrab.vis.ui.widget.VisTable;
 import com.kotcrab.vis.ui.widget.VisWindow;
 import com.mygdx.game.BaseScreen;
 import com.mygdx.game.Boot;
+import com.mygdx.game.playback.ui.MenuWidget;
 import com.mygdx.game.playback.ui.ProgressWindow;
 
 import java.io.FileInputStream;
@@ -100,7 +103,15 @@ public class PlayBackScreen extends BaseScreen{
 
         uiGroup = new Group();
 
+        VisTable table = new VisTable();
+        table.setFillParent(true);
+        table.add(new MenuWidget().getTable()).fillX().expandX().colspan(2).row();
+
+        uiStage.addActor(table);
         uiStage.addActor(uiGroup);
+
+
+
 
 
 
@@ -235,7 +246,7 @@ public class PlayBackScreen extends BaseScreen{
                             Texture.class)),bodyScale));
                 }
 
-                while (ifStream.available()>0){
+                while (ifStream.available()>25){
                     for(int i = 0; i < numberOfBodies; i++){
                         float x = stream.readFloat()*100;
                         float y = stream.readFloat()*100;
@@ -244,8 +255,14 @@ public class PlayBackScreen extends BaseScreen{
                         bodies.get(i).addAcceleration(stream.readFloat());
                     }
                 }
-                maxAccel = stream.readFloat();
-                minAccel = stream.readFloat();
+                if (stream.available()>=8){
+                    maxAccel = 1000;
+                    minAccel = 0;
+                }else {
+                    maxAccel=1;
+                    minAccel=0;
+                }
+
             }
 
             stream.close();
@@ -284,5 +301,6 @@ public class PlayBackScreen extends BaseScreen{
                 from.g*to.g+to.g*(1-percent),
                 from.b*to.b+to.b*(1-percent),
                 1);
+
     }
 }
