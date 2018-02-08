@@ -7,6 +7,7 @@ package com.company.screen;/*
 
 */
 
+import com.company.algorithm.AccelerationPatcher;
 import com.company.algorithm.MultiThreadAlgorithm;
 import com.company.algorithm.helpers.Units;
 import com.company.files.BinWriter;
@@ -31,6 +32,7 @@ public class Menu {
     private Thread writerThread;
     private BinWriter writer;
     private boolean threadIsOn;
+    public static float avgAcceleration;
 
 
 
@@ -58,7 +60,8 @@ public class Menu {
                 System.out.println("    [4] - Generate simulation (variable delta)");
                 System.out.println("    [5] - Generate simulaton (fixed delta)");
                 System.out.println("    [6] - Initial conditions conversion tools");
-                System.out.println("    [7] - Exit");
+                System.out.println("    [7] - Standard deviation of acceleration (colorize by force)");
+                System.out.println("    [8] - Exit");
 
                 String command = "";
                 System.out.println("");
@@ -96,7 +99,7 @@ public class Menu {
                     }else {
                         System.out.println("ERROR: No initial condition file has been loaded into memory");
                     }
-                }else if (command.trim().equals("7")){
+                }else if (command.trim().equals("8")){
 
                     if (threadIsOn){
                         writer.terminate();
@@ -110,7 +113,27 @@ public class Menu {
 
                     break;
 
+                }else if (command.trim().equals("7")){
+
+                    if (threadIsOn){
+                        writer.terminate();
+
+                        synchronized (writer.getLock()){
+                            writerThread.interrupt();
+
+                        }
+
+                        printHeader();
+                        System.out.println("avg: "+avgAcceleration);
+                        AccelerationPatcher patcher = new AccelerationPatcher(avgAcceleration, new File(outputPath));
+                        System.out.println();
+                        System.out.println("Done...");
+
+                    }
+
+
                 }
+
 
 
             }
