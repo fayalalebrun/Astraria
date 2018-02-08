@@ -9,6 +9,7 @@ package com.company.files;/*
 
 import com.company.algorithm.MultiThreadAlgorithm;
 import com.company.algorithm.VelocityVerlet;
+import com.company.screen.Menu;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -22,7 +23,8 @@ public class BinWriter implements Runnable {
     private boolean terminate;
     private ObjectOutputStream stream;
 
-    private Object lock;
+    private final Object lock;
+    private FileOutputStream fStream;
 
     private short version;
     private int bodies;
@@ -30,6 +32,7 @@ public class BinWriter implements Runnable {
 
     private float maxAcceleration;
     private float minAcceleration;
+    private float avgAcceleration;
 
     public BinWriter(short version, int bodies, float scale){
         queue = new LinkedBlockingQueue<Float>();
@@ -69,6 +72,7 @@ public class BinWriter implements Runnable {
             }
 
             int i = 0;
+            long u = 0;
 
             while (!terminate || !queue.isEmpty()) {
 
@@ -78,21 +82,27 @@ public class BinWriter implements Runnable {
                         if (i >= 3) {
                             i = 0;
 
+
                             float ax = queue.take();
                             float ay = queue.take();
                             float az = queue.take();
 
                             float currAcc = (float) Math.sqrt(MultiThreadAlgorithm.square(ax) + MultiThreadAlgorithm.square(ay) + MultiThreadAlgorithm.square(az));
 
+                            avgAcceleration = 0;
+                            avgAcceleration = (avgAcceleration*u+currAcc)/u+1;
+
                             if (currAcc > maxAcceleration) {
                                 maxAcceleration = currAcc;
                             }
-                            if (currAcc < minAcceleration) {
+                            if (currAcc < minAcceleration ) {
                                 minAcceleration = currAcc;
-                            }
 
+                            }
+                            u++;
 
                             stream.writeFloat(currAcc);
+
                         } else {
                             float f = queue.take();
                             stream.writeFloat(f);
@@ -104,13 +114,28 @@ public class BinWriter implements Runnable {
                         System.out.println("ERROR: Unable to write: " + e.getMessage());
                     }
                 }
+
+
             }
 
+            try{
+                stream.close();
+                fStream.close();
+
+            }catch (Exception e){
+                System.out.println(e.getMessage());
+            }
+            Menu.avgAcceleration = avgAcceleration;
+            System.out.println("avg accel: "+avgAcceleration);
+            System.out.println("max accel: "+maxAcceleration);
+            System.out.println("min accel: "+minAcceleration);
+/*
             try {
                 System.out.println(maxAcceleration);
                 stream.writeFloat(maxAcceleration);
                 stream.writeFloat(minAcceleration);
                 System.out.println(minAcceleration);
+                System.out.println(avgAcceleration);
             } catch (Exception e) {
                 System.out.println(e.getMessage());
             }
@@ -121,6 +146,7 @@ public class BinWriter implements Runnable {
             } catch (Exception e) {
                 System.out.println(e.getMessage());
             }
+            */
         }
 
     }
@@ -136,7 +162,10 @@ public class BinWriter implements Runnable {
 
     public boolean setFile(File output){
         try {
-            stream = new ObjectOutputStream(new FileOutputStream(output));
+
+            fStream = new FileOutputStream(output);
+
+            stream = new ObjectOutputStream(fStream);
 
             return true;
         }catch (Exception e){
@@ -147,6 +176,10 @@ public class BinWriter implements Runnable {
 
     public LinkedBlockingQueue<Float> getQueue(){
         return queue;
+    }
+
+    public float getAvgAcceleration(){
+        return avgAcceleration;
     }
 
 
