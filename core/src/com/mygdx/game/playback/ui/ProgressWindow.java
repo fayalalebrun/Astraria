@@ -58,12 +58,52 @@ public class ProgressWindow extends VisWindow{
             private boolean lastState = false;
             @Override
             public void changed(ChangeEvent event, Actor actor) {
+
+                if (lastState){
+                    pauseButton.setText("Pause");
+                }else {
+                    pauseButton.setText("Play");
+                }
+
                 lastState=!lastState;
                 myPlayBackScreen.setPaused(lastState);
+
+
             }
         });
 
-        add(pauseButton);
+        add(pauseButton).padRight(10);
+
+        final VisTextButton doubleSpeed = new VisTextButton("2x");
+
+        doubleSpeed.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                myPlayBackScreen.setTimeMultiplier(120);
+            }
+        });
+
+        final VisTextButton normalSpeed = new VisTextButton("1x");
+
+        normalSpeed.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                myPlayBackScreen.setTimeMultiplier(60);
+            }
+        });
+
+        final VisTextButton halfSpeed = new VisTextButton("0.5x");
+
+        halfSpeed.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                myPlayBackScreen.setTimeMultiplier(30);
+            }
+        });
+
+        add(halfSpeed);
+        add(normalSpeed);
+        add(doubleSpeed);
 
     }
 
