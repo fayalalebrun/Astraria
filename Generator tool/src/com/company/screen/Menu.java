@@ -273,7 +273,15 @@ double cycles = 0;
                 float simSpeed = Float.parseFloat(input);
 
 
+            System.out.print("    SMOOTHING FACTOR: (default is 0)");
 
+            input = reader.nextLine();
+
+            if (input.isEmpty()){
+                input="0";
+            }
+
+            float softeningFactor = Float.parseFloat(input);
 
 
                 File outputFile = new File(path+"/"+filename);
@@ -371,7 +379,7 @@ double cycles = 0;
 
             writer = new BinWriter((short)1, x.length, bodyScale);
 
-                MultiThreadAlgorithm multiThreadAlgorithm = new MultiThreadAlgorithm(new Object(), x,y,z,vx,vy,vz,m,simSpeed, writer, duration, fixedDelta, cycles);
+                MultiThreadAlgorithm multiThreadAlgorithm = new MultiThreadAlgorithm(new Object(), x,y,z,vx,vy,vz,m,simSpeed, writer, duration, fixedDelta, cycles, softeningFactor);
 
 
 

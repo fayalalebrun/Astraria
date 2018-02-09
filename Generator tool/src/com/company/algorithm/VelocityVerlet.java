@@ -19,11 +19,14 @@ import java.util.concurrent.CountDownLatch;
         private MultiThreadAlgorithm multiThreadParent;
         private float delta;
 
-        public VelocityVerlet(CountDownLatch latch, MultiThreadAlgorithm multiThreadParent, int thisBody, float delta) {
+        private float smoothingFactor;
+
+        public VelocityVerlet(CountDownLatch latch, MultiThreadAlgorithm multiThreadParent, int thisBody, float delta, float smoothingFactor) {
             this.latch = latch;
             this.thisBody = thisBody;
             this.multiThreadParent = multiThreadParent;
             this.delta = delta;
+            this.smoothingFactor = smoothingFactor;
         }
 
         @Override
@@ -91,7 +94,7 @@ import java.util.concurrent.CountDownLatch;
             float oY = multiThreadParent.getY()[other];
             float oZ = multiThreadParent.getZ()[other];
 
-            temporary = multiThreadParent.getM() / cubed( (float) Math.sqrt(square(oX - pX) + square(oY - pY) + square(oZ - pZ)));
+            temporary = multiThreadParent.getM() / (float) Math.sqrt(cubed( (float) Math.sqrt(square(oX - pX) + square(oY - pY) + square(oZ - pZ))+smoothingFactor));
 
 
             ax += (oX - pX) * temporary;

@@ -48,6 +48,7 @@ public class MultiThreadAlgorithm extends ThreadOrganizer{
 
         private double ops;
 
+        private float smoothingFactor;
 
 
 
@@ -55,7 +56,7 @@ public class MultiThreadAlgorithm extends ThreadOrganizer{
 
 
 
-    public MultiThreadAlgorithm(Object lock, float[] x, float[] y, float[] z, float[] vx, float[] vy, float[] vz, float m, float simSpeed, BinWriter writer, float duration, boolean fixedDelta, double cycles){
+    public MultiThreadAlgorithm(Object lock, float[] x, float[] y, float[] z, float[] vx, float[] vy, float[] vz, float m, float simSpeed, BinWriter writer, float duration, boolean fixedDelta, double cycles, float smoothingFactor){
             super(lock, fixedDelta, cycles, duration);
             this.amountOfThreads = Runtime.getRuntime().availableProcessors()-1;
 
@@ -65,6 +66,7 @@ public class MultiThreadAlgorithm extends ThreadOrganizer{
             this.fixedDelta = fixedDelta;
             ops = 0;
 
+            this.smoothingFactor = square(smoothingFactor);
 
             this.x = x;
             this.y = y;
@@ -120,7 +122,7 @@ public class MultiThreadAlgorithm extends ThreadOrganizer{
 
                 for (int i = 0; i < x.length; i++) {
 
-                    executorService.submit(new VelocityVerlet(countDownLatch, this, i, delta));
+                    executorService.submit(new VelocityVerlet(countDownLatch, this, i, delta, smoothingFactor));
 
 
                 }
@@ -366,7 +368,7 @@ public class MultiThreadAlgorithm extends ThreadOrganizer{
     private void parseAcceleration(int current, int other, float pX, float pY, float pZ) {
 
 
-        float temporary = m / cubed((float) Math.sqrt(square(x[other] - pX) + square(y[other] - pY) + square(z[other] - pZ)));
+        float temporary = m / (float) Math.sqrt(cubed((float) Math.sqrt(square(x[other] - pX) + square(y[other] - pY) + square(z[other] - pZ))+smoothingFactor));
 
 
 
