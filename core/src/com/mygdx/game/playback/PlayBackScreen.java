@@ -33,8 +33,11 @@ import com.kotcrab.vis.ui.widget.Menu;
 import com.kotcrab.vis.ui.widget.MenuBar;
 import com.kotcrab.vis.ui.widget.VisTable;
 import com.kotcrab.vis.ui.widget.VisWindow;
+import com.kotcrab.vis.ui.widget.color.ColorPicker;
+import com.kotcrab.vis.ui.widget.color.ColorPickerAdapter;
 import com.mygdx.game.BaseScreen;
 import com.mygdx.game.Boot;
+import com.mygdx.game.logic.Body;
 import com.mygdx.game.playback.ui.MenuWidget;
 import com.mygdx.game.playback.ui.ProgressWindow;
 
@@ -56,7 +59,6 @@ import static com.badlogic.gdx.graphics.GL20.GL_SRC_ALPHA;
 public class PlayBackScreen extends BaseScreen{
 
     private PerspectiveCamera cam;
-
 
 
 
@@ -85,6 +87,15 @@ public class PlayBackScreen extends BaseScreen{
 
     private boolean paused;
 
+    private static Color upperColor = new Color(Color.ROYAL);
+    private static Color lowerColor = new Color(Color.CLEAR);
+
+    private ColorPicker upperColorPicker;
+    private ColorPicker lowerColorPicker;
+
+    private int timeMultiplier;
+
+
 
     OrthographicCamera testCamera;
 
@@ -97,6 +108,24 @@ public class PlayBackScreen extends BaseScreen{
 
         UIListener = new InputListener();
 
+        upperColorPicker = new ColorPicker("Color picker", new ColorPickerAdapter(){
+            @Override
+            public void finished (Color newColor) {
+                setUpperColor(newColor);
+            }
+        });
+
+        lowerColorPicker = new ColorPicker("Color picker", new ColorPickerAdapter(){
+            @Override
+            public void finished (Color newColor) {
+                setLowerColor(newColor);
+            }
+        });
+
+        upperColorPicker.fadeOut(0);
+        lowerColorPicker.fadeOut(0);
+
+        timeMultiplier = 60;
 
         uiStage = new Stage(new ScreenViewport());
         uiStage.addListener(UIListener);
@@ -104,10 +133,13 @@ public class PlayBackScreen extends BaseScreen{
         uiGroup = new Group();
 
         VisTable table = new VisTable();
-        table.setFillParent(true);
-        table.add(new MenuWidget().getTable()).fillX().expandX().colspan(2).row();
 
+        table.setFillParent(true);
+        table.left().top();
         uiStage.addActor(table);
+
+        table.add(new MenuWidget(uiGroup, this ).getTable()).fillX().expandX().row();
+
         uiStage.addActor(uiGroup);
 
 
@@ -158,6 +190,8 @@ public class PlayBackScreen extends BaseScreen{
 
 
         uiGroup.addActor(progressWindow);
+        uiGroup.addActor(upperColorPicker);
+        uiGroup.addActor(lowerColorPicker);
 
     }
 
@@ -168,7 +202,7 @@ public class PlayBackScreen extends BaseScreen{
     @Override
     public void render(float delta) {
         if(!paused) {
-            currFrame = (int) (currTime * 60);
+            currFrame = (int) (currTime * timeMultiplier);
 
             currTime += delta;
         }
@@ -225,6 +259,8 @@ public class PlayBackScreen extends BaseScreen{
     public void dispose() {
         spriteBatch.dispose();
         uiStage.dispose();
+        upperColorPicker.dispose();
+        lowerColorPicker.dispose();
     }
 
 
@@ -257,7 +293,7 @@ public class PlayBackScreen extends BaseScreen{
                     }
                 }
                 if (stream.available()>=8){
-                    maxAccel = 1000;
+                    maxAccel = stream.readFloat();
                     minAccel = 0;
                 }else {
                     maxAccel=1;
@@ -298,11 +334,39 @@ public class PlayBackScreen extends BaseScreen{
         return minAccel;
     }
 
-    public static Color getGradientColor(Color from, Color to, float percent){
-        return new Color(from.r*percent+to.r*(1-percent),
-                from.g*percent+to.g*(1-percent),
-                from.b*percent+to.b*(1-percent),
+    public static Color getGradientColor( float percent){
+        return new Color(upperColor.r*percent+lowerColor.r*(1-percent),
+                upperColor.g*percent+lowerColor.g*(1-percent),
+                upperColor.b*percent+lowerColor.b*(1-percent),
                 1);
 
+    }
+
+    public void setUpperColor(Color color){
+        upperColor.set(color);
+    }
+
+    public void setLowerColor(Color color) {
+        lowerColor.set(color);
+    }
+
+    public ColorPicker getUpperColorPicker(){
+        return upperColorPicker;
+    }
+
+    public ColorPicker getLowerColorPicker(){
+        return lowerColorPicker;
+    }
+
+    public Group getUiGroup(){
+        return uiGroup;
+    }
+
+    public ArrayList<PlayBackBody> getBodies(){
+        return bodies;
+    }
+
+    public void setTimeMultiplier (int value){
+        timeMultiplier = value;
     }
 }
