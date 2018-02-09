@@ -28,6 +28,8 @@ public class PlayBackBody extends Actor{
 
 
 
+
+
     public PlayBackBody(Sprite sprite, float size) {
         positions = new ArrayList<Vector3>();
         acceleration = new ArrayList<Float>();
@@ -37,6 +39,7 @@ public class PlayBackBody extends Actor{
         sprite.setScale(0.05f);
         rand = new Random();
         color = new Color(rand.nextFloat(),rand.nextFloat(),rand.nextFloat(),1);
+
 
     }
 
@@ -73,7 +76,7 @@ public class PlayBackBody extends Actor{
         float p = (acceleration.get(frame)-minAccel)/range;
 
 
-        color = PlayBackScreen.getGradientColor(Color.RED,Color.CYAN,p);
+        color = PlayBackScreen.getGradientColor(p);
     }
 
     public void draw(SpriteBatch batch){
@@ -102,4 +105,6 @@ public class PlayBackBody extends Actor{
     public Sprite getSprite() {
         return sprite;
     }
+
+
 }
