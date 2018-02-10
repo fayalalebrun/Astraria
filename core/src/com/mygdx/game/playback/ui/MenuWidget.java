@@ -24,6 +24,8 @@ public class MenuWidget extends MenuBar {
     private MenuItem creditsMenuItem;
     private MenuItem bodyScaleMenuItem;
     private BodyScale bodyScale;
+    private MenuItem camSpeedItem;
+    private CamSpeed camSpeed;
 
     public MenuWidget(Group uiGroup, PlayBackScreen playBackScreen){
         super();
@@ -36,6 +38,12 @@ public class MenuWidget extends MenuBar {
         bodyScale = new BodyScale(playBackScreen);
         uiGroup.addActor(bodyScale);
         bodyScale.setVisible(false);
+
+        camSpeedItem = new MenuItem("Camera speed");
+        camSpeed = new CamSpeed(playBackScreen);
+        uiGroup.addActor(camSpeed);
+        camSpeed.setVisible(false);
+
 
 
 
@@ -64,6 +72,18 @@ public class MenuWidget extends MenuBar {
             }
         });
 
+        camSpeedItem.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+
+                    if (camSpeed.isVisible()){
+                        camSpeed.setVisible(false);
+                    }else {
+                        camSpeed.setVisible(true);
+                    }
+            }
+        });
+
         creditsMenuItem = new MenuItem("Credits");
 
         PopupMenu popupMenu = new PopupMenu();
@@ -73,6 +93,9 @@ public class MenuWidget extends MenuBar {
         optionsMenu.addItem(colorToolMenuItem);
         optionsMenu.addItem(bodyScaleMenuItem);
         aboutMenu.addItem(creditsMenuItem);
+        optionsMenu.addItem(camSpeedItem);
+        optionsMenu.pack();
+        aboutMenu.pack();
 
         creditsMenuItem.setSubMenu(popupMenu);
 
