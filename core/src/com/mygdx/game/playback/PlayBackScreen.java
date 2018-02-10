@@ -172,6 +172,9 @@ public class PlayBackScreen extends BaseScreen{
         setWindowPosition();
 
         loadRecording(arg);
+
+        //start simulation pasued
+        setPaused(true);
     }
 
     private void setWindowPosition(){
@@ -282,7 +285,7 @@ public class PlayBackScreen extends BaseScreen{
                             Texture.class)),bodyScale));
                 }
 
-                while (ifStream.available()>15){
+                while (ifStream.available()>24){
                     //System.out.println(ifStream.available());
                     for(int i = 0; i < numberOfBodies; i++){
                         float x = stream.readFloat()*100;
@@ -294,7 +297,7 @@ public class PlayBackScreen extends BaseScreen{
                 }
                 if (stream.available()>=8){
                     maxAccel = stream.readFloat();
-                    minAccel = 0;
+                    minAccel = stream.readFloat();
                 }else {
                     maxAccel=1;
                     minAccel=0;
@@ -368,5 +371,9 @@ public class PlayBackScreen extends BaseScreen{
 
     public void setTimeMultiplier (int value){
         timeMultiplier = value;
+    }
+
+    public void setCamVelocity(float value){
+        camControl.setVelocity(value);
     }
 }
