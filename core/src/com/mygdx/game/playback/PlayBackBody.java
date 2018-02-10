@@ -75,6 +75,12 @@ public class PlayBackBody extends Actor{
         float range = maxAccel-minAccel;
         float p = (acceleration.get(frame)-minAccel)/range;
 
+        if(p<0){
+            p=0;
+        } else if(p>1) {
+            p = 1;
+        }
+
 
         color = PlayBackScreen.getGradientColor(p);
     }
