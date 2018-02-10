@@ -32,6 +32,8 @@ public class ColorTools extends VisWindow {
     public ColorTools(final PlayBackScreen playBackScreen){
         super("Color tools");
 
+        setPosition(0,201);
+
         Table table = new Table();
         table.setFillParent(true);
         add(table);
@@ -77,7 +79,7 @@ public class ColorTools extends VisWindow {
                 if (preset1.isChecked()){
                     disableOthers(0);
                     playBackScreen.setUpperColor(Color.ROYAL);
-                    playBackScreen.setLowerColor(Color.CLEAR);
+                    playBackScreen.setLowerColor(Color.CYAN);
                 }
             }
         });
@@ -96,8 +98,8 @@ public class ColorTools extends VisWindow {
             public void changed(ChangeEvent event, Actor actor) {
                 if (preset3.isChecked()){
                     disableOthers(2);
-                    playBackScreen.setUpperColor(Color.ROYAL);
-                    playBackScreen.setLowerColor(Color.CLEAR);
+                    playBackScreen.setUpperColor(Color.CLEAR);
+                    playBackScreen.setLowerColor(Color.ROYAL);
 
                 }            }
         });
@@ -110,6 +112,14 @@ public class ColorTools extends VisWindow {
                 }            }
         });
 
+        VisTextButton closeButton = new VisTextButton("Close");
+
+        closeButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                    setVisible(false);
+            }
+        });
 
         table.defaults().left();
 
@@ -132,6 +142,8 @@ public class ColorTools extends VisWindow {
         table.row();
         table.add(color2Label);
         table.add(color2Button);
+        table.row();
+        table.add(closeButton).padLeft(60).padTop(20);
         pack();
     }
 
@@ -147,8 +159,8 @@ public class ColorTools extends VisWindow {
         if (thisOne!=3){
             color1Button.setDisabled(true);
             color2Button.setDisabled(true);
-            color1Label.setColor(Color.LIGHT_GRAY);
-            color2Label.setColor(Color.LIGHT_GRAY);
+            color1Label.setColor(Color.GRAY);
+            color2Label.setColor(Color.GRAY);
 
         }else {
             color1Button.setDisabled(false);
