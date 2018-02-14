@@ -95,16 +95,21 @@ public class PlayBackScreen extends BaseScreen{
 
     private int timeMultiplier;
 
-
+    Texture bodyTexture;
 
     OrthographicCamera testCamera;
 
     Viewport testViewport;
 
+    PlayBackLoader playBackLoader;
+
+    Thread loaderThread;
+
 
     public PlayBackScreen(Boot boot, String arg) {
         super(boot);
 
+        bodyTexture = Boot.manager.get("particle.png");
 
         UIListener = new InputListener();
 
@@ -230,6 +235,10 @@ public class PlayBackScreen extends BaseScreen{
 
     }
 
+    private void drawBody(Vector3 pos, float accel){
+
+    }
+
     @Override
     public void resize(int width, int height) {
         cam.viewportHeight = height;
@@ -269,49 +278,14 @@ public class PlayBackScreen extends BaseScreen{
     }
 
     private void loadRecording(String path){
-        try {
-            FileInputStream ifStream = new FileInputStream(path);
-            ObjectInputStream stream = new ObjectInputStream(ifStream);
+        playBackLoader = new PlayBackLoader(path);
+        loaderThread = new Thread(playBackLoader);
 
-            short version = stream.readShort();
-            if(version==1){
-                numberOfBodies = stream.readInt();
-                bodyScale = stream.readFloat();
-                for(int i = 0; i < numberOfBodies; i++){
-                    bodies.add(new PlayBackBody(new Sprite(Boot.manager.get("particle.png",
-                            Texture.class)),bodyScale));
-                }
-
-                while (ifStream.available()>15){
-                    //System.out.println(ifStream.available());
-                    for(int i = 0; i < numberOfBodies; i++){
-                        float x = stream.readFloat()*100;
-                        float y = stream.readFloat()*100;
-                        float z = stream.readFloat()*100;
-                        bodies.get(i).addPosition(new Vector3(x,y,z));
-                        bodies.get(i).addAcceleration(stream.readFloat());
-                    }
-                }
-                if (stream.available()>=8){
-                    maxAccel = stream.readFloat();
-                    minAccel = 0;
-                }else {
-                    maxAccel=1;
-                    minAccel=0;
-                }
-
-
-            }
-
-            stream.close();
-
-        }catch (Exception e){
-            e.printStackTrace();
-        }
-
-        if(bodies.size()>0){
-            totalFrames = bodies.get(0).getPositions().size();
-        }
+        totalFrames = playBackLoader.getCycles();
+        numberOfBodies = playBackLoader.getNumberOfBodies();
+        maxAccel = playBackLoader.getMaxAccel();
+        minAccel = playBackLoader.getMinAccel();
+        bodyScale = playBackLoader.getBodyScale();
     }
 
     public void setCurrTime(float currTime) {
