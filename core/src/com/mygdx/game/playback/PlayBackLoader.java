@@ -19,6 +19,7 @@ public class PlayBackLoader implements Runnable {
 
     private int numberOfBodies;
     private float bodyScale, minAccel, maxAccel, cycles;
+    private int firstFrame, currentFrame, lastFrame;
 
     private ConcurrentHashMap<Integer, Vector<Pair<Vector3, Float>>> frameMap;
 
@@ -35,9 +36,14 @@ public class PlayBackLoader implements Runnable {
                 numberOfBodies = randomAccessFile.readInt();
                 bodyScale = randomAccessFile.readFloat();
                 long length = randomAccessFile.length();
-                length-=length - 10 - 2;
+                length -= 10 - 8;
                 length/=4;
                 cycles = length;
+
+                randomAccessFile.seek(randomAccessFile.length()-8);
+
+                maxAccel = randomAccessFile.readFloat();
+                minAccel = randomAccessFile.readFloat();
             }
 
         }catch (Exception e){
@@ -48,7 +54,37 @@ public class PlayBackLoader implements Runnable {
     @Override
     public void run() {
         while(!terminate){
+            synchronized (this) {
+                if (currentFrame > firstFrame) {
+                    frameMap.remove(firstFrame);
+                    firstFrame++;
+                }
 
+                if (Runtime.getRuntime().freeMemory() > 30000000) {
+                    lastFrame++;
+
+                    Vector<Pair<Vector3, Float>> frame = new Vector<Pair<Vector3, Float>>();
+
+                    long pointer = 10;
+                    pointer += lastFrame * numberOfBodies * 16;
+                    try {
+                        randomAccessFile.seek(pointer);
+
+                        for (int i = 0; i < numberOfBodies; i++) {
+                            float x = randomAccessFile.readFloat() * 100;
+                            float y = randomAccessFile.readFloat() * 100;
+                            float z = randomAccessFile.readFloat() * 100;
+                            float accel = randomAccessFile.readFloat() * 100;
+
+                            frame.add(new Pair<Vector3, Float>(new Vector3(x, y, z), accel));
+                        }
+
+                        frameMap.put(lastFrame, frame);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
         }
     }
 }
