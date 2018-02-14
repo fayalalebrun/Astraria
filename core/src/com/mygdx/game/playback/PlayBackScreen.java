@@ -40,6 +40,7 @@ import com.mygdx.game.Boot;
 import com.mygdx.game.logic.Body;
 import com.mygdx.game.playback.ui.MenuWidget;
 import com.mygdx.game.playback.ui.ProgressWindow;
+import javafx.util.Pair;
 
 import java.io.FileInputStream;
 import java.io.ObjectInputStream;
@@ -48,6 +49,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Vector;
 
 import static com.badlogic.gdx.graphics.GL20.GL_BLEND;
 import static com.badlogic.gdx.graphics.GL20.GL_ONE_MINUS_SRC_ALPHA;
@@ -104,6 +106,8 @@ public class PlayBackScreen extends BaseScreen{
     PlayBackLoader playBackLoader;
 
     Thread loaderThread;
+
+    Vector<Pair<Vector3, Float>> frame;
 
 
     public PlayBackScreen(Boot boot, String arg) {
@@ -207,11 +211,8 @@ public class PlayBackScreen extends BaseScreen{
     @Override
     public void render(float delta) {
         if(!paused) {
-            currFrame = (int) (currTime * timeMultiplier);
-
             currTime += delta;
         }
-
 
         uiStage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 30f));
         camControl.update(delta);
@@ -223,20 +224,55 @@ public class PlayBackScreen extends BaseScreen{
 
         Gdx.gl.glEnable(GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE);
+        frame = playBackLoader.requestFrame(currFrame);
 
-        spriteBatch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE);
-        spriteBatch.begin();
-        for(PlayBackBody body : this.bodies) {
-            body.setFrame(currFrame, cam, spriteBatch,minAccel,maxAccel);
+        if(frame == null){
+            System.out.println(currFrame+"frame not available");
+            currTime=0;
+        } else {
+            spriteBatch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE);
+            spriteBatch.begin();
+            for(Pair<Vector3,Float> p : frame){
+                drawBody(p.getKey(),p.getValue());
+            }
+            spriteBatch.end();
+
         }
-        spriteBatch.end();
 
         uiStage.draw();
+
+
+
+        if(currTime>1/(60*timeMultiplier)){
+            currFrame+=(int)(currTime/(60*timeMultiplier));
+            currTime=0;
+        }
+
+        if(currFrame>totalFrames-1){
+            currFrame=totalFrames-1;
+        }
 
     }
 
     private void drawBody(Vector3 pos, float accel){
+        if(cam.frustum.pointInFrustum(pos)){
+            spriteBatch.setColor(getGradientColor(getPercentage(accel)));
+            Vector2 newPos = projectPos(pos);
+            spriteBatch.draw(bodyTexture,newPos.x,newPos.y,bodyTexture.getWidth()*bodyScale,bodyTexture.getHeight()*bodyScale);
+        }
+    }
 
+    private float getPercentage(float accel){
+        float range = maxAccel-minAccel;
+        return (accel-minAccel)/range;
+    }
+
+    private Vector2 projectPos(Vector3 oldPos){
+        Vector3 pos = oldPos.cpy();
+        cam.project(pos);
+        pos.x = pos.x - bodyTexture.getWidth()*bodyScale;
+        pos.y = pos.y - bodyTexture.getHeight()*bodyScale;
+        return new Vector2(pos.x,pos.y);
     }
 
     @Override
@@ -256,7 +292,7 @@ public class PlayBackScreen extends BaseScreen{
 
     @Override
     public void resume() {
-        
+
     }
 
     @Override
@@ -280,12 +316,13 @@ public class PlayBackScreen extends BaseScreen{
     private void loadRecording(String path){
         playBackLoader = new PlayBackLoader(path);
         loaderThread = new Thread(playBackLoader);
+        loaderThread.start();
 
         totalFrames = playBackLoader.getCycles();
         numberOfBodies = playBackLoader.getNumberOfBodies();
         maxAccel = playBackLoader.getMaxAccel();
         minAccel = playBackLoader.getMinAccel();
-        bodyScale = playBackLoader.getBodyScale();
+        bodyScale = playBackLoader.getBodyScale()*0.05f;
     }
 
     public void setCurrTime(float currTime) {
