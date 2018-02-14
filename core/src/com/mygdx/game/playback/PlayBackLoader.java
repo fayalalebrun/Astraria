@@ -89,19 +89,22 @@ public class PlayBackLoader implements Runnable {
     }
 
     public Vector<Pair<Vector3,Float>> requestFrame(int frame){
-        currentFrame = frame;
-        if(!(frame>=firstFrame&&frame<=lastFrame)){
-            for(int i = firstFrame; i<=lastFrame; i++){
-                frameMap.remove(i);
+        synchronized (this) {
+            currentFrame = frame;
+            if (!(frame >= firstFrame && frame <= lastFrame)) {
+                for (int i = firstFrame; i <= lastFrame; i++) {
+                    frameMap.remove(i);
+                }
+                firstFrame = frame;
+                lastFrame = frame;
             }
-            firstFrame = frame;
-            lastFrame = frame;
-        }
-        
-        if(frameMap.containsKey(frame)){
-            return frameMap.get(frame);
-        } else {
-            return null;
+
+            if (frameMap.containsKey(frame)) {
+                return frameMap.get(frame);
+            } else {
+                return null;
+            }
         }
     }
+
 }
