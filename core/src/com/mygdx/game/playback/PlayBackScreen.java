@@ -186,7 +186,7 @@ public class PlayBackScreen extends BaseScreen{
     public void show() {
 
         cam.near = 1f;
-        cam.far = 100000f;
+        cam.far = 1000000f;
         cam.position.set(300,0,0);
         cam.lookAt(0,0,0);
         cam.update();
