@@ -3,6 +3,7 @@ package com.mygdx.game.playback;
 import com.badlogic.gdx.math.Vector3;
 import com.sun.tools.javac.util.Pair;
 
+import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
@@ -86,6 +87,12 @@ public class PlayBackLoader implements Runnable {
                 }
             }
         }
+
+        try {
+            randomAccessFile.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public Vector<Pair<Vector3,Float>> requestFrame(int frame){
@@ -105,6 +112,10 @@ public class PlayBackLoader implements Runnable {
                 return null;
             }
         }
+    }
+
+    public void terminate(){
+        terminate = true;
     }
 
 }
