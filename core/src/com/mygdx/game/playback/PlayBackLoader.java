@@ -118,4 +118,19 @@ public class PlayBackLoader implements Runnable {
         terminate = true;
     }
 
+    public int getNumberOfBodies() {
+        return numberOfBodies;
+    }
+
+    public float getBodyScale() {
+        return bodyScale;
+    }
+
+    public float getMinAccel() {
+        return minAccel;
+    }
+
+    public float getMaxAccel() {
+        return maxAccel;
+    }
 }
