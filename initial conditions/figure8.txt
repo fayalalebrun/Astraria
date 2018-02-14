@@ -7,7 +7,6 @@
 ##
 ##	Notice: Any line starting with “##” will be omitted by the program, and are safe to edit. Any other change to the file may cause 
 ##	corruption.
-
 [2]
 1 0.9700436 -0.24308753 0 0.466203685 0.43236573 0 
 1 -0.9700436 0.24308753 0 0.466203685 0.43236573 0 
