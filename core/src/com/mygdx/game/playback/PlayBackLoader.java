@@ -18,8 +18,8 @@ public class PlayBackLoader implements Runnable {
     private RandomAccessFile randomAccessFile;
     private boolean terminate;
 
-    private int numberOfBodies;
-    private float bodyScale, minAccel, maxAccel, cycles;
+    private int numberOfBodies, cycles;
+    private float bodyScale, minAccel, maxAccel;
     private int firstFrame, currentFrame, lastFrame;
 
     private ConcurrentHashMap<Integer, Vector<Pair<Vector3, Float>>> frameMap;
@@ -39,7 +39,7 @@ public class PlayBackLoader implements Runnable {
                 long length = randomAccessFile.length();
                 length -= 10 - 8;
                 length/=4;
-                cycles = length;
+                cycles = (int)length;
 
                 randomAccessFile.seek(randomAccessFile.length()-8);
 
@@ -132,5 +132,9 @@ public class PlayBackLoader implements Runnable {
 
     public float getMaxAccel() {
         return maxAccel;
+    }
+
+    public int getCycles() {
+        return cycles;
     }
 }
