@@ -256,7 +256,7 @@ public class PlayBackScreen extends BaseScreen{
 
     @Override
     public void resume() {
-        setPaused(false);
+        
     }
 
     @Override
