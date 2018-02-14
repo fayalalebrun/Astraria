@@ -94,7 +94,7 @@ import java.util.concurrent.CountDownLatch;
             float oY = multiThreadParent.getY()[other];
             float oZ = multiThreadParent.getZ()[other];
 
-            temporary = multiThreadParent.getM() / (float) Math.sqrt(cubed( (float) Math.sqrt(square(oX - pX) + square(oY - pY) + square(oZ - pZ))+smoothingFactor));
+            temporary = multiThreadParent.getM() / (cubed( (float) Math.sqrt(square(oX - pX) + square(oY - pY) + square(oZ - pZ))+smoothingFactor));
 
 
             ax += (oX - pX) * temporary;
