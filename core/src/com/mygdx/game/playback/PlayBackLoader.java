@@ -60,7 +60,7 @@ public class PlayBackLoader implements Runnable {
                     firstFrame++;
                 }
 
-                if (Runtime.getRuntime().freeMemory() > 30000000) {
+                if (Runtime.getRuntime().freeMemory() > 30000000 && lastFrame < cycles) {
                     lastFrame++;
 
                     Vector<Pair<Vector3, Float>> frame = new Vector<Pair<Vector3, Float>>();
@@ -85,6 +85,23 @@ public class PlayBackLoader implements Runnable {
                     }
                 }
             }
+        }
+    }
+
+    public Vector<Pair<Vector3,Float>> requestFrame(int frame){
+        currentFrame = frame;
+        if(!(frame>=firstFrame&&frame<=lastFrame)){
+            for(int i = firstFrame; i<=lastFrame; i++){
+                frameMap.remove(i);
+            }
+            firstFrame = frame;
+            lastFrame = frame;
+        }
+        
+        if(frameMap.containsKey(frame)){
+            return frameMap.get(frame);
+        } else {
+            return null;
         }
     }
 }
