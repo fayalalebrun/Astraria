@@ -19,6 +19,8 @@ public class ProgressWindow extends VisWindow{
     PlayBackScreen playBackScreen;
     VisLabel elapsedTime;
 
+    Boolean dragged = false, nowDragging = false;
+
     public ProgressWindow(PlayBackScreen playBackScreen) {
         super("" );
 
@@ -39,13 +41,16 @@ public class ProgressWindow extends VisWindow{
         slider = mySlider;
         add(slider).width(300);
         final PlayBackScreen myPlayBackScreen = playBackScreen;
-
         slider.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 if(mySlider.isDragging()) {
-                    myPlayBackScreen.setCurrFrame((int) (myPlayBackScreen.getTotalFrames() * mySlider.getValue()));
-                    myPlayBackScreen.setCurrTime((myPlayBackScreen.getTotalFrames() * mySlider.getValue()) / 60);
+
+                    nowDragging = true;
+
+                    dragged = true;
+                } else {
+                    nowDragging = false;
                 }
             }
         });
@@ -109,10 +114,20 @@ public class ProgressWindow extends VisWindow{
 
     @Override
     public void act(float delta) {
-        float newValue = (float)playBackScreen.getCurrFrame()/playBackScreen.getTotalFrames();
-        if(newValue<1&&!slider.isDragging()){
-            slider.setValue(newValue);
+
+        if(!nowDragging&&!dragged) {
+            float newValue = (float) playBackScreen.getCurrFrame() / playBackScreen.getTotalFrames();
+            if (newValue < 1 && !slider.isDragging()) {
+                slider.setValue(newValue);
+            }
         }
+
+        if(dragged&&!nowDragging){
+            playBackScreen.setCurrFrame((int)(playBackScreen.getTotalFrames() * slider.getValue()));
+
+            dragged=false;
+        }
+
         elapsedTime.setText((int)(playBackScreen.getCurrFrame()/60f)+"s");
 
     }
