@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by fraayala19 on 2/13/18.
@@ -20,7 +21,7 @@ public class PlayBackLoader implements Runnable {
 
     private int numberOfBodies, cycles;
     private float bodyScale, minAccel, maxAccel;
-    private volatile int firstFrame, currentFrame, lastFrame = -1;
+    private int firstFrame, currentFrame, lastFrame = -1;
 
     private ConcurrentHashMap<Integer, Vector<Pair<Vector3, Float>>> frameMap;
 
@@ -29,23 +30,22 @@ public class PlayBackLoader implements Runnable {
         frameMap = new  ConcurrentHashMap<Integer, Vector<Pair<Vector3, Float>>>();
         try {
             randomAccessFile = new RandomAccessFile(path, "r");
-            randomAccessFile.skipBytes(9);
             short version = randomAccessFile.readShort();
+
 
             if(version==1){
                 numberOfBodies = randomAccessFile.readInt();
                 bodyScale = randomAccessFile.readFloat();
                 long length = randomAccessFile.length();
-                length = length - 27;
-                length/=16;
+                length = length - 18;
+                length/=16*numberOfBodies;
                 cycles = (int)length;
-                System.out.println(randomAccessFile.length());
-                System.out.println((length*16)+27);
 
                 randomAccessFile.seek(randomAccessFile.length()-8);
 
                 maxAccel = randomAccessFile.readFloat();
                 minAccel = randomAccessFile.readFloat();
+
             }
 
         }catch (Exception e){
@@ -56,19 +56,24 @@ public class PlayBackLoader implements Runnable {
     @Override
     public void run() {
         while(!terminate){
-            synchronized (this) {
-                if (currentFrame > firstFrame) {
-                    frameMap.remove(firstFrame);
-                    firstFrame++;
-                }
+
+                    if (currentFrame > firstFrame) {
+                        frameMap.remove(firstFrame);
+                        firstFrame+=1;
+                    }
 
                 if (Runtime.getRuntime().freeMemory() > 30000000 && lastFrame < cycles) {
-                    lastFrame++;
+
+                    lastFrame+=1;
+
 
                     Vector<Pair<Vector3, Float>> frame = new Vector<Pair<Vector3, Float>>();
 
-                    long pointer = 19;
-                    pointer += lastFrame * numberOfBodies * 16;
+                    long pointer = 10;
+
+                    pointer += (long)lastFrame * (long)numberOfBodies * 16;
+
+
                     try {
                         randomAccessFile.seek(pointer);
 
@@ -78,14 +83,13 @@ public class PlayBackLoader implements Runnable {
                             float z = randomAccessFile.readFloat() * 100;
                             float accel = randomAccessFile.readFloat();
 
-
                             frame.add(new Pair<Vector3, Float>(new Vector3(x, y, z), accel));
                         }
                         frameMap.put(lastFrame, frame);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-                }
+
             }
         }
 
@@ -97,20 +101,22 @@ public class PlayBackLoader implements Runnable {
     }
 
     public Vector<Pair<Vector3,Float>> requestFrame(int frame){
-            currentFrame = frame;
-            if (!(frame >= firstFrame && frame <= lastFrame)) {
-                for (int i = firstFrame; i <= lastFrame; i++) {
-                    frameMap.remove(i);
-                }
-                firstFrame = frame;
-                lastFrame = frame-1;
-            }
 
-            if (frameMap.containsKey(frame)) {
-                return frameMap.get(frame);
-            } else {
-                return null;
+        currentFrame=frame;
+        if (!(frame >= firstFrame && frame <= lastFrame)) {
+            for (int i = firstFrame; i <= lastFrame; i++) {
+                frameMap.remove(i);
             }
+            firstFrame=frame;
+            lastFrame=frame;
+        }
+
+        if (frameMap.containsKey(frame)) {
+            return frameMap.get(frame);
+        } else {
+            return null;
+        }
+
     }
 
     public void terminate(){

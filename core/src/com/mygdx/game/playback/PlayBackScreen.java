@@ -113,7 +113,11 @@ public class PlayBackScreen extends BaseScreen{
     public PlayBackScreen(Boot boot, String arg) {
         super(boot);
 
+        frame = new Vector<Pair<Vector3, Float>>();
+
         bodyTexture = Boot.manager.get("particle.png");
+
+        loadRecording(arg);
 
         UIListener = new InputListener();
 
@@ -180,7 +184,7 @@ public class PlayBackScreen extends BaseScreen{
 
         setWindowPosition();
 
-        loadRecording(arg);
+
     }
 
     private void setWindowPosition(){
@@ -224,12 +228,14 @@ public class PlayBackScreen extends BaseScreen{
 
         Gdx.gl.glEnable(GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE);
-        frame = playBackLoader.requestFrame(currFrame);
+        Vector<Pair<Vector3, Float>> tempframe = playBackLoader.requestFrame(currFrame);
 
-        if(frame == null){
-            System.out.println(currFrame+"frame not available");
+        if(tempframe == null){
+            System.out.println(currFrame+" frame not available ");
             currTime=0;
         } else {
+            frame = tempframe;
+        }
             spriteBatch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE);
             spriteBatch.begin();
             for(Pair<Vector3,Float> p : frame){
@@ -237,14 +243,13 @@ public class PlayBackScreen extends BaseScreen{
             }
             spriteBatch.end();
 
-        }
+
 
         uiStage.draw();
 
 
-
-        if(currTime>1/(60*timeMultiplier)){
-            currFrame+=(int)(currTime/(60*timeMultiplier));
+        if(currTime>1/60){
+            currFrame+=(int)(currTime*60);
             currTime=0;
         }
 
@@ -306,6 +311,7 @@ public class PlayBackScreen extends BaseScreen{
         uiStage.dispose();
         upperColorPicker.dispose();
         lowerColorPicker.dispose();
+        playBackLoader.terminate();
     }
 
 
