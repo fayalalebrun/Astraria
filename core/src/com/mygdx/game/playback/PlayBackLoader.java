@@ -75,7 +75,9 @@ public class PlayBackLoader implements Runnable {
 
 
                     try {
-                        randomAccessFile.seek(pointer);
+                        if(pointer!=randomAccessFile.getFilePointer()) {
+                            randomAccessFile.seek(pointer);
+                        }
 
                         for (int i = 0; i < numberOfBodies; i++) {
                             float x = randomAccessFile.readFloat() * 100;
