@@ -40,7 +40,7 @@ import com.mygdx.game.Boot;
 import com.mygdx.game.logic.Body;
 import com.mygdx.game.playback.ui.MenuWidget;
 import com.mygdx.game.playback.ui.ProgressWindow;
-import javafx.util.Pair;
+import net.dermetfan.utils.Pair;
 
 import java.io.FileInputStream;
 import java.io.ObjectInputStream;

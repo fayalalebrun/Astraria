@@ -1,7 +1,7 @@
 package com.mygdx.game.playback;
 
 import com.badlogic.gdx.math.Vector3;
-import javafx.util.Pair;
+import net.dermetfan.utils.Pair;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
