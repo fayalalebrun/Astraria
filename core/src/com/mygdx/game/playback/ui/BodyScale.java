@@ -25,7 +25,7 @@ public class BodyScale extends VisWindow {
         super("Object scale");
         setPosition(0,105);
         label = new VisLabel("Size: ");
-        slider = new VisSlider(0.01f, 0.1f, 0.01f, false);
+        slider = new VisSlider(0.002f, 0.02f, 0.002f, false);
 
         add(label).padRight(10);
         add(slider);
@@ -40,7 +40,7 @@ public class BodyScale extends VisWindow {
         add(textButton).padTop(10).padLeft(50).padBottom(10);
 
         pack();
-        slider.setValue(0.05f);
+        slider.setValue(0.01f);
 
         textButton.addListener(new ChangeListener() {
             @Override

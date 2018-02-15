@@ -36,7 +36,7 @@ public class PlayBackBody extends Actor{
         temp1 = new Vector3();
         temp2 = new Vector3();
         this.sprite = sprite;
-        sprite.setScale(0.05f);
+        sprite.setScale(0.01f);
         rand = new Random();
         color = new Color(rand.nextFloat(),rand.nextFloat(),rand.nextFloat(),1);
 
