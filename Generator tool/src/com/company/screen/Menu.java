@@ -12,7 +12,6 @@ import com.company.algorithm.MultiThreadAlgorithm;
 import com.company.algorithm.helpers.Units;
 import com.company.files.BinWriter;
 import com.company.files.TxtReader;
-import com.sun.org.apache.bcel.internal.generic.IF_ACMPEQ;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -343,7 +342,7 @@ double cycles = 0;
                 }
 
                 m = data.get(1-yot);
-            }else{
+            }else if (txtReader.getV()==3){
                 x = new float[data.size()/11];
                 y = new float[data.size()/11];
                 z = new float[data.size()/11];
@@ -365,6 +364,29 @@ double cycles = 0;
 
                     k++;
                 }
+            }else {
+                x = new float[data.size()/7];
+                y = new float[data.size()/7];
+                z = new float[data.size()/7];
+                vx = new float[data.size()/7];
+                vy = new float[data.size()/7];
+                vz = new float[data.size()/7];
+
+                m=data.get(0);
+
+                for (int i = 0; i<data.size(); i=i+7){
+
+                    x[k] = data.get(i+1);
+                    y[k] = data.get(i+2);
+                    z[k] = data.get(i+3);
+                    vx[k] = data.get(i+4);
+                    vy[k] = data.get(i+5);
+                    vz[k] = data.get(i+6);
+
+
+                    k++;
+                }
+
             }
 
 

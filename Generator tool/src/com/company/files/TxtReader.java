@@ -40,14 +40,16 @@ public class TxtReader {
                         if ((k.charAt(0)=='['&&(k.charAt(1)=='1'))){
                             //version 1
                              v = 1;
-                        }else if (v == 1||v==2||v==3){
+                        }else if (v == 1||v==2||v==3||v==4){
                             readLineV1(k);
 
                         }else if (k.charAt(0)=='['&&k.charAt(1)=='2'){
                             v = 2;
                         }else if (k.charAt(0)=='['&&k.charAt(1)=='3'){
                             v = 3;
-                        }
+                        }else if (k.charAt(0)=='['&&k.charAt(1)=='4'){
+                            v = 4;
+                    }
 
                     }
                 }
@@ -70,6 +72,12 @@ public class TxtReader {
                 System.out.println("    CORRECT: Initial condition file successfully loaded");
 
                 System.out.println("        File contains "+data.size()/11+" bodies");
+                Menu.iniLoaded = true;
+
+            }else if (v==4){
+                System.out.println("    CORRECT: Initial condition file successfully loaded");
+
+                System.out.println("        File contains "+data.size()/7+" bodies");
                 Menu.iniLoaded = true;
 
             }else {
