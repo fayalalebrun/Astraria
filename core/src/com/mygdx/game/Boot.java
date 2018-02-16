@@ -33,6 +33,7 @@ public class Boot extends Game {
 		manager.load("comicsans.fnt", BitmapFont.class);
 		manager.load("Star_texture_2.png", Texture.class);
 		manager.load("particle.png", Texture.class);
+		manager.load("indicator.png", Texture.class);
 		manager.finishLoading();
 
 		VisUI.load();
