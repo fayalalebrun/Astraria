@@ -87,10 +87,19 @@ public class PlayBackLoader implements Runnable {
                         e.printStackTrace();
                     }
 
-            } else if (lastFrame < cycles){
-                        for(int i = firstFrame; i < currentFrame; i++){
-                            frameMap.remove(i);
+            } else if (lastFrame < cycles&&firstFrame<currentFrame){
+
+                    ConcurrentHashMap<Integer, Vector<Pair<Vector3, Float>>> newMap = new ConcurrentHashMap<Integer, Vector<Pair<Vector3, Float>>>();
+
+                        for(int i = currentFrame; i<=lastFrame;i++){
+                            newMap.put(i,frameMap.get(i));
                         }
+
+                        frameMap = newMap;
+
+                    System.gc();
+
+                        firstFrame = currentFrame;
                 }
         }
 
@@ -104,12 +113,12 @@ public class PlayBackLoader implements Runnable {
     public Vector<Pair<Vector3,Float>> requestFrame(int frame){
 
         currentFrame=frame;
-        if (!(frame >= firstFrame && frame <= lastFrame)) {
-            for (int i = firstFrame; i <= lastFrame; i++) {
-                frameMap.remove(i);
-            }
+        if (frame < firstFrame || frame > lastFrame) {
+
+            frameMap = new ConcurrentHashMap<Integer, Vector<Pair<Vector3, Float>>>();
             firstFrame=frame;
             lastFrame=frame;
+            System.gc();
         }
 
         if (frameMap.containsKey(frame)) {
