@@ -11,7 +11,6 @@ import com.kotcrab.vis.ui.widget.VisSlider;
 import com.kotcrab.vis.ui.widget.VisTextButton;
 import com.kotcrab.vis.ui.widget.VisWindow;
 import com.mygdx.game.Boot;
-import com.mygdx.game.playback.PlayBackBody;
 import com.mygdx.game.playback.PlayBackScreen;
 
 /**
@@ -25,7 +24,7 @@ public class ProgressWindow extends VisWindow{
 
     Boolean dragged = false, nowDragging = false;
 
-    Vector2 indicatorPos;
+    Vector2 indicatorPosEnd, indicatorPosStart;
 
     Texture indicatorTexture;
 
@@ -141,7 +140,9 @@ public class ProgressWindow extends VisWindow{
 
         elapsedTime.setText((int)(playBackScreen.getCurrFrame()/60f)+"s");
 
-        indicatorPos = calcIndicatorPos(playBackScreen.getPlayBackLoader().getLastFrame(),playBackScreen.getTotalFrames());
+        indicatorPosEnd = calcIndicatorPos(playBackScreen.getPlayBackLoader().getLastFrame(),playBackScreen.getTotalFrames());
+        indicatorPosStart = calcIndicatorPos(playBackScreen.getPlayBackLoader().getFirstFrame(),playBackScreen.getTotalFrames());
+
 
     }
 
@@ -149,14 +150,17 @@ public class ProgressWindow extends VisWindow{
     public void draw(Batch batch, float parentAlpha) {
         super.draw(batch, parentAlpha);
 
-        batch.draw(indicatorTexture,indicatorPos.x,indicatorPos.y,indicatorTexture.getWidth()*0.25f,
-                indicatorTexture.getHeight()*0.25f);
+        indicatorPosStart.x +=9;
+        indicatorPosEnd.x+=9;
+
+        indicatorPosEnd.y+=32;
+        indicatorPosStart.y+=32;
+
+        batch.draw(indicatorTexture, indicatorPosStart.x, indicatorPosStart.y, (indicatorPosEnd.x-indicatorPosStart.x), (indicatorPosEnd.y-indicatorPosStart.y)+8);
 
     }
 
     private Vector2 calcIndicatorPos(int frameUpTo, int totalFrames){
-        frameUpTo=0;
-        System.out.println(totalFrames);
         float p = (float)frameUpTo/totalFrames;
         p = Math.max(p,0);
         p = Math.min(1,p);
