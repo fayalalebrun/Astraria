@@ -161,4 +161,8 @@ public class PlayBackLoader implements Runnable {
     public int getLastFrame() {
         return lastFrame;
     }
+
+    public int getFirstFrame() {
+        return firstFrame;
+    }
 }
