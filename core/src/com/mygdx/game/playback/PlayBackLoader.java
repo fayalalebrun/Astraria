@@ -100,6 +100,7 @@ public class PlayBackLoader implements Runnable {
                     System.gc();
 
                         firstFrame = currentFrame;
+
                 }
         }
 
@@ -151,5 +152,9 @@ public class PlayBackLoader implements Runnable {
 
     public int getCycles() {
         return cycles;
+    }
+
+    public ConcurrentHashMap<Integer, Vector<Pair<Vector3, Float>>> getFrameMap() {
+        return frameMap;
     }
 }

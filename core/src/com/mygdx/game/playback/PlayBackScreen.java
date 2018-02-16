@@ -213,7 +213,7 @@ public class PlayBackScreen extends BaseScreen{
     @Override
     public void render(float delta) {
         if(!paused) {
-            currTime += delta*timeMultiplier;
+            currTime += delta;
         }
 
         uiStage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 30f));
@@ -245,9 +245,12 @@ public class PlayBackScreen extends BaseScreen{
 
         uiStage.draw();
 
-
-        if(currTime>1/60){
-            currFrame+=(int)(currTime*60);
+        if(currTime>1/60f){
+            if(playBackLoader.getFrameMap().containsKey(currFrame+(int)(currTime*60f))) {
+                currFrame += (int) (currTime * 60f);
+            } else {
+                currFrame++;
+            }
             currTime=0;
         }
 
@@ -330,9 +333,6 @@ public class PlayBackScreen extends BaseScreen{
         bodyScale = playBackLoader.getBodyScale()*0.01f;
     }
 
-    public void setCurrTime(float currTime) {
-        this.currTime = currTime;
-    }
 
     public void setCurrFrame(int currFrame) {
         this.currFrame = currFrame;
