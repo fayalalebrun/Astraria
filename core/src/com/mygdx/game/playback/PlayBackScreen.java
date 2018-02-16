@@ -182,7 +182,7 @@ public class PlayBackScreen extends BaseScreen{
 
         setWindowPosition();
 
-
+        //start simulation pasued
     }
 
     private void setWindowPosition(){
@@ -318,6 +318,7 @@ public class PlayBackScreen extends BaseScreen{
     }
 
     private void loadRecording(String path){
+
         playBackLoader = new PlayBackLoader(path);
         loaderThread = new Thread(playBackLoader);
         loaderThread.start();
@@ -391,5 +392,8 @@ public class PlayBackScreen extends BaseScreen{
 
     public void setBodyScaleMod(float bodyScaleMod) {
         this.bodyScaleMod = bodyScaleMod;
+    }
+    public void setCamVelocity(float value){
+        camControl.setVelocity(value);
     }
 }

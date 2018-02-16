@@ -74,6 +74,8 @@ public class BinWriter implements Runnable {
             int i = 0;
             long u = 0;
 
+            avgAcceleration = 0;
+
             while (!terminate || !queue.isEmpty()) {
 
                 if (!queue.isEmpty()) {
@@ -89,8 +91,8 @@ public class BinWriter implements Runnable {
 
                             float currAcc = (float) Math.sqrt(MultiThreadAlgorithm.square(ax) + MultiThreadAlgorithm.square(ay) + MultiThreadAlgorithm.square(az));
 
-                            avgAcceleration = 0;
-                            avgAcceleration = (avgAcceleration*u+currAcc)/u+1;
+
+                            avgAcceleration = (avgAcceleration*u+currAcc)/(u+1);
 
                             if (currAcc > maxAcceleration) {
                                 maxAcceleration = currAcc;
