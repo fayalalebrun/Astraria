@@ -95,7 +95,7 @@ public class PlayBackScreen extends BaseScreen{
     private ColorPicker upperColorPicker;
     private ColorPicker lowerColorPicker;
 
-    private float timeMultiplier;
+    private float timeMultiplier =1 ;
 
     Texture bodyTexture;
 
@@ -137,8 +137,6 @@ public class PlayBackScreen extends BaseScreen{
 
         upperColorPicker.fadeOut(0);
         lowerColorPicker.fadeOut(0);
-
-        timeMultiplier = 60;
 
         uiStage = new Stage(new ScreenViewport());
         uiStage.addListener(UIListener);
