@@ -157,4 +157,8 @@ public class PlayBackLoader implements Runnable {
     public ConcurrentHashMap<Integer, Vector<Pair<Vector3, Float>>> getFrameMap() {
         return frameMap;
     }
+
+    public int getLastFrame() {
+        return lastFrame;
+    }
 }
