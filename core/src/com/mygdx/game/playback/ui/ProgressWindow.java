@@ -1,5 +1,8 @@
 package com.mygdx.game.playback.ui;
 
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Batch;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.kotcrab.vis.ui.util.TableUtils;
@@ -7,6 +10,7 @@ import com.kotcrab.vis.ui.widget.VisLabel;
 import com.kotcrab.vis.ui.widget.VisSlider;
 import com.kotcrab.vis.ui.widget.VisTextButton;
 import com.kotcrab.vis.ui.widget.VisWindow;
+import com.mygdx.game.Boot;
 import com.mygdx.game.playback.PlayBackBody;
 import com.mygdx.game.playback.PlayBackScreen;
 
@@ -21,6 +25,10 @@ public class ProgressWindow extends VisWindow{
 
     Boolean dragged = false, nowDragging = false;
 
+    Vector2 indicatorPos;
+
+    Texture indicatorTexture;
+
     public ProgressWindow(PlayBackScreen playBackScreen) {
         super("" );
 
@@ -29,6 +37,8 @@ public class ProgressWindow extends VisWindow{
         TableUtils.setSpacingDefaults(this);
         addWidgets();
         pack();
+
+        indicatorTexture = Boot.manager.get("indicator.png", Texture.class);
     }
 
     private void addWidgets(){
@@ -39,6 +49,7 @@ public class ProgressWindow extends VisWindow{
 
         final VisSlider mySlider = new VisSlider(0f, 1f, 0.01f, false);
         slider = mySlider;
+
         add(slider).width(300);
         final PlayBackScreen myPlayBackScreen = playBackScreen;
         slider.addListener(new ChangeListener() {
@@ -129,6 +140,33 @@ public class ProgressWindow extends VisWindow{
         }
 
         elapsedTime.setText((int)(playBackScreen.getCurrFrame()/60f)+"s");
+
+        indicatorPos = calcIndicatorPos(playBackScreen.getPlayBackLoader().getLastFrame(),playBackScreen.getTotalFrames());
+
+    }
+
+    @Override
+    public void draw(Batch batch, float parentAlpha) {
+        super.draw(batch, parentAlpha);
+
+        batch.draw(indicatorTexture,indicatorPos.x,indicatorPos.y,indicatorTexture.getWidth()*0.25f,
+                indicatorTexture.getHeight()*0.25f);
+
+    }
+
+    private Vector2 calcIndicatorPos(int frameUpTo, int totalFrames){
+        frameUpTo=0;
+        System.out.println(totalFrames);
+        float p = (float)frameUpTo/totalFrames;
+        p = Math.max(p,0);
+        p = Math.min(1,p);
+        float x = p * slider.getWidth();
+
+        float y = 0;
+
+        y-=10;
+        x-=8;
+        return slider.localToStageCoordinates(new Vector2(x,y));
 
     }
 
