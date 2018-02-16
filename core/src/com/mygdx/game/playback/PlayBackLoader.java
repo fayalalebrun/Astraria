@@ -57,11 +57,6 @@ public class PlayBackLoader implements Runnable {
     public void run() {
         while(!terminate){
 
-                    if (currentFrame > firstFrame) {
-                        frameMap.remove(firstFrame);
-                        firstFrame+=1;
-                    }
-
                 if (Runtime.getRuntime().freeMemory() > 30000000 && lastFrame < cycles) {
 
                     lastFrame+=1;
@@ -92,7 +87,11 @@ public class PlayBackLoader implements Runnable {
                         e.printStackTrace();
                     }
 
-            }
+            } else if (lastFrame < cycles){
+                        for(int i = firstFrame; i < currentFrame; i++){
+                            frameMap.remove(i);
+                        }
+                }
         }
 
         try {
