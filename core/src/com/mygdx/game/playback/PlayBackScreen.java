@@ -95,7 +95,7 @@ public class PlayBackScreen extends BaseScreen{
     private ColorPicker upperColorPicker;
     private ColorPicker lowerColorPicker;
 
-    private int timeMultiplier;
+    private float timeMultiplier;
 
     Texture bodyTexture;
 
@@ -215,7 +215,7 @@ public class PlayBackScreen extends BaseScreen{
     @Override
     public void render(float delta) {
         if(!paused) {
-            currTime += delta;
+            currTime += delta*timeMultiplier;
         }
 
         uiStage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 30f));
@@ -383,7 +383,7 @@ public class PlayBackScreen extends BaseScreen{
         return bodies;
     }
 
-    public void setTimeMultiplier (int value){
+    public void setTimeMultiplier (float value){
         timeMultiplier = value;
     }
 }
