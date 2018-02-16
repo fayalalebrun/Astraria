@@ -24,7 +24,7 @@ public class BodyScale extends VisWindow {
     public BodyScale(final PlayBackScreen playBackScreen){
         super("Object scale");
         label = new VisLabel("Size: ");
-        slider = new VisSlider(0.01f, 0.1f, 0.01f, false);
+        slider = new VisSlider(1f, 10f, 0.1f, false);
 
         add(label).padRight(10);
         add(slider);
@@ -37,9 +37,7 @@ public class BodyScale extends VisWindow {
         textButton.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                for (PlayBackBody current : playBackScreen.getBodies()){
-                    current.getSprite().setScale(slider.getValue());
-                }
+                playBackScreen.setBodyScaleMod(slider.getValue());
             }
         });
     }

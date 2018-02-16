@@ -72,7 +72,7 @@ public class PlayBackScreen extends BaseScreen{
 
     private int numberOfBodies;
 
-    private float bodyScale, maxAccel, minAccel;
+    private float bodyScale, maxAccel, minAccel, bodyScaleMod=1;
 
 
     private float currTime = 0;
@@ -261,7 +261,7 @@ public class PlayBackScreen extends BaseScreen{
         if(cam.frustum.pointInFrustum(pos)){
             spriteBatch.setColor(getGradientColor(getPercentage(accel)));
             Vector2 newPos = projectPos(pos);
-            spriteBatch.draw(bodyTexture,newPos.x,newPos.y,bodyTexture.getWidth()*bodyScale,bodyTexture.getHeight()*bodyScale);
+            spriteBatch.draw(bodyTexture,newPos.x,newPos.y,bodyTexture.getWidth()*bodyScale*bodyScaleMod,bodyTexture.getHeight()*bodyScale*bodyScaleMod);
         }
     }
 
@@ -273,8 +273,8 @@ public class PlayBackScreen extends BaseScreen{
     private Vector2 projectPos(Vector3 oldPos){
         Vector3 pos = oldPos.cpy();
         cam.project(pos);
-        pos.x = pos.x - bodyTexture.getWidth()*bodyScale;
-        pos.y = pos.y - bodyTexture.getHeight()*bodyScale;
+        pos.x = pos.x - bodyTexture.getWidth()*bodyScale*bodyScaleMod*0.5f;
+        pos.y = pos.y - bodyTexture.getHeight()*bodyScale*bodyScaleMod*0.5f;
         return new Vector2(pos.x,pos.y);
     }
 
@@ -326,7 +326,7 @@ public class PlayBackScreen extends BaseScreen{
         numberOfBodies = playBackLoader.getNumberOfBodies();
         maxAccel = playBackLoader.getMaxAccel();
         minAccel = playBackLoader.getMinAccel();
-        bodyScale = playBackLoader.getBodyScale()*0.05f;
+        bodyScale = playBackLoader.getBodyScale()*0.01f;
     }
 
     public void setCurrTime(float currTime) {
@@ -383,5 +383,13 @@ public class PlayBackScreen extends BaseScreen{
 
     public void setTimeMultiplier (float value){
         timeMultiplier = value;
+    }
+
+    public float getBodyScaleMod() {
+        return bodyScaleMod;
+    }
+
+    public void setBodyScaleMod(float bodyScaleMod) {
+        this.bodyScaleMod = bodyScaleMod;
     }
 }
