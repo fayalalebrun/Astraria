@@ -71,7 +71,7 @@ public class PlayBackBody extends Actor{
     }
 
     private void setColor(int frame, float minAccel, float maxAccel){
-        maxAccel = 2;
+        //maxAccel = 2;
         float range = maxAccel-minAccel;
         float p = (acceleration.get(frame)-minAccel)/range;
 

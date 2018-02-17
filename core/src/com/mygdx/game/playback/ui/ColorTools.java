@@ -40,9 +40,10 @@ public class ColorTools extends VisWindow {
 
          buttonList = new ArrayList<VisRadioButton>();
 
-        final VisRadioButton preset1 = new VisRadioButton("Blue to white");
-        final VisRadioButton preset2 = new VisRadioButton("Red to white");
-        final VisRadioButton preset3 = new VisRadioButton("Green to white");
+        final VisRadioButton preset1 = new VisRadioButton("Galaxy");
+        final VisRadioButton preset2 = new VisRadioButton("Galaxy collision");
+        final VisRadioButton preset3 = new VisRadioButton("Galaxy cluster");
+        final VisRadioButton preset4 = new VisRadioButton("Milky way");
         final VisRadioButton custom = new VisRadioButton("Custom colors");
 
          color1Button = new VisTextButton("Set");
@@ -67,6 +68,7 @@ public class ColorTools extends VisWindow {
         buttonList.add(preset1);
         buttonList.add(preset2);
         buttonList.add(preset3);
+        buttonList.add(preset4);
         buttonList.add(custom);
 
         preset1.setChecked(true);
@@ -103,14 +105,25 @@ public class ColorTools extends VisWindow {
 
                 }            }
         });
+        preset4.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+            if (preset4.isChecked()){
+                disableOthers(3);
+                playBackScreen.setUpperColor(new Color(0.07058823529f, 0.06666666666f, 0.06666666666f, 1));
+                playBackScreen.setLowerColor(new Color(0.03137254901f, 0.27058823529f, 0.4f, 1));
+            }
+            }
+        });
         custom.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 if (custom.isChecked()){
-                    disableOthers(3);
+                    disableOthers(4);
 
                 }            }
         });
+
 
         VisTextButton closeButton = new VisTextButton("Close");
 
@@ -131,6 +144,8 @@ public class ColorTools extends VisWindow {
         table.row();
         table.add(preset3);
         table.row();
+        table.add(preset4);
+        table.row();
         table.add(new Separator()).padTop(20).fillX().expandX().row();
         table.row();
         table.add(custom).padTop(10).padBottom(10).expandX().fillX().row();
@@ -148,7 +163,7 @@ public class ColorTools extends VisWindow {
     }
 
     public void disableOthers(int thisOne) {
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 5; i++) {
             if (i != thisOne) {
                 buttonList.get(i).setChecked(false);
             }else {
@@ -156,7 +171,7 @@ public class ColorTools extends VisWindow {
             }
         }
 
-        if (thisOne!=3){
+        if (thisOne!=4){
             color1Button.setDisabled(true);
             color2Button.setDisabled(true);
             color1Label.setColor(Color.GRAY);

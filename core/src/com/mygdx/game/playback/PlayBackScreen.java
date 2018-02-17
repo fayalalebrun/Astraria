@@ -376,4 +376,4 @@ public class PlayBackScreen extends BaseScreen{
     public void setCamVelocity(float value){
         camControl.setVelocity(value);
     }
-}
+} 

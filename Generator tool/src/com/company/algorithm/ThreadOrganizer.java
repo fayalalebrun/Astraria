@@ -127,7 +127,7 @@ public abstract class ThreadOrganizer {
 
             if (fixedDelta){
                 System.out.println("    PROCESSOR CYCLES PER SECOND (AVG): "+lastAvg);
-                System.out.println("    SIMULATION CYCLES PER FRAME: "+cycles);
+                System.out.println("    SIMULATION CYCLES PER 60 FRAMES: "+cycles);
                 System.out.println("    SIMULATION DURATION: "+duration+" seconds");
                 System.out.println("    GENERATION ESTIMATED DURATION: "+ (int) (cycles/lastAvg)*duration+" seconds");
             }else {
