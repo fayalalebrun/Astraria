@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.utils.BufferUtils;
 import com.mygdx.game.BaseScreen;
 import com.mygdx.game.Boot;
+import com.mygdx.game.simulation.renderer.Shader;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -16,7 +17,7 @@ import java.nio.IntBuffer;
 public class SimulationScreen extends BaseScreen {
 
     int VAO;
-    int shaderProgram;
+    Shader shader;
 
     float vertices[] = {
             -0.5f, -0.5f, 0.0f,
@@ -24,66 +25,12 @@ public class SimulationScreen extends BaseScreen {
             0.0f,  0.5f, 0.0f
     };
 
-    String vert = "#version 330 core\n" +
-            "layout (location = 0) in vec3 aPos;\n" +
-            "\n" +
-            "void main()\n" +
-            "{\n" +
-            "    gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n" +
-            "}";
-
-    String frag = "#version 330 core\n" +
-            "out vec4 FragColor;\n" +
-            "\n" +
-            "void main()\n" +
-            "{\n" +
-            "    FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n" +
-            "} ";
-
 
     public SimulationScreen(Boot boot) {
         super(boot);
 
+        shader = new Shader(Gdx.files.internal("shaders/default.vert"), Gdx.files.internal("shaders/default.frag"));
 
-        int vertexShader = Gdx.gl.glCreateShader(Gdx.gl.GL_VERTEX_SHADER);
-        Gdx.gl.glShaderSource(vertexShader, vert);
-        Gdx.gl.glCompileShader(vertexShader);
-
-        ByteBuffer temp = ByteBuffer.allocateDirect(4);
-        temp.order(ByteOrder.nativeOrder());
-        IntBuffer success = temp.asIntBuffer();
-        Gdx.gl.glGetShaderiv(vertexShader,Gdx.gl.GL_COMPILE_STATUS,success);
-        if(success.get(0)==0){
-            System.out.println(Gdx.gl.glGetShaderInfoLog(vertexShader));
-        }
-
-        int fragmentShader = Gdx.gl.glCreateShader(Gdx.gl.GL_FRAGMENT_SHADER);
-        Gdx.gl.glShaderSource(fragmentShader, frag);
-        Gdx.gl.glCompileShader(fragmentShader);
-
-
-        Gdx.gl.glGetShaderiv(fragmentShader,Gdx.gl.GL_COMPILE_STATUS,success);
-
-        if(success.get(0)==0){
-            System.out.println(Gdx.gl.glGetShaderInfoLog(fragmentShader));
-        }
-
-        shaderProgram = Gdx.gl.glCreateProgram();
-
-        Gdx.gl.glAttachShader(shaderProgram, vertexShader);
-        Gdx.gl.glAttachShader(shaderProgram, fragmentShader);
-        Gdx.gl.glLinkProgram(shaderProgram);
-
-        Gdx.gl.glGetProgramiv(shaderProgram, Gdx.gl.GL_LINK_STATUS, success);
-
-        if(success.get(0)==0){
-            System.out.println(Gdx.gl.glGetShaderInfoLog(shaderProgram));
-        }
-
-        Gdx.gl.glUseProgram(shaderProgram);
-
-        Gdx.gl.glDeleteShader(vertexShader);
-        Gdx.gl.glDeleteShader(fragmentShader);
 
         int[] tempv = new int[1];
 
@@ -119,7 +66,7 @@ public class SimulationScreen extends BaseScreen {
         Gdx.gl.glClear(Gdx.gl.GL_COLOR_BUFFER_BIT);
 
 
-        Gdx.gl.glUseProgram(shaderProgram);
+        shader.use();
         Gdx.gl30.glBindVertexArray(VAO);
         Gdx.gl.glDrawArrays(Gdx.gl.GL_TRIANGLES, 0, 3);
 
