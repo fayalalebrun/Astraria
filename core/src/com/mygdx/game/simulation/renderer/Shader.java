@@ -61,4 +61,8 @@ public class Shader {
             }
         }
     }
+
+    public void use(){
+        Gdx.gl.glUseProgram(ID);
+    }
 }
