@@ -9,6 +9,8 @@ import com.badlogic.gdx.utils.BufferUtils;
 import com.mygdx.game.BaseScreen;
 import com.mygdx.game.Boot;
 import com.mygdx.game.simulation.renderer.Shader;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -23,6 +25,7 @@ public class SimulationScreen extends BaseScreen {
     int VAO;
     Shader shader;
     int texture1;
+    float total;
 
     float vertices[] = {
             -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
@@ -97,10 +100,12 @@ public class SimulationScreen extends BaseScreen {
         Gdx.gl.glVertexAttribPointer(1, 2, Gdx.gl.GL_FLOAT, false, 20, 12);
         Gdx.gl.glEnableVertexAttribArray(1);
 
-        texture1 = loadTexture(Gdx.files.internal("particle.png"));
+        texture1 = loadTexture(Gdx.files.internal("container.jpg"));
 
         shader.use();
         shader.setInt("texture1", texture1);
+
+        Gdx.gl.glEnable(Gdx.gl.GL_DEPTH_TEST);
     }
 
     private int loadTexture(FileHandle handle){
@@ -138,12 +143,26 @@ public class SimulationScreen extends BaseScreen {
 
     @Override
     public void render(float delta) {
+        total+=delta;
+
 
         Gdx.gl.glClearColor(1f,1f,1f,1.0f);
-        Gdx.gl.glClear(Gdx.gl.GL_COLOR_BUFFER_BIT);
+        Gdx.gl.glClear(Gdx.gl.GL_COLOR_BUFFER_BIT|Gdx.gl.GL_DEPTH_BUFFER_BIT);
 
+        Gdx.gl.glActiveTexture(Gdx.gl.GL_TEXTURE0);
+        Gdx.gl.glBindTexture(Gdx.gl.GL_TEXTURE_2D, texture1);
 
         shader.use();
+        Matrix4f projection = new Matrix4f().identity().perspective((float)Math.toRadians(45f),
+                (float)Gdx.graphics.getWidth()/Gdx.graphics.getHeight(), 0.1f, 100f);
+        Matrix4f view = new Matrix4f().translate(0f,0f,-3.0f);
+        Matrix4f model = new Matrix4f().rotateX(total*(float)Math.toRadians(50f)*0.5f);
+        model.rotateY(total*(float)Math.toRadians(50f));
+
+        shader.setMat4("projection", projection);
+        shader.setMat4("view", view);
+        shader.setMat4("model", model);
+
         Gdx.gl30.glBindVertexArray(VAO);
         Gdx.gl.glDrawArrays(Gdx.gl.GL_TRIANGLES, 0, 36);
 
