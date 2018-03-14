@@ -46,7 +46,6 @@ public class Shader {
         ByteBuffer temp = ByteBuffer.allocateDirect(4);
         temp.order(ByteOrder.nativeOrder());
         IntBuffer success = temp.asIntBuffer();
-
         if(!type.equals("PROGRAM")){
             Gdx.gl.glGetShaderiv(shader, Gdx.gl.GL_COMPILE_STATUS, success);
             if(success.get(0)==0){
@@ -60,6 +59,10 @@ public class Shader {
                         Gdx.gl.glGetProgramInfoLog(shader));
             }
         }
+    }
+
+    public void setInt(String name, int value){
+        Gdx.gl.glUniform1i(Gdx.gl.glGetUniformLocation(ID, name), value);
     }
 
     public void use(){
