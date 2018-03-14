@@ -9,6 +9,7 @@ import com.badlogic.gdx.utils.BufferUtils;
 import com.badlogic.gdx.utils.Disposable;
 import com.sun.media.jfxmediaimpl.MediaDisposer;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 
 import java.nio.FloatBuffer;
 
@@ -22,6 +23,8 @@ public class Renderer implements Disposable{
     Shader shader;
     int texture1;
     float total;
+    Transformation transformation;
+    private static float FOV =(float)Math.toRadians(45f);
 
     float vertices[] = {
             -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
@@ -69,6 +72,7 @@ public class Renderer implements Disposable{
 
     public Renderer() {
         new GLProfiler(Gdx.graphics).enable();
+        transformation = new Transformation();
 
         shader = new Shader(Gdx.files.internal("shaders/default.vert"), Gdx.files.internal("shaders/default.frag"));
 
@@ -96,13 +100,24 @@ public class Renderer implements Disposable{
         texture1 = loadTexture(Gdx.files.internal("container.jpg"));
 
         shader.use();
+
+        try {
+            shader.createUniform("texture1");
+            shader.createUniform("projection");
+            shader.createUniform("view");
+            shader.createUniform("model");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         shader.setInt("texture1", texture1);
+
 
         Gdx.gl.glEnable(Gdx.gl.GL_DEPTH_TEST);
     }
 
     public void render(float delta){
-        total+=delta;
+        total+=delta*50;
 
 
 
@@ -111,11 +126,9 @@ public class Renderer implements Disposable{
         Gdx.gl.glBindTexture(Gdx.gl.GL_TEXTURE_2D, texture1);
 
         shader.use();
-        Matrix4f projection = new Matrix4f().identity().perspective((float)Math.toRadians(45f),
-                (float)Gdx.graphics.getWidth()/Gdx.graphics.getHeight(), 0.1f, 100f);
+        Matrix4f projection = transformation.getProjectionMatrix(FOV, 800,600,0.01f,1000f);
         Matrix4f view = new Matrix4f().translate(0f,0f,-3.0f);
-        Matrix4f model = new Matrix4f().rotateX(total*(float)Math.toRadians(50f)*0.5f);
-        model.rotateY(total*(float)Math.toRadians(50f));
+        Matrix4f model = transformation.getWorldMatrix(new Vector3f(),new Vector3f(total*(float)Math.toRadians(50f),total*(float)Math.toRadians(50f),0),1f);
 
         shader.setMat4("projection", projection);
         shader.setMat4("view", view);
