@@ -3,6 +3,7 @@ package com.mygdx.game.simulation.renderer;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.utils.BufferUtils;
+import com.badlogic.gdx.utils.Disposable;
 import org.joml.Matrix4f;
 
 import java.io.File;
@@ -16,7 +17,7 @@ import static com.badlogic.gdx.graphics.GL20.GL_VERTEX_SHADER;
 /**
  * Created by Fran on 3/12/2018.
  */
-public class Shader {
+public class Shader implements Disposable{
     public int ID;
 
     public Shader(FileHandle vertexPath, FileHandle fragmentPath) {
@@ -76,5 +77,11 @@ public class Shader {
         FloatBuffer fb = BufferUtils.newFloatBuffer(16);
         value.get(fb);
         Gdx.gl.glUniformMatrix4fv((Gdx.gl.glGetUniformLocation(ID, name)),1,false, fb);
+    }
+
+
+    @Override
+    public void dispose() {
+        Gdx.gl.glDeleteProgram(ID);
     }
 }
