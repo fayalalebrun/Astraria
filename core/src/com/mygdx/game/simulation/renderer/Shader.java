@@ -2,10 +2,13 @@ package com.mygdx.game.simulation.renderer;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
+import com.badlogic.gdx.utils.BufferUtils;
+import org.joml.Matrix4f;
 
 import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
 import static com.badlogic.gdx.graphics.GL20.GL_VERTEX_SHADER;
@@ -67,5 +70,11 @@ public class Shader {
 
     public void use(){
         Gdx.gl.glUseProgram(ID);
+    }
+
+    public void setMat4(String name, Matrix4f value){
+        FloatBuffer fb = BufferUtils.newFloatBuffer(16);
+        value.get(fb);
+        Gdx.gl.glUniformMatrix4fv((Gdx.gl.glGetUniformLocation(ID, name)),1,false, fb);
     }
 }
