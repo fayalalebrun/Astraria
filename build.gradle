@@ -45,7 +45,7 @@ project(":desktop") {
         compile "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
         compile "com.badlogicgames.gdx:gdx-tools:$gdxVersion"
         compile "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-desktop"
-        
+        compile group: 'org.lwjgl.osgi', name: 'org.lwjgl.assimp', version: '3.1.3'
     }
 }
 
@@ -58,7 +58,7 @@ project(":core") {
         compile "com.badlogicgames.gdx:gdx-freetype:$gdxVersion"
         compile "com.kotcrab.vis:vis-ui:1.3.0"
         compile "net.dermetfan.libgdx-utils:libgdx-utils:0.13.4"
-        
+        compile group: 'org.joml', name: 'joml', version: '1.9.8'
     }
 }
 
