@@ -11,6 +11,8 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.badlogic.gdx.graphics.GL20.GL_VERTEX_SHADER;
 
@@ -20,7 +22,11 @@ import static com.badlogic.gdx.graphics.GL20.GL_VERTEX_SHADER;
 public class Shader implements Disposable{
     public int ID;
 
+    private final Map<String, Integer> uniforms;
+
     public Shader(FileHandle vertexPath, FileHandle fragmentPath) {
+        uniforms = new HashMap<String, Integer>();
+
         String vertexCode = vertexPath.readString();
         String fragmentCode = fragmentPath.readString();
         int vertex, fragment;
@@ -66,7 +72,7 @@ public class Shader implements Disposable{
     }
 
     public void setInt(String name, int value){
-        Gdx.gl.glUniform1i(Gdx.gl.glGetUniformLocation(ID, name), value);
+        Gdx.gl.glUniform1i(uniforms.get(name), value);
     }
 
     public void use(){
@@ -74,9 +80,18 @@ public class Shader implements Disposable{
     }
 
     public void setMat4(String name, Matrix4f value){
+
         FloatBuffer fb = BufferUtils.newFloatBuffer(16);
         value.get(fb);
-        Gdx.gl.glUniformMatrix4fv((Gdx.gl.glGetUniformLocation(ID, name)),1,false, fb);
+        Gdx.gl.glUniformMatrix4fv(uniforms.get(name),1,false, fb);
+    }
+
+    public void createUniform(String uniformName) throws Exception{
+        int uniformLocation = Gdx.gl.glGetUniformLocation(ID, uniformName);
+        if(uniformLocation<0){
+            throw new Exception("Could not find uniform: "+uniformName);
+        }
+        uniforms.put(uniformName, uniformLocation);
     }
 
 
