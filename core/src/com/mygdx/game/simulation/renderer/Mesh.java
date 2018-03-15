@@ -67,7 +67,7 @@ public class Mesh implements Disposable{
         *4+normals.remaining()*4);
     }
 
-    private void render(Shader shader){
+    public void render(Shader shader){
         Gdx.gl.glEnableVertexAttribArray(0);
         Gdx.gl.glEnableVertexAttribArray(1);
         Gdx.gl.glEnableVertexAttribArray(2);
