@@ -3,6 +3,7 @@ package com.mygdx.game.simulation.renderer;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
 import de.javagl.obj.*;
+import org.joml.Matrix4f;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -19,13 +20,14 @@ import java.util.Map;
  */
 public class Model {
 
-
     OpenGLTextureManager textures;
     ArrayList<Mesh> meshes;
+    Shader shader;
 
-    public Model(OpenGLTextureManager textureManager, String name) {
+    public Model(OpenGLTextureManager textureManager, String name, Shader shader) {
         this.textures = textureManager;
         meshes = new ArrayList<Mesh>();
+        this.shader = shader;
         String path = getPath(name);
         loadModel(path);
     }
@@ -90,5 +92,12 @@ public class Model {
         return null;
     }
 
+    public void render(Matrix4f modelMatrix){
+        shader.use();
+        shader.setMat4("model", modelMatrix);
+        for (Mesh mesh : this.meshes){
+            mesh.render(shader);
+        }
+    }
 
 }
