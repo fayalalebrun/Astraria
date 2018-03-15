@@ -7,7 +7,6 @@ package com.mygdx.game.logic.algorithms;/*
 
 */
 
-import com.mygdx.game.SimulationScreen;
 import com.mygdx.game.logic.Body;
 import com.mygdx.game.logic.DetailedBody;
 import com.mygdx.game.logic.algorithms.threads.VelocityVerlet;
@@ -81,11 +80,11 @@ public class MultiThreadAlgorithm extends NBodyAlgorithm{
 
             //
 
-            double delta = this.getDelta() * SimulationScreen.simSpeed;
+            //double delta = this.getDelta() * SimulationScreen.simSpeed;
 
             for (int i = 0; i < bodies.size(); i++) {
 
-                executorService.submit(new VelocityVerlet(countDownLatch, this, i, delta));
+                //executorService.submit(new VelocityVerlet(countDownLatch, this, i, delta));
 
 
             }
