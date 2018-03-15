@@ -45,7 +45,6 @@ project(":desktop") {
         compile "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
         compile "com.badlogicgames.gdx:gdx-tools:$gdxVersion"
         compile "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-desktop"
-        compile group: 'org.lwjgl.osgi', name: 'org.lwjgl.assimp', version: '3.1.3'
     }
 }
 
