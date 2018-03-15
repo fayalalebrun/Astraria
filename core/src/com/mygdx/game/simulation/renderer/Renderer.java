@@ -102,7 +102,7 @@ public class Renderer implements Disposable{
         shader.use();
 
         try {
-            shader.createUniform("texture1");
+            shader.createUniform("diffuseTex");
             shader.createUniform("projection");
             shader.createUniform("view");
             shader.createUniform("model");
@@ -110,7 +110,7 @@ public class Renderer implements Disposable{
             e.printStackTrace();
         }
 
-        shader.setInt("texture1", texture1);
+        shader.setInt("diffuseTex", texture1);
 
 
         Gdx.gl.glEnable(Gdx.gl.GL_DEPTH_TEST);
