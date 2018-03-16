@@ -71,10 +71,10 @@ public class Model {
             diffuseTex = diffuseTex.substring(2);
         }
 
-        IntBuffer indices = ObjData.getFaceVertexIndices(obj, 3);
-        FloatBuffer vertices = ObjData.getVertices(obj);
-        FloatBuffer texCoords = ObjData.getTexCoords(obj, 2);
-        FloatBuffer normals = ObjData.getNormals(obj);
+        int[] indices = ObjData.getFaceVertexIndicesArray(obj, 3);
+        float[] vertices = ObjData.getVerticesArray(obj);
+        float[] texCoords = ObjData.getTexCoordsArray(obj, 2);
+        float[] normals = ObjData.getNormalsArray(obj);
 
 
 
