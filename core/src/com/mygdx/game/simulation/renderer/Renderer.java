@@ -19,7 +19,7 @@ import java.nio.FloatBuffer;
  */
 public class Renderer implements Disposable{
 
-
+    float total;
 
     Shader shader;
 
@@ -60,10 +60,12 @@ public class Renderer implements Disposable{
     public void render(float delta){
         Gdx.gl.glClear(Gdx.gl.GL_COLOR_BUFFER_BIT | Gdx.gl.GL_DEPTH_BUFFER_BIT);
 
+        total += delta*50;
+
         shader.use();
         Matrix4f projection = transformation.getProjectionMatrix(FOV, 800,600,0.01f,1000f);
-        Matrix4f view = new Matrix4f().translate(0f,0f,-3.0f);
-        Matrix4f model = new Matrix4f().identity();
+        Matrix4f view = new Matrix4f().translate(0f,0f,-3f);
+        Matrix4f model = transformation.getWorldMatrix(new Vector3f(),new Vector3f(total*(float)Math.toRadians(50f),total*(float)Math.toRadians(50f),0),1f);
 
 
         shader.setMat4("projection", projection);

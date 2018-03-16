@@ -44,12 +44,16 @@ public class Mesh implements Disposable{
         Gdx.gl30.glGenVertexArrays(1, tempv, 0);
         VAO = tempv[0];
 
-        /*for(int i = 0; i<vertices.length; i+=3){
+        for(int i = 0; i<vertices.length; i+=3){
             System.out.print(vertices[i]+" ");
             System.out.print(vertices[i+1]+" ");
             System.out.print(vertices[i+2]);
             System.out.println();
-        }*/
+        }
+
+        for(int i = 0; i < indices.length; i++){
+            System.out.println(indices[i]);
+        }
 
         Gdx.gl30.glBindVertexArray(VAO);
 
@@ -57,18 +61,21 @@ public class Mesh implements Disposable{
         vboList.add(VBO);
         Gdx.gl.glBindBuffer(GL_ARRAY_BUFFER, VBO);
         Gdx.gl.glBufferData(GL_ARRAY_BUFFER, vertices.length*4, toFloatBuffer(vertices), Gdx.gl.GL_STATIC_DRAW);
+        Gdx.gl.glEnableVertexAttribArray(0);
         Gdx.gl.glVertexAttribPointer(0, 3, Gdx.gl.GL_FLOAT, false, 0, 0);
 
         VBO = Gdx.gl.glGenBuffer();
         vboList.add(VBO);
         Gdx.gl.glBindBuffer(GL_ARRAY_BUFFER, VBO);
         Gdx.gl.glBufferData(GL_ARRAY_BUFFER, texCoords.length*4, toFloatBuffer(vertices), Gdx.gl.GL_STATIC_DRAW);
+        Gdx.gl.glEnableVertexAttribArray(1);
         Gdx.gl.glVertexAttribPointer(1, 2, Gdx.gl.GL_FLOAT, false, 0, 0);
 
         VBO = Gdx.gl.glGenBuffer();
         vboList.add(VBO);
         Gdx.gl.glBindBuffer(GL_ARRAY_BUFFER, VBO);
         Gdx.gl.glBufferData(GL_ARRAY_BUFFER, normals.length*4, toFloatBuffer(normals), Gdx.gl.GL_STATIC_DRAW);
+        Gdx.gl.glEnableVertexAttribArray(2);
         Gdx.gl.glVertexAttribPointer(2, 3, Gdx.gl.GL_FLOAT, false, 0, 0);
 
         EBO = Gdx.gl.glGenBuffer();
@@ -82,25 +89,19 @@ public class Mesh implements Disposable{
     public void render(Shader shader){
 
 
-        Gdx.gl.glEnableVertexAttribArray(0);
-        Gdx.gl.glEnableVertexAttribArray(1);
-        Gdx.gl.glEnableVertexAttribArray(2);
+        Gdx.gl30.glBindVertexArray(VAO);
+
 
 
         Gdx.gl.glActiveTexture(Gdx.gl.GL_TEXTURE0);
-        shader.setInt("diffuseTex", 0);
+        shader.setInt("diffuseTex", diffuseTexture);
         Gdx.gl.glBindTexture(Gdx.gl.GL_TEXTURE_2D, diffuseTexture);
         shader.use();
 
-        Gdx.gl30.glBindVertexArray(VAO);
         Gdx.gl.glBindBuffer(Gdx.gl.GL_ELEMENT_ARRAY_BUFFER, EBO);
         Gdx.gl.glDrawElements(Gdx.gl.GL_TRIANGLES, 36, Gdx.gl.GL_UNSIGNED_INT, 0);
 
-        Gdx.gl.glDisableVertexAttribArray(0);
-        Gdx.gl.glDisableVertexAttribArray(1);
-        Gdx.gl.glDisableVertexAttribArray(2);
         Gdx.gl30.glBindVertexArray(0);
-        Gdx.gl.glBindTexture(Gdx.gl.GL_TEXTURE_2D, 0);
     }
 
     @Override
