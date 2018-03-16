@@ -66,12 +66,18 @@ public class Model {
 
     private void processMesh(Mtl mtl, Obj obj){
         String diffuseTex = mtl.getMapKd();
-        diffuseTex = diffuseTex.substring(2);
 
-        IntBuffer indices = ObjData.getFaceVertexIndices(obj);
+        if(diffuseTex.startsWith("d ")) {
+            diffuseTex = diffuseTex.substring(2);
+        }
+
+        IntBuffer indices = ObjData.getFaceVertexIndices(obj, 3);
         FloatBuffer vertices = ObjData.getVertices(obj);
         FloatBuffer texCoords = ObjData.getTexCoords(obj, 2);
         FloatBuffer normals = ObjData.getNormals(obj);
+
+
+
 
         meshes.add(new Mesh(indices,vertices,texCoords,normals,textures.addTexture(getPath(diffuseTex))));
     }
