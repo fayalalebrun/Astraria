@@ -44,7 +44,7 @@ public class Mesh implements Disposable{
         Gdx.gl30.glGenVertexArrays(1, tempv, 0);
         VAO = tempv[0];
 
-        for(int i = 0; i<vertices.length; i+=3){
+        /*for(int i = 0; i<vertices.length; i+=3){
             System.out.print(vertices[i]+" ");
             System.out.print(vertices[i+1]+" ");
             System.out.print(vertices[i+2]);
@@ -53,7 +53,7 @@ public class Mesh implements Disposable{
 
         for(int i = 0; i < indices.length; i++){
             System.out.println(indices[i]);
-        }
+        }*/
 
         Gdx.gl30.glBindVertexArray(VAO);
 
@@ -67,7 +67,7 @@ public class Mesh implements Disposable{
         VBO = Gdx.gl.glGenBuffer();
         vboList.add(VBO);
         Gdx.gl.glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        Gdx.gl.glBufferData(GL_ARRAY_BUFFER, texCoords.length*4, toFloatBuffer(vertices), Gdx.gl.GL_STATIC_DRAW);
+        Gdx.gl.glBufferData(GL_ARRAY_BUFFER, texCoords.length*4, toFloatBuffer(texCoords), Gdx.gl.GL_STATIC_DRAW);
         Gdx.gl.glEnableVertexAttribArray(1);
         Gdx.gl.glVertexAttribPointer(1, 2, Gdx.gl.GL_FLOAT, false, 0, 0);
 
