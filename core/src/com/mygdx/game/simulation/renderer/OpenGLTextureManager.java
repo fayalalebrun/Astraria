@@ -12,7 +12,7 @@ import java.util.Map;
  * Created by fraayala19 on 3/15/18.
  */
 public class OpenGLTextureManager {
-    Map<String, Integer> textures;
+    private Map<String, Integer> textures;
 
     public OpenGLTextureManager() {
         textures = new HashMap<String, Integer>();
