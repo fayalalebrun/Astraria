@@ -11,6 +11,7 @@ import com.badlogic.gdx.utils.Disposable;
 import com.sun.media.jfxmediaimpl.MediaDisposer;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+import org.joml.Vector3i;
 
 import java.nio.FloatBuffer;
 
@@ -37,9 +38,7 @@ public class Renderer implements Disposable{
         transformation = new Transformation();
 
         shader = new Shader(Gdx.files.internal("shaders/default.vert"), Gdx.files.internal("shaders/default.frag"));
-        model = new Model(openGLTextureManager, "box.obj", shader);
-
-
+        model = new Model(openGLTextureManager, "sphere.obj", shader);
 
         shader.use();
 
@@ -58,6 +57,7 @@ public class Renderer implements Disposable{
     }
 
     public void render(float delta){
+        Gdx.gl.glClearColor(0.0f,0.0f,0.0f,1.0f);
         Gdx.gl.glClear(Gdx.gl.GL_COLOR_BUFFER_BIT | Gdx.gl.GL_DEPTH_BUFFER_BIT);
 
         total += delta*50;
