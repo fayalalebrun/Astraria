@@ -22,6 +22,8 @@ public class Renderer implements Disposable{
 
     float total;
 
+    Camera camera;
+
     Shader shader;
 
     Transformation transformation;
@@ -37,6 +39,9 @@ public class Renderer implements Disposable{
         new GLProfiler(Gdx.graphics).enable();
         transformation = new Transformation();
 
+        camera = new Camera();
+        camera.movePosition(0,0,3);
+
         shader = new Shader(Gdx.files.internal("shaders/default.vert"), Gdx.files.internal("shaders/default.frag"));
         model = new Model(openGLTextureManager, "sphere.obj", shader);
 
@@ -45,8 +50,7 @@ public class Renderer implements Disposable{
         try {
             shader.createUniform("diffuseTex");
             shader.createUniform("projection");
-            shader.createUniform("view");
-            shader.createUniform("model");
+            shader.createUniform("modelView");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -64,15 +68,13 @@ public class Renderer implements Disposable{
 
         shader.use();
         Matrix4f projection = transformation.getProjectionMatrix(FOV, 800,600,0.01f,1000f);
-        Matrix4f view = new Matrix4f().translate(0f,0f,-3f);
-        Matrix4f model = transformation.getWorldMatrix(new Vector3f(),new Vector3f(total*(float)Math.toRadians(50f),total*(float)Math.toRadians(50f),0),1f);
+        Matrix4f modelView = transformation.getModelViewMatrix(transformation.getViewMatrix(camera),new Vector3f(),new Vector3f(0,total*(float)Math.toRadians(50f),0),1f);
 
 
         shader.setMat4("projection", projection);
-        shader.setMat4("view", view);
-        shader.setMat4("model", model);
+        shader.setMat4("modelView", modelView);
 
-        this.model.render(model);
+        this.model.render(modelView);
 
     }
 
