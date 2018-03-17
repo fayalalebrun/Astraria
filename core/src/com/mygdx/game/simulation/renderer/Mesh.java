@@ -23,7 +23,7 @@ public class Mesh implements Disposable{
     private int diffuseTexture;
 
     private int VAO;
-    int EBO;
+    private int EBO;
 
     private List<Integer> vboList;
 
@@ -33,6 +33,7 @@ public class Mesh implements Disposable{
         this.texCoords = texCoords;
         this.normals = normals;
         this.diffuseTexture = diffuseTexture;
+
 
         vboList = new ArrayList<Integer>();
 
@@ -44,21 +45,18 @@ public class Mesh implements Disposable{
         Gdx.gl30.glGenVertexArrays(1, tempv, 0);
         VAO = tempv[0];
 
+
         /*for(int i = 0; i<vertices.length; i+=3){
             System.out.print(vertices[i]+" ");
             System.out.print(vertices[i+1]+" ");
             System.out.print(vertices[i+2]);
             System.out.println();
-        }
-
-        for(int i = 0; i < indices.length; i++){
-            System.out.println(indices[i]);
         }*/
 
-        Gdx.gl30.glBindVertexArray(VAO);
 
+        Gdx.gl30.glBindVertexArray(VAO);
+        System.out.println(vertices.length);
         int VBO = Gdx.gl.glGenBuffer();
-        vboList.add(VBO);
         Gdx.gl.glBindBuffer(GL_ARRAY_BUFFER, VBO);
         Gdx.gl.glBufferData(GL_ARRAY_BUFFER, vertices.length*4, toFloatBuffer(vertices), Gdx.gl.GL_STATIC_DRAW);
         Gdx.gl.glEnableVertexAttribArray(0);
@@ -84,6 +82,10 @@ public class Mesh implements Disposable{
 
         Gdx.gl.glBindBuffer(GL_ARRAY_BUFFER, 0);
         Gdx.gl30.glBindVertexArray(0);
+
+        Gdx.gl.glDisableVertexAttribArray(0);
+        Gdx.gl.glDisableVertexAttribArray(1);
+        Gdx.gl.glDisableVertexAttribArray(2);
     }
 
     public void render(Shader shader){
@@ -91,6 +93,9 @@ public class Mesh implements Disposable{
 
         Gdx.gl30.glBindVertexArray(VAO);
 
+        Gdx.gl.glEnableVertexAttribArray(0);
+        Gdx.gl.glEnableVertexAttribArray(1);
+        Gdx.gl.glEnableVertexAttribArray(2);
 
 
         Gdx.gl.glActiveTexture(Gdx.gl.GL_TEXTURE0);
@@ -99,7 +104,11 @@ public class Mesh implements Disposable{
         shader.use();
 
         Gdx.gl.glBindBuffer(Gdx.gl.GL_ELEMENT_ARRAY_BUFFER, EBO);
-        Gdx.gl.glDrawElements(Gdx.gl.GL_TRIANGLES, 36, Gdx.gl.GL_UNSIGNED_INT, 0);
+        Gdx.gl.glDrawElements(Gdx.gl.GL_TRIANGLES, indices.length, Gdx.gl.GL_UNSIGNED_INT, 0);
+
+        Gdx.gl.glDisableVertexAttribArray(0);
+        Gdx.gl.glDisableVertexAttribArray(1);
+        Gdx.gl.glDisableVertexAttribArray(2);
 
         Gdx.gl30.glBindVertexArray(0);
     }

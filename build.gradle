@@ -32,6 +32,7 @@ allprojects {
         mavenCentral()
         maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
         maven { url "https://oss.sonatype.org/content/repositories/releases/" }
+        maven { url 'https://jitpack.io' }
     }
 }
 
@@ -45,8 +46,8 @@ project(":desktop") {
         compile "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
         compile "com.badlogicgames.gdx:gdx-tools:$gdxVersion"
         compile "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-desktop"
-        // https://mvnrepository.com/artifact/de.javagl/obj
-        compile group: 'de.javagl', name: 'obj', version: '0.3.0'
+        compile 'com.github.mokiat:java-data-front:v2.0.0'
+
     }
 }
 
