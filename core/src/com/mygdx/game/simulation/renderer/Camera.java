@@ -9,61 +9,56 @@ import org.joml.Vector3f;
  * Created by Fran on 3/13/2018.
  */
 public class Camera {
-    Vector3f position;
-    Vector3f front;
-    Vector3f up;
-    Vector3f right;
-    Vector3f worldUp;
 
-    float yaw;
-    float pitch;
+    private final Vector3f position;
 
-    float movementSpeed;
-    float mouseSensitivity;
-    float zoom;
+    private final Vector3f rotation;
 
-    public Camera(Vector3f position, Vector3f up, float yaw, float pitch, float movementSpeed, float mouseSensitivity, float zoom) {
+    public Camera() {
+        position = new Vector3f(0, 0, 0);
+        rotation = new Vector3f(0, 0, 0);
+    }
+
+    public Camera(Vector3f position, Vector3f rotation) {
         this.position = position;
-        this.up = up;
-        this.yaw = yaw;
-        this.pitch = pitch;
-
-        this.movementSpeed = movementSpeed;
-        this.mouseSensitivity = mouseSensitivity;
-        this.zoom = zoom;
-
-        updateCameraVectors();
+        this.rotation = rotation;
     }
 
-    public Matrix4f getViewMatrix(){
-        return (new Matrix4f()).lookAt(position, (new Vector3f(position)).add(front),up);
+    public Vector3f getPosition() {
+        return position;
     }
 
-    public void processKeyboard(Camera_Movement direction, float delta){
-        float velocity = movementSpeed * delta;
-        switch (direction){
-            case FORWARD:
-                position.add(new Vector3f(front).mul(velocity));
-                break;
-            case BACKWARD:
-                position.sub(new Vector3f(front).mul(velocity));
-                break;
-            case LEFT:
-                position.sub(new Vector3f(right).mul(velocity));
-                break;
-            case RIGHT:
-                position.sub(new Vector3f(right).mul(velocity));
-                break;
+    public void setPosition(float x, float y, float z) {
+        position.x = x;
+        position.y = y;
+        position.z = z;
+    }
+
+    public void movePosition(float offsetX, float offsetY, float offsetZ) {
+        if ( offsetZ != 0 ) {
+            position.x += (float)Math.sin(Math.toRadians(rotation.y)) * -1.0f * offsetZ;
+            position.z += (float)Math.cos(Math.toRadians(rotation.y)) * offsetZ;
         }
+        if ( offsetX != 0) {
+            position.x += (float)Math.sin(Math.toRadians(rotation.y - 90)) * -1.0f * offsetX;
+            position.z += (float)Math.cos(Math.toRadians(rotation.y - 90)) * offsetX;
+        }
+        position.y += offsetY;
     }
 
-    private void updateCameraVectors(){
-        Vector3f front = new Vector3f();
-        front.x = (float)(Math.cos(Math.toRadians(yaw)) * Math.cos(Math.toRadians(pitch)));
-        front.y = (float)Math.sin(Math.toRadians(pitch));
-        front.z = (float)(Math.sin(Math.toRadians(yaw))*Math.cos(Math.toRadians(pitch)));
-        this.front = front.normalize();
-        right = (new Vector3f(this.front)).cross(worldUp).normalize();
-        up = (new Vector3f(right)).cross(this.front).normalize();
+    public Vector3f getRotation() {
+        return rotation;
+    }
+
+    public void setRotation(float x, float y, float z) {
+        rotation.x = x;
+        rotation.y = y;
+        rotation.z = z;
+    }
+
+    public void moveRotation(float offsetX, float offsetY, float offsetZ) {
+        rotation.x += offsetX;
+        rotation.y += offsetY;
+        rotation.z += offsetZ;
     }
 }

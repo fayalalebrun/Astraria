@@ -61,7 +61,7 @@ public class Model {
                     int diffuseTexture = -1;
 
                     for(OBJFace face : mesh.getFaces()){
-                        if(face.getReferences().size()>3){
+                        if(face.getReferences().size()!=3){
                             throw new Exception("Model at "+path+" not triangulated");
                         }
                         for(OBJDataReference reference : face.getReferences()) {
@@ -144,9 +144,9 @@ public class Model {
     }
 
 
-    public void render(Matrix4f modelMatrix){
+    public void render(Matrix4f modelViewMatrix){
         shader.use();
-        shader.setMat4("model", modelMatrix);
+        shader.setMat4("modelView", modelViewMatrix);
         for (Mesh mesh : this.meshes){
             mesh.render(shader);
         }
