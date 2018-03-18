@@ -51,8 +51,8 @@ public class Renderer implements Disposable{
 
         shader = new Shader(Gdx.files.internal("shaders/default.vert"), Gdx.files.internal("shaders/default.frag"));
         model = new Model(openGLTextureManager, "sphere.obj", shader, transformation, new Vector3f(), new Vector3f(), 1);
-        simulationObject = new SimulationObject(0,0,0,model);
-        simulationObject2 = new SimulationObject(0,0,10,model);
+        simulationObject = new SimulationObject(0,0,0,model, 1);
+        simulationObject2 = new SimulationObject(0,0,10000000000f,model, 1000000000f);
 
         shader.use();
 
@@ -78,7 +78,6 @@ public class Renderer implements Disposable{
 
     public void render(float delta){
         camera.update(delta);
-        simulationObject.update(camera);
 
         Gdx.gl.glClearColor(0.0f,0.0f,0.0f,1.0f);
         Gdx.gl.glClear(Gdx.gl.GL_COLOR_BUFFER_BIT | Gdx.gl.GL_DEPTH_BUFFER_BIT);
@@ -86,15 +85,14 @@ public class Renderer implements Disposable{
         total += delta*50;
 
         shader.use();
-        Matrix4f projection = transformation.getProjectionMatrix(FOV, screenWidth,screenHeight,1f,10000000);
+        Matrix4f projection = transformation.getProjectionMatrix(FOV, screenWidth,screenHeight,1f,10000000000f);
 
-        shader.setFloat("og_farPlaneDistance", projection.perspectiveFar());
+        shader.setFloat("og_farPlaneDistance", 10000000000f);
         shader.setFloat("u_logarithmicDepthConstant", 1f);
         shader.setMat4("projection", projection);
 
         //this.model.render(camera);
         simulationObject.render(camera);
-        simulationObject2.update(camera);
         simulationObject2.render(camera);
     }
 
