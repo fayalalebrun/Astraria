@@ -75,6 +75,10 @@ public class Shader implements Disposable{
         Gdx.gl.glUniform1i(uniforms.get(name), value);
     }
 
+    public void setFloat(String name, float value){
+        Gdx.gl.glUniform1f(uniforms.get(name), value);
+    }
+
     public void use(){
         Gdx.gl.glUseProgram(ID);
     }
