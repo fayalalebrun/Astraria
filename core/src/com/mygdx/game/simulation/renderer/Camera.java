@@ -22,6 +22,8 @@ public class Camera {
 
     private float yaw, pitch;
 
+    private int scrolledAmount;
+
     Map<Camera_Movement, Boolean> keysPressed;
 
     public Camera(float posX, float posY, float posZ) {
@@ -79,6 +81,16 @@ public class Camera {
                 }
             }
         }
+    }
+
+    public void changeSpeed(int amount){
+        scrolledAmount-=amount;
+        if(scrolledAmount<1){
+            scrolledAmount = 1;
+        }
+        System.out.println(scrolledAmount);
+        movementSpeed = (float)2.5 * (float)Math.pow((double)scrolledAmount, 4);
+        System.out.println(movementSpeed);
     }
 
     public void processMouseMovement(float xOffset, float yOffset){
