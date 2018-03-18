@@ -8,6 +8,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.profiling.GLProfiler;
 import com.badlogic.gdx.utils.BufferUtils;
 import com.badlogic.gdx.utils.Disposable;
+import com.mygdx.game.simulation.SimulationObject;
 import com.sun.media.jfxmediaimpl.MediaDisposer;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -32,6 +33,8 @@ public class Renderer implements Disposable{
 
     Model model;
 
+    SimulationObject simulationObject;
+
 
     public Renderer() {
         openGLTextureManager = new OpenGLTextureManager();
@@ -39,11 +42,11 @@ public class Renderer implements Disposable{
         new GLProfiler(Gdx.graphics).enable();
         transformation = new Transformation();
 
-        camera = new Camera();
-        camera.movePosition(0,0,3);
+        camera = new Camera(0, 0, 0);
 
         shader = new Shader(Gdx.files.internal("shaders/default.vert"), Gdx.files.internal("shaders/default.frag"));
-        model = new Model(openGLTextureManager, "sphere.obj", shader);
+        model = new Model(openGLTextureManager, "sphere.obj", shader, transformation, new Vector3f(), new Vector3f(), 1);
+        simulationObject = new SimulationObject(0,0,0,model);
 
         shader.use();
 
@@ -65,6 +68,9 @@ public class Renderer implements Disposable{
     }
 
     public void render(float delta){
+        camera.update(delta);
+        simulationObject.update(camera);
+
         Gdx.gl.glClearColor(0.0f,0.0f,0.0f,1.0f);
         Gdx.gl.glClear(Gdx.gl.GL_COLOR_BUFFER_BIT | Gdx.gl.GL_DEPTH_BUFFER_BIT);
 
@@ -72,14 +78,12 @@ public class Renderer implements Disposable{
 
         shader.use();
         Matrix4f projection = transformation.getProjectionMatrix(FOV, 800,600,0.01f,1000f);
-        Matrix4f modelView = transformation.getModelViewMatrix(transformation.getViewMatrix(camera),new Vector3f(),new Vector3f(0,total*(float)Math.toRadians(50f),0),1f);
 
 
         shader.setMat4("projection", projection);
-        shader.setMat4("modelView", modelView);
 
-        this.model.render(modelView);
-
+        //this.model.render(camera);
+        simulationObject.render(camera);
     }
 
 

@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.mokiat.data.front.parser.*;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 import org.joml.Vector3i;
 
 import java.io.*;
@@ -20,14 +21,22 @@ import java.util.*;
  */
 public class Model {
 
-    OpenGLTextureManager textures;
-    ArrayList<Mesh> meshes;
-    Shader shader;
+    private OpenGLTextureManager textures;
+    private ArrayList<Mesh> meshes;
+    private Shader shader;
+    private final Vector3f position, rotation;
+    private final Transformation transformation;
+    private float scale;
 
-    public Model(OpenGLTextureManager textureManager, String name, Shader shader) {
+
+    public Model(OpenGLTextureManager textureManager, String name, Shader shader, Transformation transformation, Vector3f position, Vector3f rotation, float scale) {
+        this.position = position;
+        this.rotation = rotation;
         this.textures = textureManager;
+        this.scale = scale;
         meshes = new ArrayList<Mesh>();
         this.shader = shader;
+        this.transformation = transformation;
         String path = getPath(name);
         loadModel(path);
     }
@@ -143,10 +152,21 @@ public class Model {
         return Gdx.files.local("/models/"+name).file().getAbsolutePath();
     }
 
+    public void setPosition(float x, float y, float z){
+        position.set(x,y,z);
+    }
 
-    public void render(Matrix4f modelViewMatrix){
+    public void setPosition(Vector3f pos){
+        position.set(pos);
+    }
+
+    public void setRotation(float x, float y, float z){
+        rotation.set(x, y, z);
+    }
+
+    public void render(Camera cam){
         shader.use();
-        shader.setMat4("modelView", modelViewMatrix);
+        shader.setMat4("modelView", transformation.getModelViewMatrix(transformation.getViewMatrix(cam),position,rotation, scale));
         for (Mesh mesh : this.meshes){
             mesh.render(shader);
         }

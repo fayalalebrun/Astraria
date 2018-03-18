@@ -23,16 +23,16 @@ public class SimCamInputProcessor implements InputProcessor{
     public boolean keyDown(int keycode) {
         switch (keycode){
             case Input.Keys.W:
-                camera.processKeyboard(Camera_Movement.FORWARD);
+                camera.processKeyboard(Camera_Movement.FORWARD, false);
                 return true;
             case Input.Keys.S:
-                camera.processKeyboard(Camera_Movement.BACKWARD);
+                camera.processKeyboard(Camera_Movement.BACKWARD, false);
                 return true;
             case Input.Keys.A:
-                camera.processKeyboard(Camera_Movement.LEFT);
+                camera.processKeyboard(Camera_Movement.LEFT, false);
                 return true;
             case Input.Keys.D:
-                camera.processKeyboard(Camera_Movement.RIGHT);
+                camera.processKeyboard(Camera_Movement.RIGHT, false);
                 return true;
         }
         return false;
@@ -40,6 +40,20 @@ public class SimCamInputProcessor implements InputProcessor{
 
     @Override
     public boolean keyUp(int keycode) {
+        switch (keycode){
+            case Input.Keys.W:
+                camera.processKeyboard(Camera_Movement.FORWARD, true);
+                return true;
+            case Input.Keys.S:
+                camera.processKeyboard(Camera_Movement.BACKWARD, true);
+                return true;
+            case Input.Keys.A:
+                camera.processKeyboard(Camera_Movement.LEFT, true);
+                return true;
+            case Input.Keys.D:
+                camera.processKeyboard(Camera_Movement.RIGHT, true);
+                return true;
+        }
         return false;
     }
 
