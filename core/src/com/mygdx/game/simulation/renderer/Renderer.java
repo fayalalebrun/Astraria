@@ -21,22 +21,27 @@ import java.nio.FloatBuffer;
  */
 public class Renderer implements Disposable{
 
-    float total;
+    private float total;
 
-    Camera camera;
+    private int screenWidth, screenHeight;
 
-    Shader shader;
+    private Camera camera;
 
-    Transformation transformation;
+    private Shader shader;
+
+    private Transformation transformation;
     private static float FOV =(float)Math.toRadians(45f);
-    OpenGLTextureManager openGLTextureManager;
+    private OpenGLTextureManager openGLTextureManager;
 
-    Model model;
+    private Model model;
 
-    SimulationObject simulationObject;
+    private SimulationObject simulationObject;
 
 
-    public Renderer() {
+    public Renderer(int screenWidth, int screenHeight) {
+        this.screenWidth = screenWidth;
+        this.screenHeight = screenHeight;
+
         openGLTextureManager = new OpenGLTextureManager();
 
         new GLProfiler(Gdx.graphics).enable();
@@ -77,7 +82,7 @@ public class Renderer implements Disposable{
         total += delta*50;
 
         shader.use();
-        Matrix4f projection = transformation.getProjectionMatrix(FOV, 800,600,0.01f,1000f);
+        Matrix4f projection = transformation.getProjectionMatrix(FOV, screenWidth,screenHeight,0.01f,1000f);
 
 
         shader.setMat4("projection", projection);
@@ -86,6 +91,11 @@ public class Renderer implements Disposable{
         simulationObject.render(camera);
     }
 
+
+    public void updateScreenSize(int width, int height){
+        screenWidth = width;
+        screenHeight = height;
+    }
 
 
     @Override
