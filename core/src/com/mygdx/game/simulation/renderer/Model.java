@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.utils.Disposable;
 import com.mokiat.data.front.parser.*;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -19,7 +20,7 @@ import java.util.*;
 /**
  * Created by fraayala19 on 3/15/18.
  */
-public class Model {
+public class Model implements Disposable{
 
     private OpenGLTextureManager textures;
     private ArrayList<Mesh> meshes;
@@ -169,6 +170,13 @@ public class Model {
         shader.setMat4("modelView", transformation.getModelViewMatrix(transformation.getViewMatrix(cam),position,rotation, scale));
         for (Mesh mesh : this.meshes){
             mesh.render(shader);
+        }
+    }
+
+    @Override
+    public void dispose() {
+        for(Mesh mesh : meshes){
+            mesh.dispose();
         }
     }
 
