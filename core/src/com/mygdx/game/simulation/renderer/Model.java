@@ -101,7 +101,8 @@ public class Model implements Disposable{
                     }
                     if(materials.containsKey(mesh.getMaterialName())){
                         MTLMaterial mat = materials.get(mesh.getMaterialName());
-                        diffuseTexture = loadTexture(new FileHandle(getPath(mat.getDiffuseTexture())));
+                        diffuseTexture = textures.addTexture(getPath(mat.getDiffuseTexture()));
+
                     }else{
                         throw new Exception("Could not find mesh material: "+mesh.getMaterialName());
                     }

@@ -31,7 +31,7 @@ public class SimulationScreen extends BaseScreen {
     public SimulationScreen(Boot boot) {
         super(boot);
 
-        renderer = new Renderer();
+        renderer = new Renderer(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
         processor = new SimCamInputProcessor(renderer.getCamera());
 
@@ -76,6 +76,7 @@ public class SimulationScreen extends BaseScreen {
 
     @Override
     public void resize(int width, int height) {
+        renderer.updateScreenSize(width, height);
     }
 
 
