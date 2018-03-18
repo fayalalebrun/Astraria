@@ -13,7 +13,11 @@ import static com.badlogic.gdx.Gdx.input;
  */
 public class SimCamInputProcessor implements InputProcessor{
 
-    Camera camera;
+    private Camera camera;
+
+    private int lastY, lastX;
+
+    private boolean firstMove, rightClickDown;
 
     public SimCamInputProcessor(Camera cam) {
         this.camera = cam;
@@ -64,21 +68,38 @@ public class SimCamInputProcessor implements InputProcessor{
 
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+        if(button == Input.Buttons.RIGHT){
+            rightClickDown = true;
+            lastX = screenX;
+            lastY = screenY;
+            return true;
+        }
         return false;
     }
 
     @Override
     public boolean touchUp(int screenX, int screenY, int pointer, int button) {
+        if(button == Input.Buttons.RIGHT){
+            rightClickDown = false;
+            return true;
+        }
         return false;
     }
 
     @Override
     public boolean touchDragged(int screenX, int screenY, int pointer) {
+        if(rightClickDown){
+            camera.processMouseMovement(screenX-lastX, lastY-screenY);
+            lastX = screenX;
+            lastY = screenY;
+        }
         return false;
     }
 
     @Override
     public boolean mouseMoved(int screenX, int screenY) {
+
+
         return false;
     }
 
