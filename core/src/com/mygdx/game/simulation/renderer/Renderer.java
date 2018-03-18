@@ -35,7 +35,7 @@ public class Renderer implements Disposable{
 
     private Model model;
 
-    private SimulationObject simulationObject;
+    private SimulationObject simulationObject, simulationObject2;
 
 
     public Renderer(int screenWidth, int screenHeight) {
@@ -52,6 +52,7 @@ public class Renderer implements Disposable{
         shader = new Shader(Gdx.files.internal("shaders/default.vert"), Gdx.files.internal("shaders/default.frag"));
         model = new Model(openGLTextureManager, "sphere.obj", shader, transformation, new Vector3f(), new Vector3f(), 1);
         simulationObject = new SimulationObject(0,0,0,model);
+        simulationObject2 = new SimulationObject(0,0,10,model);
 
         shader.use();
 
@@ -59,6 +60,9 @@ public class Renderer implements Disposable{
             shader.createUniform("diffuseTex");
             shader.createUniform("projection");
             shader.createUniform("modelView");
+            shader.createUniform("og_farPlaneDistance");
+            shader.createUniform("u_logarithmicDepthConstant");
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -82,13 +86,16 @@ public class Renderer implements Disposable{
         total += delta*50;
 
         shader.use();
-        Matrix4f projection = transformation.getProjectionMatrix(FOV, screenWidth,screenHeight,0.01f,1000f);
+        Matrix4f projection = transformation.getProjectionMatrix(FOV, screenWidth,screenHeight,1f,10000000);
 
-
+        shader.setFloat("og_farPlaneDistance", projection.perspectiveFar());
+        shader.setFloat("u_logarithmicDepthConstant", 1f);
         shader.setMat4("projection", projection);
 
         //this.model.render(camera);
         simulationObject.render(camera);
+        simulationObject2.update(camera);
+        simulationObject2.render(camera);
     }
 
 
