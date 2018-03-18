@@ -81,6 +81,23 @@ public class Camera {
         }
     }
 
+    public void processMouseMovement(float xOffset, float yOffset){
+        xOffset *= sensitivity;
+        yOffset *= sensitivity;
+
+        yaw += xOffset;
+        pitch += yOffset;
+
+        if(pitch > 89f){
+            pitch = 89f;
+        }
+        if (pitch < -89f){
+            pitch = -89f;
+        }
+
+        updateCameraVectors();
+    }
+
 
     public void processKeyboard(Camera_Movement direction, boolean down){
         down = !down;
