@@ -1,64 +1,93 @@
 package com.mygdx.game.simulation.renderer;
 
 import com.badlogic.gdx.math.Matrix3;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
+import org.joml.Vector3d;
 import org.joml.Vector3f;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by Fran on 3/13/2018.
  */
 public class Camera {
 
-    private final Vector3f position;
+    private float movementSpeed = 2.5f;
+    private float sensitivity = 0.1f;
+    private final Vector3d position;
+    private final Vector3f front, up, right, worldUp, temp, temp2;
 
-    private final Vector3f rotation;
+    private float yaw, pitch;
 
-    public Camera() {
-        position = new Vector3f(0, 0, 0);
-        rotation = new Vector3f(0, 0, 0);
+    Map<Camera_Movement, Boolean> keysPressed;
+
+    public Camera(float posX, float posY, float posZ) {
+        position = new Vector3d(posX,posY,posZ);
+        worldUp = new Vector3f(0, 1, 0);
+        front = new Vector3f();
+        up = new Vector3f();
+        right = new Vector3f();
+        temp = new Vector3f();
+        temp2 = new Vector3f();
+        yaw = -90f;
+        pitch = 0f;
+        updateCameraVectors();
+
+        keysPressed = new HashMap<Camera_Movement, Boolean>();
+        keysPressed.put(Camera_Movement.FORWARD, false);
+        keysPressed.put(Camera_Movement.BACKWARD, false);
+        keysPressed.put(Camera_Movement.RIGHT, false);
+        keysPressed.put(Camera_Movement.LEFT, false);
     }
 
-    public Camera(Vector3f position, Vector3f rotation) {
-        this.position = position;
-        this.rotation = rotation;
+    private void updateCameraVectors() {
+        front.x = (float)(Math.cos(Math.toRadians(yaw))*Math.cos(Math.toRadians(pitch)));
+        front.y = (float)Math.sin(Math.toRadians(pitch));
+        front.z = (float)(Math.sin(Math.toRadians(yaw)) * Math.cos(Math.toRadians(pitch)));
+        front.normalize();
+
+        right.set(front).cross(worldUp).normalize();
+
+        up.set(right).cross(front).normalize();
+
     }
 
-    public Vector3f getPosition() {
+    public Vector3d getPosition(){
         return position;
     }
 
-    public void setPosition(float x, float y, float z) {
-        position.x = x;
-        position.y = y;
-        position.z = z;
-    }
-
-    public void movePosition(float offsetX, float offsetY, float offsetZ) {
-        if ( offsetZ != 0 ) {
-            position.x += (float)Math.sin(Math.toRadians(rotation.y)) * -1.0f * offsetZ;
-            position.z += (float)Math.cos(Math.toRadians(rotation.y)) * offsetZ;
+    public void update(float delta){
+        float velocity = movementSpeed * delta;
+        for(Camera_Movement key : keysPressed.keySet()){
+            if(keysPressed.get(key)){
+                switch (key){
+                    case FORWARD:
+                        position.add(temp.set(front).mul(velocity));
+                        break;
+                    case BACKWARD:
+                        position.add(temp.set(front).mul(-velocity));
+                        break;
+                    case RIGHT:
+                        position.add(temp.set(right).mul(velocity));
+                        break;
+                    case LEFT:
+                        position.add(temp.set(right).mul(-velocity));
+                        break;
+                }
+            }
         }
-        if ( offsetX != 0) {
-            position.x += (float)Math.sin(Math.toRadians(rotation.y - 90)) * -1.0f * offsetX;
-            position.z += (float)Math.cos(Math.toRadians(rotation.y - 90)) * offsetX;
-        }
-        position.y += offsetY;
     }
 
-    public Vector3f getRotation() {
-        return rotation;
+
+    public void processKeyboard(Camera_Movement direction, boolean down){
+        down = !down;
+        keysPressed.put(direction, down);
     }
 
-    public void setRotation(float x, float y, float z) {
-        rotation.x = x;
-        rotation.y = y;
-        rotation.z = z;
-    }
-
-    public void moveRotation(float offsetX, float offsetY, float offsetZ) {
-        rotation.x += offsetX;
-        rotation.y += offsetY;
-        rotation.z += offsetZ;
+    public Matrix4f getViewMatrix(Matrix4f view){
+        return view.identity().lookAt(temp2.set(0,0,0), front, up);
     }
 }

@@ -8,6 +8,7 @@ import com.badlogic.gdx.graphics.profiling.GLProfiler;
 import com.badlogic.gdx.utils.BufferUtils;
 import com.mygdx.game.BaseScreen;
 import com.mygdx.game.Boot;
+import com.mygdx.game.ViewportListener;
 import com.mygdx.game.simulation.renderer.Renderer;
 import com.mygdx.game.simulation.renderer.Shader;
 import org.joml.Matrix4f;
@@ -24,12 +25,18 @@ import java.nio.IntBuffer;
 public class SimulationScreen extends BaseScreen {
 
     Renderer renderer;
+    SimCamInputProcessor processor;
 
 
     public SimulationScreen(Boot boot) {
         super(boot);
 
         renderer = new Renderer();
+
+        processor = new SimCamInputProcessor(renderer.getCamera());
+
+        Gdx.input.setInputProcessor(processor);
+
     }
 
 
