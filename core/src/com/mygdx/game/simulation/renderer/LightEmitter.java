@@ -8,7 +8,7 @@ import org.joml.Vector3f;
  */
 public interface LightEmitter {
 
-    public Vector3f getPosition();
+    public Vector3f getLightPosition(Camera camera);
 
     public Vector3f getAmbient();
 
