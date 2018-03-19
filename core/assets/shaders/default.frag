@@ -26,7 +26,7 @@ void main()
     vec3 norm = normalize(Normal);
     vec3 viewDir = normalize(-FragPos);
 
-    vec3 result = vec3(0.2  * vec3(texture(diffuseTex, TexCoord)));
+    vec3 result = vec3(0.0);
 
     for(int i = 0; i < nLights; i++){
         result+=calcPointLight(pointLights[i], norm, FragPos, viewDir);
