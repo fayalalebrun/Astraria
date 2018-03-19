@@ -17,24 +17,31 @@ public class SimulationObject implements Disposable{
     private final Model model;
     private final Vector3f rotation;
     private float size;
+    private final String name;
 
-    public SimulationObject(double x, double y, double z, Model model, float size) {
+    public SimulationObject(double x, double y, double z, Model model, float size, String name) {
         position = new Vector3d(x,y,z);
         this.model = model;
         this.temp = new Vector3d();
         this.temp2 = new Vector3f();
         rotation = new Vector3f();
         this.size = size;
+        this.name = name;
     }
 
     private void update(Camera cam){
         model.setScale(size);
-        model.setPosition(temp2.set(temp.set(position).sub(cam.getPosition())));
+        model.setPosition(getPositionRelativeToCamera(cam));
     }
 
     public void render(Camera cam){
         update(cam);
         model.render(cam);
+    }
+
+
+    public Vector3f getPositionRelativeToCamera(Camera cam){
+        return temp2.set(temp.set(position).sub(cam.getPosition()));
     }
 
     @Override
