@@ -52,12 +52,12 @@ public class Renderer implements Disposable{
         camera = new Camera(0, 0, 0);
 
         shader = new Shader(Gdx.files.internal("shaders/default.vert"), Gdx.files.internal("shaders/default.frag"));
-        model = new Model(openGLTextureManager, "sphere.obj", shader, transformation, new Vector3f(), new Vector3f(), 1);
+        model = new Model(openGLTextureManager, "sphere3.obj", shader, transformation, new Vector3f(), new Vector3f(), 1);
         simulationObject = new SimulationObject(0,0,0,model, 1);
         simulationObject2 = new SimulationObject(0,0,10000000000f,model, 1000000000f);
 
         lightSourceManager = new LightSourceManager(shader, camera, transformation);
-        lightSourceManager.addLight(new PointLight(0,0,0));
+        lightSourceManager.addLight(new PointLight(10,0,0));
 
         shader.use();
 
