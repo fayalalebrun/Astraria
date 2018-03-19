@@ -116,6 +116,10 @@ public class Camera {
         keysPressed.put(direction, down);
     }
 
+    public Vector3f getFront() {
+        return front;
+    }
+
     public Matrix4f getViewMatrix(Matrix4f view){
         return view.identity().lookAt(temp2.set(0,0,0), front, up);
     }
