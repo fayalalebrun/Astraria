@@ -5,6 +5,7 @@ import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g3d.Renderable;
 import com.badlogic.gdx.graphics.profiling.GLProfiler;
 import com.badlogic.gdx.utils.BufferUtils;
 import com.badlogic.gdx.utils.Disposable;
@@ -14,6 +15,7 @@ import org.joml.*;
 
 import java.lang.Math;
 import java.nio.FloatBuffer;
+import java.util.ArrayList;
 
 /**
  * Created by Fran on 3/14/2018.
@@ -30,7 +32,8 @@ public class Renderer implements Disposable{
 
     private Transformation transformation;
     private static float FOV =(float)Math.toRadians(45f);
-    private OpenGLTextureManager openGLTextureManager;
+    private final OpenGLTextureManager openGLTextureManager;
+    private final ModelManager modelManager;
 
     private Model model;
 
@@ -42,6 +45,8 @@ public class Renderer implements Disposable{
 
     private final Matrix4f combined;
 
+    private final ArrayList<SimulationObject> toDraw;
+
 
     public Renderer(int screenWidth, int screenHeight) {
         this.screenWidth = screenWidth;
@@ -49,8 +54,11 @@ public class Renderer implements Disposable{
         this.combined = new Matrix4f();
 
         openGLTextureManager = new OpenGLTextureManager();
+        this.modelManager = new ModelManager(openGLTextureManager);
 
         this.temp = new Vector3f();
+
+        toDraw = new ArrayList<SimulationObject>();
 
         new GLProfiler(Gdx.graphics).enable();
         transformation = new Transformation();
@@ -58,7 +66,8 @@ public class Renderer implements Disposable{
         camera = new Camera(0, 0, 0);
 
         shader = new Shader(Gdx.files.internal("shaders/default.vert"), Gdx.files.internal("shaders/default.frag"));
-        model = new Model(openGLTextureManager, "sphere3.obj", shader, transformation, new Vector3f(), new Vector3f(), 1);
+
+        model = modelManager.loadModel("sphere3.obj", shader, transformation);
         simulationObject = new SimulationObject(0,0,0,model, 1, "earth");
         simulationObject2 = new SimulationObject(0,0,10000000000f,model, 1000000000f, "sun");
 
@@ -104,6 +113,7 @@ public class Renderer implements Disposable{
         shader.setMat4("projection", projection);
 
 
+
         //this.model.render(camera);
         simulationObject.render(camera);
         simulationObject2.render(camera);
@@ -126,6 +136,14 @@ public class Renderer implements Disposable{
     public void updateScreenSize(int width, int height){
         screenWidth = width;
         screenHeight = height;
+    }
+
+    public void addSimObject(SimulationObject object){
+        toDraw.add(object);
+    }
+
+    public void removeSimObject(SimulationObject object){
+        toDraw.remove(object);
     }
 
 
