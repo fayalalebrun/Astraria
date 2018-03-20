@@ -114,7 +114,6 @@ public class Renderer implements Disposable{
 
 
 
-        //this.model.render(camera);
         simulationObject.render(camera);
         simulationObject2.render(camera);
     }

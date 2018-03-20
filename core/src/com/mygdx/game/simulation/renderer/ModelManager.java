@@ -104,7 +104,7 @@ public class ModelManager {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        Model m = new Model(meshes, shader, transformation, textures);
+        Model m = new Model(meshes, shader, transformation);
         models.put(name, m);
         return m;
     }

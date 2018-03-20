@@ -16,7 +16,7 @@ import java.util.Map;
 public class Camera {
 
     private float movementSpeed = 2.5f;
-    private float sensitivity = 0.1f;
+    private float sensitivity = 0.2f;
     private final Vector3d position;
     private final Vector3f front, up, right, worldUp, temp, temp2;
 
