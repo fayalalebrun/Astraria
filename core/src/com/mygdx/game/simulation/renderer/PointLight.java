@@ -23,7 +23,7 @@ public class PointLight implements LightEmitter{
 
     @Override
     public Vector3f getAmbient() {
-        return temp.set(0.2f,0.2f,0.2f);
+        return temp.set(0.05f,0.05f,0.05f);
     }
 
     @Override
