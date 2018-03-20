@@ -20,6 +20,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import java.util.ArrayList;
 
 /**
  * Created by fraayala19 on 12/12/17.
@@ -28,6 +29,7 @@ public class SimulationScreen extends BaseScreen {
 
     Renderer renderer;
     SimCamInputProcessor processor;
+    ArrayList<SimulationObject> simulationObjects;
 
 
     public SimulationScreen(Boot boot) {
@@ -39,6 +41,11 @@ public class SimulationScreen extends BaseScreen {
 
         Gdx.input.setInputProcessor(processor);
 
+        simulationObjects = new ArrayList<SimulationObject>();
+        simulationObjects.add(new SimulationObject(0,0,0,renderer.getModelManager().loadModel("sphere3.obj",
+                renderer.getPlanetShader(), renderer.getTransformation()), 1,"earth"));
+        simulationObjects.add(new SimulationObject(0,0,10000000000f,renderer.getModelManager().loadModel("sphere3.obj",
+                renderer.getPlanetShader(), renderer.getTransformation()), 1000000000f,"sun"));
 
     }
 
@@ -56,7 +63,7 @@ public class SimulationScreen extends BaseScreen {
         Gdx.gl.glClearColor(1f,1f,1f,1.0f);
         Gdx.gl.glClear(Gdx.gl.GL_COLOR_BUFFER_BIT|Gdx.gl.GL_DEPTH_BUFFER_BIT);
 
-        renderer.render(delta);
+        renderer.render(delta, simulationObjects);
 
     }
 

@@ -28,7 +28,7 @@ public class Renderer implements Disposable{
 
     private Camera camera;
 
-    private Shader shader;
+    private Shader planetShader;
 
     private Transformation transformation;
     private static float FOV =(float)Math.toRadians(45f);
@@ -45,8 +45,6 @@ public class Renderer implements Disposable{
 
     private final Matrix4f combined;
 
-    private final ArrayList<SimulationObject> toDraw;
-
 
     public Renderer(int screenWidth, int screenHeight) {
         this.screenWidth = screenWidth;
@@ -58,30 +56,28 @@ public class Renderer implements Disposable{
 
         this.temp = new Vector3f();
 
-        toDraw = new ArrayList<SimulationObject>();
-
         new GLProfiler(Gdx.graphics).enable();
         transformation = new Transformation();
 
-        camera = new Camera(0, 0, 0);
+        camera = new Camera(0, 0, 10);
 
-        shader = new Shader(Gdx.files.internal("shaders/default.vert"), Gdx.files.internal("shaders/default.frag"));
+        planetShader = new Shader(Gdx.files.internal("shaders/default.vert"), Gdx.files.internal("shaders/default.frag"));
 
-        model = modelManager.loadModel("sphere3.obj", shader, transformation);
-        simulationObject = new SimulationObject(0,0,0,model, 1, "earth");
-        simulationObject2 = new SimulationObject(0,0,10000000000f,model, 1000000000f, "sun");
+        model = modelManager.loadModel("sphere3.obj", planetShader, transformation);
+        //simulationObject = new SimulationObject(0,0,0,model, 1, "earth");
+        //simulationObject2 = new SimulationObject(0,0,10000000000f,model, 1000000000f, "sun");
 
-        lightSourceManager = new LightSourceManager(shader, camera, transformation);
+        lightSourceManager = new LightSourceManager(planetShader, camera, transformation);
         lightSourceManager.addLight(new PointLight(10,0,0));
 
-        shader.use();
+        planetShader.use();
 
         try {
-            shader.createUniform("diffuseTex");
-            shader.createUniform("projection");
-            shader.createUniform("modelView");
-            shader.createUniform("og_farPlaneDistance");
-            shader.createUniform("u_logarithmicDepthConstant");
+            planetShader.createUniform("diffuseTex");
+            planetShader.createUniform("projection");
+            planetShader.createUniform("modelView");
+            planetShader.createUniform("og_farPlaneDistance");
+            planetShader.createUniform("u_logarithmicDepthConstant");
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -95,7 +91,7 @@ public class Renderer implements Disposable{
         return camera;
     }
 
-    public void render(float delta){
+    public void render(float delta, ArrayList<SimulationObject> toDraw){
         camera.update(delta);
         lightSourceManager.update();
 
@@ -104,18 +100,20 @@ public class Renderer implements Disposable{
 
         total += delta*50;
 
-        shader.use();
+        planetShader.use();
         Matrix4f projection = transformation.getProjectionMatrix(FOV, screenWidth,screenHeight,1f,10000000f);
         combined.set(projection).mul(transformation.getViewMatrix(camera));
 
-        shader.setFloat("og_farPlaneDistance", 10000000000f);
-        shader.setFloat("u_logarithmicDepthConstant", 1f);
-        shader.setMat4("projection", projection);
+        planetShader.setFloat("og_farPlaneDistance", 10000000000f);
+        planetShader.setFloat("u_logarithmicDepthConstant", 1f);
+        planetShader.setMat4("projection", projection);
 
+        for(SimulationObject object : toDraw){
+            object.render(camera);
+        }
 
-
-        simulationObject.render(camera);
-        simulationObject2.render(camera);
+        //simulationObject.render(camera);
+        //simulationObject2.render(camera);
     }
 
     public Vector3f projectPoint(Vector3f position){
@@ -137,14 +135,18 @@ public class Renderer implements Disposable{
         screenHeight = height;
     }
 
-    public void addSimObject(SimulationObject object){
-        toDraw.add(object);
+
+    public ModelManager getModelManager() {
+        return modelManager;
     }
 
-    public void removeSimObject(SimulationObject object){
-        toDraw.remove(object);
+    public Shader getPlanetShader() {
+        return planetShader;
     }
 
+    public Transformation getTransformation() {
+        return transformation;
+    }
 
     @Override
     public void dispose() {
