@@ -38,6 +38,12 @@ public class SimCamInputProcessor implements InputProcessor{
             case Input.Keys.D:
                 camera.processKeyboard(Camera_Movement.RIGHT, false);
                 return true;
+            case Input.Keys.UP:
+                camera.changeSpeed(10);
+                return true;
+            case Input.Keys.DOWN:
+                camera.changeSpeed(-10);
+                return true;
         }
         return false;
     }
@@ -105,7 +111,7 @@ public class SimCamInputProcessor implements InputProcessor{
 
     @Override
     public boolean scrolled(int amount) {
-        camera.changeSpeed(amount);
+        camera.changeSpeed(-amount);
         return false;
     }
 }

@@ -84,7 +84,7 @@ public class Camera {
     }
 
     public void changeSpeed(int amount){
-        scrolledAmount-=amount;
+        scrolledAmount+=amount;
         if(scrolledAmount<1){
             scrolledAmount = 1;
         }
