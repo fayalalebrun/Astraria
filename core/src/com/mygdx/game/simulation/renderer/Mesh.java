@@ -80,12 +80,12 @@ public class Mesh implements Disposable{
         Gdx.gl.glBindBuffer(Gdx.gl.GL_ELEMENT_ARRAY_BUFFER, EBO);
         Gdx.gl.glBufferData(Gdx.gl.GL_ELEMENT_ARRAY_BUFFER, indices.length*4,toIntBuffer(indices), Gdx.gl.GL_STATIC_DRAW);
 
-        Gdx.gl.glBindBuffer(GL_ARRAY_BUFFER, 0);
-        Gdx.gl30.glBindVertexArray(0);
-
         Gdx.gl.glDisableVertexAttribArray(0);
         Gdx.gl.glDisableVertexAttribArray(1);
         Gdx.gl.glDisableVertexAttribArray(2);
+
+        Gdx.gl.glBindBuffer(GL_ARRAY_BUFFER, 0);
+        Gdx.gl30.glBindVertexArray(0);
     }
 
     public void render(Shader shader){
