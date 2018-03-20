@@ -22,7 +22,6 @@ import java.util.*;
  */
 public class Model implements Disposable{
 
-    private OpenGLTextureManager textures;
     private ArrayList<Mesh> meshes;
     private Shader shader;
     private final Vector3f position, rotation;
@@ -31,14 +30,13 @@ public class Model implements Disposable{
 
 
 
-    public Model(ArrayList<Mesh> meshes, Shader shader, Transformation transformation, OpenGLTextureManager textureManager){
+    public Model(ArrayList<Mesh> meshes, Shader shader, Transformation transformation){
         position = new Vector3f();
         scale = 1f;
         rotation = new Vector3f();
         this.meshes = meshes;
         this.shader = shader;
         this.transformation = transformation;
-        this.textures = textureManager;
     }
 
 
