@@ -4,6 +4,8 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.profiling.GLProfiler;
 import com.badlogic.gdx.utils.BufferUtils;
 import com.mygdx.game.BaseScreen;
@@ -27,9 +29,12 @@ import java.util.ArrayList;
  */
 public class SimulationScreen extends BaseScreen {
 
-    Renderer renderer;
-    SimCamInputProcessor processor;
-    ArrayList<SimulationObject> simulationObjects;
+    private final Renderer renderer;
+    private final SimCamInputProcessor processor;
+    private ArrayList<SimulationObject> simulationObjects;
+    private final BitmapFont labelFont;
+    private SpriteBatch fontBatch;
+    private final Vector3f temp;
 
 
     public SimulationScreen(Boot boot) {
@@ -38,6 +43,11 @@ public class SimulationScreen extends BaseScreen {
         renderer = new Renderer(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
         processor = new SimCamInputProcessor(renderer.getCamera());
+
+        temp = new Vector3f();
+
+        labelFont = Boot.manager.get("Euclid10.fnt", BitmapFont.class);
+        fontBatch = new SpriteBatch();
 
         Gdx.input.setInputProcessor(processor);
 
@@ -64,6 +74,14 @@ public class SimulationScreen extends BaseScreen {
         Gdx.gl.glClear(Gdx.gl.GL_COLOR_BUFFER_BIT|Gdx.gl.GL_DEPTH_BUFFER_BIT);
 
         renderer.render(delta, simulationObjects);
+        fontBatch.begin();
+        for(SimulationObject object : this.simulationObjects){
+            temp.set(renderer.projectPoint(object.getPositionRelativeToCamera(renderer.getCamera())));
+            if(temp.x!=-1&&temp.y!=-1) {
+                labelFont.draw(fontBatch, object.getName(), temp.x, temp.y);
+            }
+        }
+        fontBatch.end();
 
     }
 
@@ -87,6 +105,7 @@ public class SimulationScreen extends BaseScreen {
     @Override
     public void resize(int width, int height) {
         renderer.updateScreenSize(width, height);
+        fontBatch = new SpriteBatch();
     }
 
 

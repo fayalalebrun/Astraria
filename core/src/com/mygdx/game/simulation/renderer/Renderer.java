@@ -125,7 +125,7 @@ public class Renderer implements Disposable{
         if(res>0) {
             return position;
         } else {
-            return null;
+            return position.set(-1,-1,-1);
         }
     }
 
