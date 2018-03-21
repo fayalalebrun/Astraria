@@ -44,6 +44,10 @@ public class SimulationObject implements Disposable{
         return temp2.set(temp.set(position).sub(cam.getPosition()));
     }
 
+    public String getName() {
+        return name;
+    }
+
     @Override
     public void dispose() {
         model.dispose();
