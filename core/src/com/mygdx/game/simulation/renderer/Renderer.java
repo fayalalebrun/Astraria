@@ -30,14 +30,13 @@ public class Renderer implements Disposable{
 
     private Shader planetShader;
 
+    private Shader starShader;
+
     private Transformation transformation;
     private static float FOV =(float)Math.toRadians(45f);
     private final OpenGLTextureManager openGLTextureManager;
     private final ModelManager modelManager;
 
-    private Model model;
-
-    private SimulationObject simulationObject, simulationObject2;
 
     private LightSourceManager lightSourceManager;
 
@@ -63,9 +62,8 @@ public class Renderer implements Disposable{
 
         planetShader = new Shader(Gdx.files.internal("shaders/default.vert"), Gdx.files.internal("shaders/default.frag"));
 
-        model = modelManager.loadModel("sphere3.obj", planetShader, transformation);
-        //simulationObject = new SimulationObject(0,0,0,model, 1, "earth");
-        //simulationObject2 = new SimulationObject(0,0,10000000000f,model, 1000000000f, "sun");
+        starShader =  new Shader(Gdx.files.internal("shaders/default.vert"), Gdx.files.internal("shaders/sunShader.frag"));
+
 
         lightSourceManager = new LightSourceManager(planetShader, camera, transformation);
         lightSourceManager.addLight(new PointLight(10,0,0));
@@ -78,6 +76,18 @@ public class Renderer implements Disposable{
             planetShader.createUniform("modelView");
             planetShader.createUniform("og_farPlaneDistance");
             planetShader.createUniform("u_logarithmicDepthConstant");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        starShader.use();
+
+        try {
+            starShader.createUniform("projection");
+            starShader.createUniform("modelView");
+            starShader.createUniform("og_farPlaneDistance");
+            starShader.createUniform("u_logarithmicDepthConstant");
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -107,6 +117,12 @@ public class Renderer implements Disposable{
         planetShader.setFloat("og_farPlaneDistance", 10000000000f);
         planetShader.setFloat("u_logarithmicDepthConstant", 1f);
         planetShader.setMat4("projection", projection);
+
+        starShader.use();
+        starShader.setFloat("og_farPlaneDistance", 10000000000f);
+        starShader.setFloat("u_logarithmicDepthConstant", 1f);
+        starShader.setMat4("projection", projection);
+
 
         for(SimulationObject object : toDraw){
             object.render(camera);
