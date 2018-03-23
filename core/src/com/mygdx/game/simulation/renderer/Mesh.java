@@ -98,10 +98,11 @@ public class Mesh implements Disposable{
         Gdx.gl.glEnableVertexAttribArray(2);
 
 
+
+        shader.use();
         Gdx.gl.glActiveTexture(Gdx.gl.GL_TEXTURE0);
         shader.setInt("diffuseTex", diffuseTexture);
         Gdx.gl.glBindTexture(Gdx.gl.GL_TEXTURE_2D, diffuseTexture);
-        shader.use();
 
         Gdx.gl.glBindBuffer(Gdx.gl.GL_ELEMENT_ARRAY_BUFFER, EBO);
         Gdx.gl.glDrawElements(Gdx.gl.GL_TRIANGLES, indices.length, Gdx.gl.GL_UNSIGNED_INT, 0);
