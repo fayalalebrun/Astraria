@@ -40,18 +40,10 @@ public class Mesh implements Disposable{
         setupMesh();
     }
 
-    private void setupMesh(){
+    protected void setupMesh(){
         int[] tempv = new int[1];
         Gdx.gl30.glGenVertexArrays(1, tempv, 0);
         VAO = tempv[0];
-
-
-        /*for(int i = 0; i<vertices.length; i+=3){
-            System.out.print(vertices[i]+" ");
-            System.out.print(vertices[i+1]+" ");
-            System.out.print(vertices[i+2]);
-            System.out.println();
-        }*/
 
 
         Gdx.gl30.glBindVertexArray(VAO);
@@ -123,14 +115,14 @@ public class Mesh implements Disposable{
         Gdx.gl30.glDeleteVertexArrays(1, new int[VAO], 0);
     }
 
-    private IntBuffer toIntBuffer(int[] arr){
+    protected IntBuffer toIntBuffer(int[] arr){
         IntBuffer buff = BufferUtils.newIntBuffer(arr.length);
         buff.put(arr);
         buff.flip();
         return buff;
     }
 
-    private FloatBuffer toFloatBuffer(float[] arr){
+    protected FloatBuffer toFloatBuffer(float[] arr){
         FloatBuffer buff = BufferUtils.newFloatBuffer(arr.length);
         buff.put(arr);
         buff.flip();
