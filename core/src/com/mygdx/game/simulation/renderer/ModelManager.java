@@ -22,7 +22,7 @@ public class ModelManager {
         models = new HashMap<String, Model>();
     }
 
-    public Model loadModel(String name, Shader shader, Transformation transformation){
+    public Model loadModel(String name, Transformation transformation){
         if(models.containsKey(name)){
             return models.get(name);
         }
@@ -84,14 +84,14 @@ public class ModelManager {
                             }
                         }
                     }
-                    if(materials.containsKey(mesh.getMaterialName())){
+
+
+                    if (materials.containsKey(mesh.getMaterialName())) {
                         MTLMaterial mat = materials.get(mesh.getMaterialName());
                         diffuseTexture = textures.addTexture(getPath(mat.getDiffuseTexture()));
-
-                    }else{
-                        throw new Exception("Could not find mesh material: "+mesh.getMaterialName());
+                    } else {
+                        throw new Exception("Could not find mesh material: " + mesh.getMaterialName());
                     }
-
 
                     meshes.add(new Mesh(convertIntegers(indices), convertFloats(vertices), convertFloats(texCoords),convertFloats(normals), diffuseTexture));
                 }
@@ -104,7 +104,7 @@ public class ModelManager {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        Model m = new Model(meshes, shader, transformation);
+        Model m = new Model(meshes, transformation);
         models.put(name, m);
         return m;
     }

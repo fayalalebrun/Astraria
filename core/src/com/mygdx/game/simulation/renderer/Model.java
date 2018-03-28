@@ -23,19 +23,17 @@ import java.util.*;
 public class Model implements Disposable{
 
     private ArrayList<Mesh> meshes;
-    private Shader shader;
     private final Vector3f position, rotation;
     private final Transformation transformation;
     private float scale;
 
 
 
-    public Model(ArrayList<Mesh> meshes, Shader shader, Transformation transformation){
+    public Model(ArrayList<Mesh> meshes, Transformation transformation){
         position = new Vector3f();
         scale = 1f;
         rotation = new Vector3f();
         this.meshes = meshes;
-        this.shader = shader;
         this.transformation = transformation;
     }
 
@@ -56,7 +54,7 @@ public class Model implements Disposable{
         rotation.set(x, y, z);
     }
 
-    public void render(Camera cam){
+    public void render(Camera cam, Shader shader){
         shader.use();
         shader.setMat4("modelView", transformation.getModelViewMatrix(transformation.getViewMatrix(cam),position,rotation, scale));
         for (Mesh mesh : this.meshes){

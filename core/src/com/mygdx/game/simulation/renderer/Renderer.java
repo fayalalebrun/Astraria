@@ -35,6 +35,8 @@ public class Renderer implements Disposable{
     private Transformation transformation;
     private static float FOV =(float)Math.toRadians(45f);
     private final OpenGLTextureManager openGLTextureManager;
+
+
     private final ModelManager modelManager;
 
 
@@ -84,6 +86,7 @@ public class Renderer implements Disposable{
         starShader.use();
 
         try {
+            starShader.createUniform("diffuseTex");
             starShader.createUniform("projection");
             starShader.createUniform("modelView");
             starShader.createUniform("og_farPlaneDistance");
@@ -159,6 +162,11 @@ public class Renderer implements Disposable{
     public Shader getPlanetShader() {
         return planetShader;
     }
+
+    public Shader getStarShader() {
+        return starShader;
+    }
+
 
     public Transformation getTransformation() {
         return transformation;
