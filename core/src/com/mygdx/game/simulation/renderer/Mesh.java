@@ -16,11 +16,11 @@ import static com.badlogic.gdx.graphics.GL20.GL_ARRAY_BUFFER;
  * Created by fraayala19 on 3/15/18.
  */
 public class Mesh implements Disposable{
-    private int[] indices;
-    private float[] vertices;
-    private float[] texCoords;
-    private float[] normals;
-    private int diffuseTexture;
+    protected int[] indices;
+    protected float[] vertices;
+    protected float[] texCoords;
+    protected float[] normals;
+    protected int diffuseTexture;
 
     private int VAO;
     private int EBO;
@@ -95,6 +95,7 @@ public class Mesh implements Disposable{
         Gdx.gl.glActiveTexture(Gdx.gl.GL_TEXTURE0);
         shader.setInt("diffuseTex", diffuseTexture);
         Gdx.gl.glBindTexture(Gdx.gl.GL_TEXTURE_2D, diffuseTexture);
+
 
         Gdx.gl.glBindBuffer(Gdx.gl.GL_ELEMENT_ARRAY_BUFFER, EBO);
         Gdx.gl.glDrawElements(Gdx.gl.GL_TRIANGLES, indices.length, Gdx.gl.GL_UNSIGNED_INT, 0);

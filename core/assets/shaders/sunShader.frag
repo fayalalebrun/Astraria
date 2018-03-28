@@ -5,6 +5,7 @@ in vec2 TexCoord;
 in vec3 FragPos;
 in vec3 Normal;
 
+uniform sampler2D diffuseTex;
 
 vec3 mod289(vec3 x) {
   return x - floor(x * (1.0 / 289.0)) * 289.0;
@@ -126,5 +127,5 @@ void main()
     float n = (noise(FragPos, 4, 40.0, 0.7) + 1.0) * 0.5;
 
     float total = n;
-    FragColor = vec4(total, total, total, 1.0);
+    FragColor = vec4(total, total, total, 1.0) + (texture(diffuseTex,TexCoord)-texture(diffuseTex,TexCoord));
 }
