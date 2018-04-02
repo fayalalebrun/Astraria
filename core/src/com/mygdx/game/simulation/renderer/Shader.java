@@ -52,6 +52,7 @@ public class Shader implements Disposable{
         Gdx.gl.glDeleteShader(fragment);
     }
 
+
     private void checkCompileErrors(int shader, String type){
 
         ByteBuffer temp = ByteBuffer.allocateDirect(4);

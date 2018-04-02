@@ -2,9 +2,9 @@ package com.mygdx.game.simulation.renderer;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.utils.BufferUtils;
-import com.badlogic.gdx.utils.Disposable;
+import org.joml.Vector3d;
+import org.joml.Vector3f;
 
-import java.nio.Buffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
@@ -13,34 +13,56 @@ import java.util.List;
 import static com.badlogic.gdx.graphics.GL20.GL_ARRAY_BUFFER;
 
 /**
- * Created by fraayala19 on 3/15/18.
+ * Created by Fran on 3/28/2018.
  */
-public class Mesh implements Disposable{
-    protected int[] indices;
-    protected float[] vertices;
-    protected float[] texCoords;
-    protected float[] normals;
-    protected int diffuseTexture;
+public class Billboard {
+    private int textureID, billboardWidth, billboardHeight;
 
-    private int VAO;
-    private int EBO;
+    private int VAO, EBO;
+
+    private int[] indices;
+    private float[] vertices;
+    private float[] texCoords;
 
     private List<Integer> vboList;
 
-    public Mesh(int[] indices, float[] vertices, float[] texCoords, float[] normals, int diffuseTexture) {
-        this.indices = indices;
-        this.vertices = vertices;
-        this.texCoords = texCoords;
-        this.normals = normals;
-        this.diffuseTexture = diffuseTexture;
+    private final Vector3d position, temp;
 
+    Transformation transformation;
+
+    private final Vector3f temp2, rotation;
+
+    public Billboard(double x, double y, double z, int textureID, int billboardWidth, int billboardHeight, Transformation transformation) {
+        this.textureID = textureID;
+        this.billboardWidth = billboardWidth;
+        this.billboardHeight = billboardHeight;
 
         vboList = new ArrayList<Integer>();
 
-        setupMesh();
+        position = new Vector3d(x,y,z);
+        this.transformation = transformation;
+
+        temp = new Vector3d();
+        temp2 = new Vector3f();
+        rotation = new Vector3f(0,0,0);
+
+        this.setup();
     }
 
-    protected void setupMesh(){
+    private void setup(){
+        indices = new int[]{0,2,1,1,2,3};
+        vertices = new float[]{
+                -1, 1, 0,
+                1,1,0,
+                -1,-1,0,
+                1,-1,0};
+        texCoords = new float[]{
+                0,1,
+                1,1,
+                0,0,
+                1,0
+        };
+
         int[] tempv = new int[1];
         Gdx.gl30.glGenVertexArrays(1, tempv, 0);
         VAO = tempv[0];
@@ -62,40 +84,32 @@ public class Mesh implements Disposable{
         Gdx.gl.glEnableVertexAttribArray(1);
         Gdx.gl.glVertexAttribPointer(1, 2, Gdx.gl.GL_FLOAT, false, 0, 0);
 
-        VBO = Gdx.gl.glGenBuffer();
-        vboList.add(VBO);
-        Gdx.gl.glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        Gdx.gl.glBufferData(GL_ARRAY_BUFFER, normals.length*4, toFloatBuffer(normals), Gdx.gl.GL_STATIC_DRAW);
-        Gdx.gl.glEnableVertexAttribArray(2);
-        Gdx.gl.glVertexAttribPointer(2, 3, Gdx.gl.GL_FLOAT, false, 0, 0);
-
         EBO = Gdx.gl.glGenBuffer();
         Gdx.gl.glBindBuffer(Gdx.gl.GL_ELEMENT_ARRAY_BUFFER, EBO);
         Gdx.gl.glBufferData(Gdx.gl.GL_ELEMENT_ARRAY_BUFFER, indices.length*4,toIntBuffer(indices), Gdx.gl.GL_STATIC_DRAW);
 
         Gdx.gl.glDisableVertexAttribArray(0);
         Gdx.gl.glDisableVertexAttribArray(1);
-        Gdx.gl.glDisableVertexAttribArray(2);
-
-        Gdx.gl.glBindBuffer(GL_ARRAY_BUFFER, 0);
-        Gdx.gl30.glBindVertexArray(0);
     }
 
-    public void render(Shader shader){
-
-
+    public void render(Shader shader, int screenWidth, int screenHeight, Camera cam){
         Gdx.gl30.glBindVertexArray(VAO);
 
         Gdx.gl.glEnableVertexAttribArray(0);
         Gdx.gl.glEnableVertexAttribArray(1);
-        Gdx.gl.glEnableVertexAttribArray(2);
 
 
 
         shader.use();
         Gdx.gl.glActiveTexture(Gdx.gl.GL_TEXTURE0);
-        shader.setInt("diffuseTex", diffuseTexture);
-        Gdx.gl.glBindTexture(Gdx.gl.GL_TEXTURE_2D, diffuseTexture);
+        shader.setInt("tex", textureID);
+        Gdx.gl.glBindTexture(Gdx.gl.GL_TEXTURE_2D, textureID);
+        shader.setMat4("modelView", transformation.getModelViewMatrix(transformation.getViewMatrix(cam),getPositionRelativeToCamera(cam),rotation, 1));
+        shader.setFloat("billboardWidth", billboardWidth);
+        shader.setFloat("billboardHeight", billboardHeight);
+        shader.setFloat("screenWidth", screenWidth);
+        shader.setFloat("screenHeight", screenHeight);
+        shader.setVec3f("billboardOrigin", getPositionRelativeToCamera(cam));
 
 
         Gdx.gl.glBindBuffer(Gdx.gl.GL_ELEMENT_ARRAY_BUFFER, EBO);
@@ -103,18 +117,8 @@ public class Mesh implements Disposable{
 
         Gdx.gl.glDisableVertexAttribArray(0);
         Gdx.gl.glDisableVertexAttribArray(1);
-        Gdx.gl.glDisableVertexAttribArray(2);
 
         Gdx.gl30.glBindVertexArray(0);
-    }
-
-    @Override
-    public void dispose() {
-        for(Integer i : this.vboList){
-            Gdx.gl.glDeleteBuffer(i);
-        }
-        Gdx.gl.glDeleteBuffer(EBO);
-        Gdx.gl30.glDeleteVertexArrays(1, new int[VAO], 0);
     }
 
     protected IntBuffer toIntBuffer(int[] arr){
@@ -130,4 +134,9 @@ public class Mesh implements Disposable{
         buff.flip();
         return buff;
     }
+
+    public Vector3f getPositionRelativeToCamera(Camera cam){
+        return temp2.set(temp.set(position).sub(cam.getPosition()));
+    }
+
 }
