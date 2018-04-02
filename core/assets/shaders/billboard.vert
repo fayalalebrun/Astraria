@@ -1,7 +1,7 @@
 #version 330 core
 
 layout (location = 0) in vec3 aPos;
-layout (location = 1) in vec3 aTexCoord;
+layout (location = 1) in vec2 aTexCoord;
 
 out vec2 TexCoord;
 
@@ -26,10 +26,12 @@ vec4 modelToClipCoordinates(vec4 position, mat4 modelViewPerspectiveMatrix, floa
 
 void main()
 {
-    vec4 position = modelToClipCoordinates(vec4(centerPoint, 1.0), projection * modelView, u_logarithmicDepthConstant, og_farPlaneDistance);
+    vec4 position = modelToClipCoordinates(vec4(billboardOrigin, 1.0), projection * modelView, u_logarithmicDepthConstant, og_farPlaneDistance);
 
-    float offsetX = 0.5*(billboardWidth/screenWidth) * 2 - 1;
-    float offsetY = 0.5*(billboardHeight/screenHeight) * 2 - 1;
+    float offsetX = (billboardWidth/screenWidth)  - 1;
+    float offsetY = (billboardHeight/screenHeight)  - 1;
 
-    gl_Position = position + vec4(aPos.x * offsetX, aPos.y * offsetY, 0.0, 0.0);
+    gl_Position = position  + vec4(aPos.x * offsetX, aPos.y * offsetY, 0.0, 0.0);
+
+    TexCoord = aTexCoord;
 }

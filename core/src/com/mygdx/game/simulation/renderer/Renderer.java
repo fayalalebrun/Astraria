@@ -32,6 +32,8 @@ public class Renderer implements Disposable{
 
     private Shader starShader;
 
+    private Shader billboardShader;
+
     private Transformation transformation;
     private static float FOV =(float)Math.toRadians(45f);
     private final OpenGLTextureManager openGLTextureManager;
@@ -45,6 +47,8 @@ public class Renderer implements Disposable{
     private final Vector3f temp;
 
     private final Matrix4f combined;
+
+    private Billboard bill;
 
 
     public Renderer(int screenWidth, int screenHeight) {
@@ -66,6 +70,9 @@ public class Renderer implements Disposable{
 
         starShader =  new Shader(Gdx.files.internal("shaders/default.vert"), Gdx.files.internal("shaders/sunShader.frag"));
 
+        billboardShader = new Shader(Gdx.files.internal("shaders/billboard.vert"), Gdx.files.internal("shaders/billboard.frag"));
+
+        bill = new Billboard(0,0,0,openGLTextureManager.addTexture(Gdx.files.internal("models/earth.jpg").path()),100,150, transformation);
 
         lightSourceManager = new LightSourceManager(planetShader, camera, transformation);
         lightSourceManager.addLight(new PointLight(10,0,0));
@@ -91,6 +98,28 @@ public class Renderer implements Disposable{
             starShader.createUniform("modelView");
             starShader.createUniform("og_farPlaneDistance");
             starShader.createUniform("u_logarithmicDepthConstant");
+            //starShader.createUniform("unDT");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        billboardShader.use();
+
+        try {
+            billboardShader.createUniform("billboardWidth");
+            billboardShader.createUniform("billboardHeight");
+            billboardShader.createUniform("screenWidth");
+            billboardShader.createUniform("screenHeight");
+            billboardShader.createUniform("billboardOrigin");
+
+            billboardShader.createUniform("modelView");
+            billboardShader.createUniform("projection");
+            billboardShader.createUniform("og_farPlaneDistance");
+            billboardShader.createUniform("u_logarithmicDepthConstant");
+
+            billboardShader.createUniform("tex");
+
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -98,6 +127,7 @@ public class Renderer implements Disposable{
 
 
         Gdx.gl.glEnable(Gdx.gl.GL_DEPTH_TEST);
+        //Gdx.gl.glEnable(Gdx.gl.GL_CULL_FACE);
     }
 
     public Camera getCamera() {
@@ -113,10 +143,11 @@ public class Renderer implements Disposable{
 
         total += delta*50;
 
-        planetShader.use();
+
         Matrix4f projection = transformation.getProjectionMatrix(FOV, screenWidth,screenHeight,1f,10000000f);
         combined.set(projection).mul(transformation.getViewMatrix(camera));
 
+        planetShader.use();
         planetShader.setFloat("og_farPlaneDistance", 10000000000f);
         planetShader.setFloat("u_logarithmicDepthConstant", 1f);
         planetShader.setMat4("projection", projection);
@@ -126,11 +157,17 @@ public class Renderer implements Disposable{
         starShader.setFloat("u_logarithmicDepthConstant", 1f);
         starShader.setMat4("projection", projection);
 
+        billboardShader.use();
+        starShader.setFloat("og_farPlaneDistance", 10000000000f);
+        starShader.setFloat("u_logarithmicDepthConstant", 1f);
+        starShader.setMat4("projection", projection);
+
 
         for(SimulationObject object : toDraw){
             object.render(camera);
         }
 
+        bill.render(billboardShader,screenWidth,screenHeight,camera);
         //simulationObject.render(camera);
         //simulationObject2.render(camera);
     }

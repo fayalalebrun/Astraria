@@ -49,6 +49,7 @@ public class Mesh implements Disposable{
         Gdx.gl30.glBindVertexArray(VAO);
 
         int VBO = Gdx.gl.glGenBuffer();
+        vboList.add(VBO);
         Gdx.gl.glBindBuffer(GL_ARRAY_BUFFER, VBO);
         Gdx.gl.glBufferData(GL_ARRAY_BUFFER, vertices.length*4, toFloatBuffer(vertices), Gdx.gl.GL_STATIC_DRAW);
         Gdx.gl.glEnableVertexAttribArray(0);
