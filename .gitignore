@@ -4,3 +4,5 @@ desktop/build/
 core/build/
 .gradle/
 recordings/
+core/out/
+desktop/out/production/classes/com/mygdx/game/desktop/DesktopLauncher.class
