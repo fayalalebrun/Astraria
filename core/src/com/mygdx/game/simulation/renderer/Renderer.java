@@ -148,26 +148,28 @@ public class Renderer implements Disposable{
         combined.set(projection).mul(transformation.getViewMatrix(camera));
 
         planetShader.use();
-        planetShader.setFloat("og_farPlaneDistance", 10000000000f);
+        planetShader.setFloat("og_farPlaneDistance", 100000000000f);
         planetShader.setFloat("u_logarithmicDepthConstant", 1f);
         planetShader.setMat4("projection", projection);
 
         starShader.use();
-        starShader.setFloat("og_farPlaneDistance", 10000000000f);
+        starShader.setFloat("og_farPlaneDistance", 100000000000f);
         starShader.setFloat("u_logarithmicDepthConstant", 1f);
         starShader.setMat4("projection", projection);
 
         billboardShader.use();
-        starShader.setFloat("og_farPlaneDistance", 10000000000f);
-        starShader.setFloat("u_logarithmicDepthConstant", 1f);
-        starShader.setMat4("projection", projection);
+        billboardShader.setFloat("og_farPlaneDistance", 100000000000f);
+        billboardShader.setFloat("u_logarithmicDepthConstant", 1f);
+        billboardShader.setMat4("projection", projection);
 
+
+        bill.render(billboardShader,screenWidth,screenHeight,camera);
 
         for(SimulationObject object : toDraw){
             object.render(camera);
         }
 
-        bill.render(billboardShader,screenWidth,screenHeight,camera);
+
         //simulationObject.render(camera);
         //simulationObject2.render(camera);
     }

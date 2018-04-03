@@ -105,6 +105,7 @@ public class Billboard {
         shader.setInt("tex", textureID);
         Gdx.gl.glBindTexture(Gdx.gl.GL_TEXTURE_2D, textureID);
         shader.setMat4("modelView", transformation.getModelViewMatrix(transformation.getViewMatrix(cam),getPositionRelativeToCamera(cam),rotation, 1));
+        System.out.println(billboardWidth + " " + billboardHeight + " " + screenWidth + " " + screenHeight);
         shader.setFloat("billboardWidth", billboardWidth);
         shader.setFloat("billboardHeight", billboardHeight);
         shader.setFloat("screenWidth", screenWidth);

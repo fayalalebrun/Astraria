@@ -52,7 +52,7 @@ public class SimulationScreen extends BaseScreen {
         Gdx.input.setInputProcessor(processor);
 
         simulationObjects = new ArrayList<SimulationObject>();
-        simulationObjects.add(new SimulationObject(0,0,0,renderer.getModelManager().loadModel("sphere3.obj", renderer.getTransformation()),
+        simulationObjects.add(new SimulationObject(3,0,0,renderer.getModelManager().loadModel("sphere3.obj", renderer.getTransformation()),
                 renderer.getStarShader(), 1,"earth"));
         simulationObjects.add(new SimulationObject(0,0,10000000000f,renderer.getModelManager().loadModel("sphere3.obj", renderer.getTransformation())
                 ,renderer.getStarShader(), 1000000000f,"sun"));
