@@ -84,18 +84,22 @@ public class Mesh implements Disposable{
     public void render(Shader shader){
 
 
+
+
+
+
+        shader.use();
+
+        Gdx.gl.glActiveTexture(Gdx.gl.GL_TEXTURE0);
+        shader.setInt("diffuseTex", 0);
+        Gdx.gl.glBindTexture(Gdx.gl.GL_TEXTURE_2D, diffuseTexture);
+        Gdx.gl.glActiveTexture(Gdx.gl.GL_TEXTURE0);
+
         Gdx.gl30.glBindVertexArray(VAO);
 
         Gdx.gl.glEnableVertexAttribArray(0);
         Gdx.gl.glEnableVertexAttribArray(1);
         Gdx.gl.glEnableVertexAttribArray(2);
-
-
-
-        shader.use();
-        Gdx.gl.glActiveTexture(Gdx.gl.GL_TEXTURE0);
-        shader.setInt("diffuseTex", diffuseTexture);
-        Gdx.gl.glBindTexture(Gdx.gl.GL_TEXTURE_2D, diffuseTexture);
 
 
         Gdx.gl.glBindBuffer(Gdx.gl.GL_ELEMENT_ARRAY_BUFFER, EBO);
