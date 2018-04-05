@@ -22,7 +22,7 @@ import java.util.ArrayList;
  */
 public class Renderer implements Disposable{
 
-    private float total;
+    private static final float MAXVIEWDISTANCE = 100000000000f;
 
     private int screenWidth, screenHeight;
 
@@ -72,7 +72,7 @@ public class Renderer implements Disposable{
 
         billboardShader = new Shader(Gdx.files.internal("shaders/billboard.vert"), Gdx.files.internal("shaders/billboard.frag"));
 
-        bill = new Billboard(0,0,0,openGLTextureManager.addTexture(Gdx.files.internal("models/earth.jpg").path()),100,150, transformation);
+        bill = new Billboard(0,0,0,openGLTextureManager.addTexture(Gdx.files.internal("particle.png").path()),100,150, transformation);
 
         lightSourceManager = new LightSourceManager(planetShader, camera, transformation);
         lightSourceManager.addLight(new PointLight(10,0,0));
@@ -126,8 +126,8 @@ public class Renderer implements Disposable{
         }
 
 
-        Gdx.gl.glEnable(Gdx.gl.GL_DEPTH_TEST);
-        //Gdx.gl.glEnable(Gdx.gl.GL_CULL_FACE);
+
+
     }
 
     public Camera getCamera() {
@@ -138,40 +138,47 @@ public class Renderer implements Disposable{
         camera.update(delta);
         lightSourceManager.update();
 
+        //Gdx.gl.glEnable(Gdx.gl.GL_CULL_FACE);
+        Gdx.gl.glEnable(Gdx.gl.GL_DEPTH_TEST);
+        Gdx.gl.glEnable(Gdx.gl.GL_BLEND);
+
         Gdx.gl.glClearColor(0.0f,0.0f,0.0f,1.0f);
         Gdx.gl.glClear(Gdx.gl.GL_COLOR_BUFFER_BIT | Gdx.gl.GL_DEPTH_BUFFER_BIT);
 
-        total += delta*50;
 
 
         Matrix4f projection = transformation.getProjectionMatrix(FOV, screenWidth,screenHeight,1f,10000000f);
         combined.set(projection).mul(transformation.getViewMatrix(camera));
 
         planetShader.use();
-        planetShader.setFloat("og_farPlaneDistance", 100000000000f);
+        planetShader.setFloat("og_farPlaneDistance", MAXVIEWDISTANCE);
         planetShader.setFloat("u_logarithmicDepthConstant", 1f);
         planetShader.setMat4("projection", projection);
 
         starShader.use();
-        starShader.setFloat("og_farPlaneDistance", 100000000000f);
+        starShader.setFloat("og_farPlaneDistance", MAXVIEWDISTANCE);
         starShader.setFloat("u_logarithmicDepthConstant", 1f);
         starShader.setMat4("projection", projection);
 
         billboardShader.use();
-        billboardShader.setFloat("og_farPlaneDistance", 100000000000f);
+        billboardShader.setFloat("og_farPlaneDistance", MAXVIEWDISTANCE);
         billboardShader.setFloat("u_logarithmicDepthConstant", 1f);
         billboardShader.setMat4("projection", projection);
 
 
-        bill.render(billboardShader,screenWidth,screenHeight,camera);
+
 
         for(SimulationObject object : toDraw){
             object.render(camera);
         }
 
+        bill.render(billboardShader,screenWidth,screenHeight,camera);
 
         //simulationObject.render(camera);
         //simulationObject2.render(camera);
+        Gdx.gl.glDisable(Gdx.gl.GL_CULL_FACE);
+        Gdx.gl.glDisable(Gdx.gl.GL_DEPTH_TEST);
+        Gdx.gl.glDisable(Gdx.gl.GL_BLEND);
     }
 
     public Vector3f projectPoint(Vector3f position){

@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.badlogic.gdx.graphics.GL20.GL_ARRAY_BUFFER;
+import static com.badlogic.gdx.graphics.GL20.GL_TEXTURE0;
 
 /**
  * Created by Fran on 3/28/2018.
@@ -93,24 +94,27 @@ public class Billboard {
     }
 
     public void render(Shader shader, int screenWidth, int screenHeight, Camera cam){
-        Gdx.gl30.glBindVertexArray(VAO);
-
-        Gdx.gl.glEnableVertexAttribArray(0);
-        Gdx.gl.glEnableVertexAttribArray(1);
-
-
 
         shader.use();
-        Gdx.gl.glActiveTexture(Gdx.gl.GL_TEXTURE0);
-        shader.setInt("tex", textureID);
-        Gdx.gl.glBindTexture(Gdx.gl.GL_TEXTURE_2D, textureID);
         shader.setMat4("modelView", transformation.getModelViewMatrix(transformation.getViewMatrix(cam),getPositionRelativeToCamera(cam),rotation, 1));
-        System.out.println(billboardWidth + " " + billboardHeight + " " + screenWidth + " " + screenHeight);
         shader.setFloat("billboardWidth", billboardWidth);
         shader.setFloat("billboardHeight", billboardHeight);
         shader.setFloat("screenWidth", screenWidth);
         shader.setFloat("screenHeight", screenHeight);
         shader.setVec3f("billboardOrigin", getPositionRelativeToCamera(cam));
+
+        Gdx.gl30.glBindVertexArray(VAO);
+
+        Gdx.gl.glEnableVertexAttribArray(0);
+        Gdx.gl.glEnableVertexAttribArray(1);
+
+        Gdx.gl.glActiveTexture(Gdx.gl.GL_TEXTURE0);
+        shader.setInt("tex", 0);
+        Gdx.gl.glBindTexture(Gdx.gl.GL_TEXTURE_2D, textureID);
+        Gdx.gl.glActiveTexture(Gdx.gl.GL_TEXTURE0);
+
+
+
 
 
         Gdx.gl.glBindBuffer(Gdx.gl.GL_ELEMENT_ARRAY_BUFFER, EBO);
