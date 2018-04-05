@@ -147,6 +147,8 @@ public class Renderer implements Disposable{
 
             lensGlowShader.createUniform("tex");
 
+            lensGlowShader.createUniform("camDir");
+
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -192,6 +194,7 @@ public class Renderer implements Disposable{
 
         lensGlowShader.use();
         lensGlowShader.setMat4("projection", projection);
+        lensGlowShader.setVec3f("camDir", camera.getFront());
 
 
         for(SimulationObject object : toDraw){
