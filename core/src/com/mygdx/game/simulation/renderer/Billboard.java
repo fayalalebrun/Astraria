@@ -30,7 +30,7 @@ public class Billboard implements Disposable{
 
     private final Vector3d position, temp;
 
-    Transformation transformation;
+    private Transformation transformation;
 
     private final Vector3f temp2, rotation;
 

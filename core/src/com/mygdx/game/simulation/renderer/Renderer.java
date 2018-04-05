@@ -34,6 +34,8 @@ public class Renderer implements Disposable{
 
     private Shader billboardShader;
 
+    private Shader lensGlowShader;
+
     private Transformation transformation;
     private static float FOV =(float)Math.toRadians(45f);
     private final OpenGLTextureManager openGLTextureManager;
@@ -49,6 +51,8 @@ public class Renderer implements Disposable{
     private final Matrix4f combined;
 
     private Billboard bill;
+
+    private LensGlow testGlow;
 
 
     public Renderer(int screenWidth, int screenHeight) {
@@ -72,7 +76,11 @@ public class Renderer implements Disposable{
 
         billboardShader = new Shader(Gdx.files.internal("shaders/billboard.vert"), Gdx.files.internal("shaders/billboard.frag"));
 
+        lensGlowShader = new Shader(Gdx.files.internal("shaders/lensGlow.vert"), Gdx.files.internal("shaders/lensGlow.frag"));
+
         bill = new Billboard(0,0,0,openGLTextureManager.addTexture(Gdx.files.internal("particle.png").path()),100,150, transformation);
+
+        testGlow = new LensGlow(10,0,0,openGLTextureManager.addTexture(Gdx.files.internal("star_glow.png").path()),1024,1024,transformation);
 
         lightSourceManager = new LightSourceManager(planetShader, camera, transformation);
         lightSourceManager.addLight(new PointLight(10,0,0));
@@ -125,7 +133,24 @@ public class Renderer implements Disposable{
             e.printStackTrace();
         }
 
+        lensGlowShader.use();
 
+        try {
+            lensGlowShader.createUniform("width");
+            lensGlowShader.createUniform("height");
+            lensGlowShader.createUniform("screenWidth");
+            lensGlowShader.createUniform("screenHeight");
+            lensGlowShader.createUniform("uPos");
+
+            lensGlowShader.createUniform("modelView");
+            lensGlowShader.createUniform("projection");
+
+            lensGlowShader.createUniform("tex");
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
 
     }
@@ -138,7 +163,7 @@ public class Renderer implements Disposable{
         camera.update(delta);
         lightSourceManager.update();
 
-        //Gdx.gl.glEnable(Gdx.gl.GL_CULL_FACE);
+        Gdx.gl.glEnable(Gdx.gl.GL_CULL_FACE);
         Gdx.gl.glEnable(Gdx.gl.GL_DEPTH_TEST);
         Gdx.gl.glEnable(Gdx.gl.GL_BLEND);
 
@@ -165,7 +190,8 @@ public class Renderer implements Disposable{
         billboardShader.setFloat("u_logarithmicDepthConstant", 1f);
         billboardShader.setMat4("projection", projection);
 
-
+        lensGlowShader.use();
+        lensGlowShader.setMat4("projection", projection);
 
 
         for(SimulationObject object : toDraw){
@@ -173,6 +199,8 @@ public class Renderer implements Disposable{
         }
 
         bill.render(billboardShader,screenWidth,screenHeight,camera);
+
+        testGlow.render(lensGlowShader, screenWidth, screenHeight, camera);
 
         //simulationObject.render(camera);
         //simulationObject2.render(camera);
