@@ -90,13 +90,16 @@ public class LensGlow {
     }
 
     public void render(Shader shader, int screenWidth, int screenHeight, Camera cam){
+        float size = (float)calculateGlowSize(1391400000,5778,getPositionRelativeToCamera(cam).length());
+
         shader.use();
         shader.setMat4("modelView", transformation.getModelViewMatrix(transformation.getViewMatrix(cam),getPositionRelativeToCamera(cam),rotation, 1));
-        shader.setFloat("width", width);
-        shader.setFloat("height", height);
+        shader.setFloat("width", size);
+        shader.setFloat("height", size * (screenWidth/screenHeight));
         shader.setFloat("screenWidth", screenWidth);
         shader.setFloat("screenHeight", screenHeight);
         shader.setVec3f("uPos", getPositionRelativeToCamera(cam));
+
 
         Gdx.gl30.glBindVertexArray(VAO);
 
@@ -133,5 +136,15 @@ public class LensGlow {
 
     public Vector3f getPositionRelativeToCamera(Camera cam){
         return temp2.set(temp.set(position).sub(cam.getPosition()));
+    }
+
+    public double calculateGlowSize(double diameter, double temperature, double distance) {
+        final double DSUN = 1392684.0;
+        final double TSUN = 5778.0;
+
+        double d = distance; // Distance
+        double D = diameter * DSUN;
+        double L = (D * D) * Math.pow(temperature / TSUN, 4.0); // Luminosity
+        return 0.016 * Math.pow(L, 0.25) / Math.pow(d, 0.35); // Size
     }
 }

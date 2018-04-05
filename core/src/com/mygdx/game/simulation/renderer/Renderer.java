@@ -80,10 +80,10 @@ public class Renderer implements Disposable{
 
         bill = new Billboard(0,0,0,openGLTextureManager.addTexture(Gdx.files.internal("particle.png").path()),100,150, transformation);
 
-        testGlow = new LensGlow(10,0,0,openGLTextureManager.addTexture(Gdx.files.internal("star_glow.png").path()),1024,1024,transformation);
+        testGlow = new LensGlow(149598000,0,0,openGLTextureManager.addTexture(Gdx.files.internal("star_glow.png").path()),1024,1024,transformation);
 
         lightSourceManager = new LightSourceManager(planetShader, camera, transformation);
-        lightSourceManager.addLight(new PointLight(10,0,0));
+        lightSourceManager.addLight(new PointLight(149598000,0,0));
 
         planetShader.use();
 
