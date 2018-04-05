@@ -2,7 +2,6 @@ package com.mygdx.game.simulation.renderer;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.utils.BufferUtils;
-import com.badlogic.gdx.utils.Disposable;
 import org.joml.Vector3d;
 import org.joml.Vector3f;
 
@@ -12,13 +11,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.badlogic.gdx.graphics.GL20.GL_ARRAY_BUFFER;
-import static com.badlogic.gdx.graphics.GL20.GL_TEXTURE0;
 
-/**
- * Created by Fran on 3/28/2018.
- */
-public class Billboard implements Disposable{
-    private int textureID, billboardWidth, billboardHeight;
+public class LensGlow {
+    private int textureID, width, height;
 
     private int VAO, EBO;
 
@@ -28,25 +23,25 @@ public class Billboard implements Disposable{
 
     private List<Integer> vboList;
 
+
     private final Vector3d position, temp;
 
     private Transformation transformation;
 
     private final Vector3f temp2, rotation;
 
-    public Billboard(double x, double y, double z, int textureID, int billboardWidth, int billboardHeight, Transformation transformation) {
+    public LensGlow(double x, double y, double z, int textureID, int width, int height, Transformation transformation) {
         this.textureID = textureID;
-        this.billboardWidth = billboardWidth;
-        this.billboardHeight = billboardHeight;
-
-        vboList = new ArrayList<Integer>();
-
-        position = new Vector3d(x,y,z);
+        this.width = width;
+        this.height = height;
+        this.position = new Vector3d(x,y,z);
         this.transformation = transformation;
 
-        temp = new Vector3d();
-        temp2 = new Vector3f();
-        rotation = new Vector3f(0,0,0);
+        this.temp = new Vector3d();
+        this.temp2 = new Vector3f();
+        this.rotation = new Vector3f();
+
+        this.vboList = new ArrayList<Integer>();
 
         this.setup();
     }
@@ -95,14 +90,13 @@ public class Billboard implements Disposable{
     }
 
     public void render(Shader shader, int screenWidth, int screenHeight, Camera cam){
-
         shader.use();
         shader.setMat4("modelView", transformation.getModelViewMatrix(transformation.getViewMatrix(cam),getPositionRelativeToCamera(cam),rotation, 1));
-        shader.setFloat("billboardWidth", billboardWidth);
-        shader.setFloat("billboardHeight", billboardHeight);
+        shader.setFloat("width", width);
+        shader.setFloat("height", height);
         shader.setFloat("screenWidth", screenWidth);
         shader.setFloat("screenHeight", screenHeight);
-        shader.setVec3f("billboardOrigin", getPositionRelativeToCamera(cam));
+        shader.setVec3f("uPos", getPositionRelativeToCamera(cam));
 
         Gdx.gl30.glBindVertexArray(VAO);
 
@@ -113,10 +107,6 @@ public class Billboard implements Disposable{
         shader.setInt("tex", 0);
         Gdx.gl.glBindTexture(Gdx.gl.GL_TEXTURE_2D, textureID);
         Gdx.gl.glActiveTexture(Gdx.gl.GL_TEXTURE0);
-
-
-
-
 
         Gdx.gl.glBindBuffer(Gdx.gl.GL_ELEMENT_ARRAY_BUFFER, EBO);
         Gdx.gl.glDrawElements(Gdx.gl.GL_TRIANGLES, indices.length, Gdx.gl.GL_UNSIGNED_INT, 0);
@@ -143,14 +133,5 @@ public class Billboard implements Disposable{
 
     public Vector3f getPositionRelativeToCamera(Camera cam){
         return temp2.set(temp.set(position).sub(cam.getPosition()));
-    }
-
-    @Override
-    public void dispose() {
-        for(int i : vboList){
-            Gdx.gl.glDeleteBuffer(i);
-        }
-        Gdx.gl.glDeleteBuffer(EBO);
-        Gdx.gl30.glDeleteVertexArrays(1, new int[VAO], 0);
     }
 }
