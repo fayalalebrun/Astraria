@@ -13,7 +13,7 @@ import java.util.List;
 import static com.badlogic.gdx.graphics.GL20.GL_ARRAY_BUFFER;
 
 public class LensGlow {
-    private int textureID, width, height;
+    private int textureID, spectrumTexID, width, height;
 
     private int VAO, EBO;
 
@@ -30,10 +30,14 @@ public class LensGlow {
 
     private final Vector3f temp2, rotation;
 
-    public LensGlow(double x, double y, double z, int textureID, int width, int height, Transformation transformation) {
+    private float temperature;
+
+    public LensGlow(double x, double y, double z, int textureID, int spectrumTexID, float temperature, int width, int height, Transformation transformation) {
         this.textureID = textureID;
         this.width = width;
         this.height = height;
+        this.spectrumTexID = spectrumTexID;
+        this.temperature = temperature;
         this.position = new Vector3d(x,y,z);
         this.transformation = transformation;
 
@@ -90,7 +94,7 @@ public class LensGlow {
     }
 
     public void render(Shader shader, int screenWidth, int screenHeight, Camera cam){
-        float size = (float)calculateGlowSize(1391400000,5778,getPositionRelativeToCamera(cam).length());
+        float size = (float)calculateGlowSize(1391400000,temperature,getPositionRelativeToCamera(cam).length());
 
         shader.use();
         shader.setMat4("modelView", transformation.getModelViewMatrix(transformation.getViewMatrix(cam),getPositionRelativeToCamera(cam),rotation, 1));
@@ -99,6 +103,7 @@ public class LensGlow {
         shader.setFloat("screenWidth", screenWidth);
         shader.setFloat("screenHeight", screenHeight);
         shader.setVec3f("uPos", getPositionRelativeToCamera(cam));
+        shader.setFloat("temperature", temperature);
 
 
         Gdx.gl30.glBindVertexArray(VAO);
@@ -109,6 +114,11 @@ public class LensGlow {
         Gdx.gl.glActiveTexture(Gdx.gl.GL_TEXTURE0);
         shader.setInt("tex", 0);
         Gdx.gl.glBindTexture(Gdx.gl.GL_TEXTURE_2D, textureID);
+
+        Gdx.gl.glActiveTexture(Gdx.gl.GL_TEXTURE1);
+        shader.setInt("spectrumTex",1);
+        Gdx.gl.glBindTexture(Gdx.gl.GL_TEXTURE_2D, spectrumTexID);
+
         Gdx.gl.glActiveTexture(Gdx.gl.GL_TEXTURE0);
 
         Gdx.gl.glBindBuffer(Gdx.gl.GL_ELEMENT_ARRAY_BUFFER, EBO);
