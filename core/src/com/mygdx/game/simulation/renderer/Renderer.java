@@ -50,7 +50,6 @@ public class Renderer implements Disposable{
 
     private final Matrix4f combined;
 
-    private Billboard bill;
 
     private LensGlow testGlow;
 
@@ -78,9 +77,8 @@ public class Renderer implements Disposable{
 
         lensGlowShader = new Shader(Gdx.files.internal("shaders/lensGlow.vert"), Gdx.files.internal("shaders/lensGlow.frag"));
 
-        bill = new Billboard(0,0,0,openGLTextureManager.addTexture(Gdx.files.internal("particle.png").path()),100,150, transformation);
-
-        testGlow = new LensGlow(149598000,0,0,openGLTextureManager.addTexture(Gdx.files.internal("star_glow.png").path()),1024,1024,transformation);
+        testGlow = new LensGlow(149598000,0,0,openGLTextureManager.addTexture(Gdx.files.internal("star_glow.png").path()),
+                openGLTextureManager.addTexture(Gdx.files.internal("starspectrum.png").path()),5500,1024,1024,transformation);
 
         lightSourceManager = new LightSourceManager(planetShader, camera, transformation);
         lightSourceManager.addLight(new PointLight(149598000,0,0));
@@ -141,11 +139,13 @@ public class Renderer implements Disposable{
             lensGlowShader.createUniform("screenWidth");
             lensGlowShader.createUniform("screenHeight");
             lensGlowShader.createUniform("uPos");
+            lensGlowShader.createUniform("temperature");
 
             lensGlowShader.createUniform("modelView");
             lensGlowShader.createUniform("projection");
 
             lensGlowShader.createUniform("tex");
+            lensGlowShader.createUniform("spectrumTex");
 
             lensGlowShader.createUniform("camDir");
 
@@ -201,7 +201,6 @@ public class Renderer implements Disposable{
             object.render(camera);
         }
 
-        bill.render(billboardShader,screenWidth,screenHeight,camera);
 
         testGlow.render(lensGlowShader, screenWidth, screenHeight, camera);
 
