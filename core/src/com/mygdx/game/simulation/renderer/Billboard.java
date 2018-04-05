@@ -2,6 +2,7 @@ package com.mygdx.game.simulation.renderer;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.utils.BufferUtils;
+import com.badlogic.gdx.utils.Disposable;
 import org.joml.Vector3d;
 import org.joml.Vector3f;
 
@@ -16,7 +17,7 @@ import static com.badlogic.gdx.graphics.GL20.GL_TEXTURE0;
 /**
  * Created by Fran on 3/28/2018.
  */
-public class Billboard {
+public class Billboard implements Disposable{
     private int textureID, billboardWidth, billboardHeight;
 
     private int VAO, EBO;
@@ -144,4 +145,12 @@ public class Billboard {
         return temp2.set(temp.set(position).sub(cam.getPosition()));
     }
 
+    @Override
+    public void dispose() {
+        for(int i : vboList){
+            Gdx.gl.glDeleteBuffer(i);
+        }
+        Gdx.gl.glDeleteBuffer(EBO);
+        Gdx.gl30.glDeleteVertexArrays(1, new int[VAO], 0);
+    }
 }
