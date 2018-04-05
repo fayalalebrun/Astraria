@@ -2,6 +2,7 @@ package com.mygdx.game.simulation.renderer;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.utils.BufferUtils;
+import com.badlogic.gdx.utils.Disposable;
 import org.joml.Vector3d;
 import org.joml.Vector3f;
 
@@ -12,7 +13,7 @@ import java.util.List;
 
 import static com.badlogic.gdx.graphics.GL20.GL_ARRAY_BUFFER;
 
-public class LensGlow {
+public class LensGlow implements Disposable {
     private int textureID, spectrumTexID, width, height;
 
     private int VAO, EBO;
@@ -156,5 +157,14 @@ public class LensGlow {
         double D = diameter * DSUN;
         double L = (D * D) * Math.pow(temperature / TSUN, 4.0); // Luminosity
         return 0.016 * Math.pow(L, 0.25) / Math.pow(d, 0.35); // Size
+    }
+
+    @Override
+    public void dispose() {
+        for(int i : vboList){
+            Gdx.gl.glDeleteBuffer(i);
+        }
+        Gdx.gl.glDeleteBuffer(EBO);
+        Gdx.gl30.glDeleteVertexArrays(1, new int[VAO], 0);
     }
 }
