@@ -11,10 +11,7 @@ import com.badlogic.gdx.utils.BufferUtils;
 import com.mygdx.game.BaseScreen;
 import com.mygdx.game.Boot;
 import com.mygdx.game.ViewportListener;
-import com.mygdx.game.simulation.renderer.Model;
-import com.mygdx.game.simulation.renderer.OpenGLTextureManager;
-import com.mygdx.game.simulation.renderer.Renderer;
-import com.mygdx.game.simulation.renderer.Shader;
+import com.mygdx.game.simulation.renderer.*;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -23,6 +20,8 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
+import java.util.Queue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Created by fraayala19 on 12/12/17.
@@ -40,6 +39,7 @@ public class SimulationScreen extends BaseScreen {
     public SimulationScreen(Boot boot) {
         super(boot);
 
+
         renderer = new Renderer(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
         processor = new SimCamInputProcessor(renderer.getCamera());
@@ -52,12 +52,15 @@ public class SimulationScreen extends BaseScreen {
         Gdx.input.setInputProcessor(processor);
 
         simulationObjects = new ArrayList<SimulationObject>();
+
+        simulationObjects.add(new Star(149598000,0,0,renderer.getModelManager().loadModel("sphere3.obj", renderer.getTransformation()),
+                renderer,695700,"Sun2",5500));
+
         simulationObjects.add(new SimulationObject(3,0,0,renderer.getModelManager().loadModel("sphere3.obj", renderer.getTransformation()),
                 renderer.getPlanetShader(), 1,"earth"));
         simulationObjects.add(new SimulationObject(0,0,10000000000f,renderer.getModelManager().loadModel("sphere3.obj", renderer.getTransformation())
                 ,renderer.getPlanetShader(), 1000000000f,"sun"));
-        simulationObjects.add(new Star(149598000,0,0,renderer.getModelManager().loadModel("sphere3.obj", renderer.getTransformation()),
-                renderer,695700,"Sun2",5500));
+
 
     }
 
@@ -76,6 +79,8 @@ public class SimulationScreen extends BaseScreen {
         Gdx.gl.glClear(Gdx.gl.GL_COLOR_BUFFER_BIT|Gdx.gl.GL_DEPTH_BUFFER_BIT);
 
         renderer.render(delta, simulationObjects);
+
+
         fontBatch.begin();
         for(SimulationObject object : this.simulationObjects){
             temp.set(renderer.projectPoint(object.getPositionRelativeToCamera(renderer.getCamera())));
@@ -109,6 +114,7 @@ public class SimulationScreen extends BaseScreen {
         renderer.updateScreenSize(width, height);
         fontBatch = new SpriteBatch();
     }
+
 
 
     @Override

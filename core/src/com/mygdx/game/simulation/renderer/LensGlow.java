@@ -33,6 +33,12 @@ public class LensGlow implements Disposable {
 
     private final Vector3f temp2, rotation;
 
+    boolean prepared;
+
+    Shader shader;
+    int screenWidth, screenHeight;
+    Camera cam;
+
 
     public LensGlow(double x, double y, double z, int textureID, int spectrumTexID, Star star, Transformation transformation) {
         this.textureID = textureID;
@@ -93,7 +99,21 @@ public class LensGlow implements Disposable {
         Gdx.gl.glDisableVertexAttribArray(1);
     }
 
-    public void render(Shader shader, int screenWidth, int screenHeight, Camera cam){
+    public void prepare(Shader shader, int screenWidth, int screenHeight, Camera cam, double x, double y, double z){
+        this.prepared = true;
+        this.shader = shader;
+        this.screenWidth = screenWidth;
+        this.screenHeight = screenHeight;
+        this.cam = cam;
+        this.setPosition(x,y,z);
+    }
+
+    public void render() throws Exception {
+        if(!prepared){
+            throw new Exception("LensGlow not prepared before rendering");
+        }
+        prepared = false;
+
         float size = (float)calculateGlowSize(star.getSize()*200,star.getTemperature(),getPositionRelativeToCamera(cam).length());
 
         shader.use();

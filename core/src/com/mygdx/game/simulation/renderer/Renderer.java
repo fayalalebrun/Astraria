@@ -16,6 +16,8 @@ import org.joml.*;
 import java.lang.Math;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
+import java.util.Queue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Created by Fran on 3/14/2018.
@@ -50,6 +52,8 @@ public class Renderer implements Disposable{
 
     private final Matrix4f combined;
 
+    Queue<LensGlow> lensGlows;
+
 
 
     public Renderer(int screenWidth, int screenHeight) {
@@ -75,6 +79,7 @@ public class Renderer implements Disposable{
 
         lensGlowShader = new Shader(Gdx.files.internal("shaders/lensGlow.vert"), Gdx.files.internal("shaders/lensGlow.frag"));
 
+        lensGlows = new LinkedBlockingQueue<LensGlow>();
 
         lightSourceManager = new LightSourceManager(planetShader, camera, transformation);
 
@@ -196,7 +201,13 @@ public class Renderer implements Disposable{
             object.render(camera);
         }
 
-
+        while(!lensGlows.isEmpty()){
+            try {
+                lensGlows.poll().render();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
 
         //simulationObject.render(camera);
         //simulationObject2.render(camera);
@@ -260,6 +271,10 @@ public class Renderer implements Disposable{
 
     public int getScreenHeight() {
         return screenHeight;
+    }
+
+    public void submitLensGlow(LensGlow lensGlow){
+        lensGlows.add(lensGlow);
     }
 
     @Override

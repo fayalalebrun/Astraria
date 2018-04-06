@@ -59,4 +59,5 @@ public class SimulationObject implements Disposable{
     public void dispose() {
         model.dispose();
     }
+
 }
