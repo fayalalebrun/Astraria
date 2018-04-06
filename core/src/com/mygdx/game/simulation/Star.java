@@ -39,9 +39,16 @@ public class Star extends SimulationObject implements LightEmitter{
     public void render(Camera cam) {
         super.render(cam);
 
-        lensGlow.setPosition(position.x,position.y,position.z);
 
-        lensGlow.render(renderer.getLensGlowShader(),renderer.getScreenWidth(),renderer.getScreenHeight(), cam);
+        Gdx.gl.glDepthMask(false);
+
+
+        lensGlow.prepare(renderer.getLensGlowShader(), renderer.getScreenWidth(), renderer.getScreenHeight(),cam,
+                position.x,position.y,position.z);
+
+        renderer.submitLensGlow(lensGlow);
+
+        Gdx.gl.glDepthMask(true);
     }
 
     @Override
@@ -58,4 +65,6 @@ public class Star extends SimulationObject implements LightEmitter{
     public Vector3f getSpecular() {
         return temp3.set(1.0f,1.0f,1.0f);
     }
+
+
 }
