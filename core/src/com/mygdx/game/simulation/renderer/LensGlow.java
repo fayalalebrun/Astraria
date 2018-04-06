@@ -126,6 +126,8 @@ public class LensGlow implements Disposable {
         shader.setFloat("temperature", star.getTemperature());
 
 
+        Gdx.gl.glDepthMask(false);
+
         Gdx.gl30.glBindVertexArray(VAO);
 
         Gdx.gl.glEnableVertexAttribArray(0);
@@ -148,6 +150,8 @@ public class LensGlow implements Disposable {
         Gdx.gl.glDisableVertexAttribArray(1);
 
         Gdx.gl30.glBindVertexArray(0);
+
+        Gdx.gl.glDepthMask(true);
     }
 
     protected IntBuffer toIntBuffer(int[] arr){
