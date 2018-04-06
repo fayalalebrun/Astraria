@@ -83,11 +83,6 @@ public class Mesh implements Disposable{
 
     public void render(Shader shader){
 
-
-
-
-
-
         shader.use();
 
         Gdx.gl.glActiveTexture(Gdx.gl.GL_TEXTURE0);

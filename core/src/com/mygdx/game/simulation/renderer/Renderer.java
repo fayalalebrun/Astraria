@@ -22,7 +22,7 @@ import java.util.ArrayList;
  */
 public class Renderer implements Disposable{
 
-    private static final float MAXVIEWDISTANCE = 100000000000f;
+    private static final float MAXVIEWDISTANCE = 10000000000f;
 
     private int screenWidth, screenHeight;
 
@@ -51,8 +51,6 @@ public class Renderer implements Disposable{
     private final Matrix4f combined;
 
 
-    private LensGlow testGlow;
-
 
     public Renderer(int screenWidth, int screenHeight) {
         this.screenWidth = screenWidth;
@@ -77,11 +75,8 @@ public class Renderer implements Disposable{
 
         lensGlowShader = new Shader(Gdx.files.internal("shaders/lensGlow.vert"), Gdx.files.internal("shaders/lensGlow.frag"));
 
-        testGlow = new LensGlow(149598000,0,0,openGLTextureManager.addTexture(Gdx.files.internal("star_glow.png").path()),
-                openGLTextureManager.addTexture(Gdx.files.internal("starspectrum.png").path()),5500,1024,1024,transformation);
 
         lightSourceManager = new LightSourceManager(planetShader, camera, transformation);
-        lightSourceManager.addLight(new PointLight(149598000,0,0));
 
         planetShader.use();
 
@@ -202,7 +197,6 @@ public class Renderer implements Disposable{
         }
 
 
-        testGlow.render(lensGlowShader, screenWidth, screenHeight, camera);
 
         //simulationObject.render(camera);
         //simulationObject2.render(camera);
@@ -243,9 +237,29 @@ public class Renderer implements Disposable{
         return starShader;
     }
 
+    public void addLight(LightEmitter light){
+        lightSourceManager.addLight(light);
+    }
+
 
     public Transformation getTransformation() {
         return transformation;
+    }
+
+    public OpenGLTextureManager getOpenGLTextureManager() {
+        return openGLTextureManager;
+    }
+
+    public Shader getLensGlowShader() {
+        return lensGlowShader;
+    }
+
+    public int getScreenWidth() {
+        return screenWidth;
+    }
+
+    public int getScreenHeight() {
+        return screenHeight;
     }
 
     @Override

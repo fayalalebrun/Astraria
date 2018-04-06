@@ -56,6 +56,8 @@ public class SimulationScreen extends BaseScreen {
                 renderer.getPlanetShader(), 1,"earth"));
         simulationObjects.add(new SimulationObject(0,0,10000000000f,renderer.getModelManager().loadModel("sphere3.obj", renderer.getTransformation())
                 ,renderer.getPlanetShader(), 1000000000f,"sun"));
+        simulationObjects.add(new Star(149598000,0,0,renderer.getModelManager().loadModel("sphere3.obj", renderer.getTransformation()),
+                renderer,695700,"Sun2",5500));
 
     }
 
