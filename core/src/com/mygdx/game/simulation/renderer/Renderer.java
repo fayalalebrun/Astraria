@@ -54,6 +54,8 @@ public class Renderer implements Disposable{
 
     private final Matrix4f combined;
 
+    private Point testPoint;
+
     Queue<LensGlow> lensGlows;
 
 
@@ -72,6 +74,8 @@ public class Renderer implements Disposable{
         transformation = new Transformation();
 
         camera = new Camera(0, 0, 10);
+
+        testPoint = new Point(new Vector4f(1,1,1,1), transformation);
 
         planetShader = new Shader(Gdx.files.internal("shaders/default.vert"), Gdx.files.internal("shaders/default.frag"));
 
@@ -221,6 +225,8 @@ public class Renderer implements Disposable{
             object.render(camera);
         }
 
+        testPoint.render(pointShader,camera);
+
         while(!lensGlows.isEmpty()){
             try {
                 lensGlows.poll().render();
@@ -228,6 +234,7 @@ public class Renderer implements Disposable{
                 e.printStackTrace();
             }
         }
+
 
         //simulationObject.render(camera);
         //simulationObject2.render(camera);
