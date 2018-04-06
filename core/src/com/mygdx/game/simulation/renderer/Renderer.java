@@ -38,6 +38,8 @@ public class Renderer implements Disposable{
 
     private Shader lensGlowShader;
 
+    private Shader pointShader;
+
     private Transformation transformation;
     private static float FOV =(float)Math.toRadians(45f);
     private final OpenGLTextureManager openGLTextureManager;
@@ -78,6 +80,8 @@ public class Renderer implements Disposable{
         billboardShader = new Shader(Gdx.files.internal("shaders/billboard.vert"), Gdx.files.internal("shaders/billboard.frag"));
 
         lensGlowShader = new Shader(Gdx.files.internal("shaders/lensGlow.vert"), Gdx.files.internal("shaders/lensGlow.frag"));
+
+        pointShader = new Shader(Gdx.files.internal("shaders/point.vert"), Gdx.files.internal("shaders/point.frag"));
 
         lensGlows = new LinkedBlockingQueue<LensGlow>();
 
@@ -150,6 +154,18 @@ public class Renderer implements Disposable{
             lensGlowShader.createUniform("camDir");
 
 
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        pointShader.use();
+
+        try {
+            pointShader.createUniform("projection");
+            pointShader.createUniform("modelView");
+            pointShader.createUniform("og_farPlaneDistance");
+            pointShader.createUniform("u_logarithmicDepthConstant");
+            pointShader.createUniform("color");
         } catch (Exception e) {
             e.printStackTrace();
         }
