@@ -16,6 +16,8 @@ public class Star extends SimulationObject implements LightEmitter{
 
     private final Vector3d temp4;
 
+    private final Query query;
+
     public Star(double x, double y, double z, Model model, Renderer renderer, float size, String name, float temperature) {
         super(x, y, z, model, renderer.getStarShader(), size, name);
         this.temperature = temperature;
@@ -33,6 +35,8 @@ public class Star extends SimulationObject implements LightEmitter{
                 renderer.getOpenGLTextureManager().addTexture(Gdx.files.internal("starspectrum.png").path()),this,renderer.getTransformation());
 
         occlusionTestPoint = new Point(new Vector4f(1,0,0,1),renderer.getTransformation());
+
+        this.query = new Query(Gdx.gl30.GL_ANY_SAMPLES_PASSED);
     }
 
     @Override
@@ -49,12 +53,7 @@ public class Star extends SimulationObject implements LightEmitter{
         super.render(cam);
 
 
-        temp4.set(cam.getPosition());
-        temp4.sub(position);
-        temp4.normalize();
-        temp4.mul(getSize()*10);
-        temp4.add(position);
-        occlusionTestPoint.setPosition(temp4.x,temp4.y,temp4.z);
+
 
 
         lensGlow.prepare(renderer.getLensGlowShader(), renderer.getScreenWidth(), renderer.getScreenHeight(),cam,
@@ -64,7 +63,39 @@ public class Star extends SimulationObject implements LightEmitter{
 
 
 
-        occlusionTestPoint.render(renderer.getPointShader(),cam);
+        doOcclusionTest(cam);
+
+
+    }
+
+    private void doOcclusionTest(Camera cam){
+        if(query.isResultReady()){
+            int visibleSamples = query.getResult();
+            //System.out.println(visibleSamples);
+        }
+
+
+        temp4.set(cam.getPosition());
+        temp4.sub(position);
+        temp4.normalize();
+        temp4.mul(getSize()*10);
+        temp4.add(position);
+        occlusionTestPoint.setPosition(temp4.x,temp4.y,temp4.z);
+
+
+        if(!query.isInUse()) {
+            query.start();
+            Gdx.gl.glEnable(Gdx.gl.GL_DEPTH_TEST);
+            occlusionTestPoint.render(renderer.getPointShader(), cam);
+            query.end();
+        }
+    }
+
+    @Override
+    public void dispose() {
+        super.dispose();
+        query.dispose();
+        lensGlow.dispose();
     }
 
     @Override

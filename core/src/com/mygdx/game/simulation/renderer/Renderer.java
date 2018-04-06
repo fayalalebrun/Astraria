@@ -14,7 +14,9 @@ import com.sun.media.jfxmediaimpl.MediaDisposer;
 import org.joml.*;
 
 import java.lang.Math;
+import java.nio.Buffer;
 import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -25,6 +27,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class Renderer implements Disposable{
 
     private static final float MAXVIEWDISTANCE = 10000000000f;
+
+    private static final float LOGDEPTHCONSTANT = 1f;
 
     private int screenWidth, screenHeight;
 
@@ -57,12 +61,16 @@ public class Renderer implements Disposable{
 
     Queue<LensGlow> lensGlows;
 
+    FloatBuffer outBuff;
+
 
 
     public Renderer(int screenWidth, int screenHeight) {
         this.screenWidth = screenWidth;
         this.screenHeight = screenHeight;
         this.combined = new Matrix4f();
+
+        outBuff = BufferUtils.newFloatBuffer(1);
 
         openGLTextureManager = new OpenGLTextureManager();
         this.modelManager = new ModelManager(openGLTextureManager);
@@ -197,17 +205,17 @@ public class Renderer implements Disposable{
 
         planetShader.use();
         planetShader.setFloat("og_farPlaneDistance", MAXVIEWDISTANCE);
-        planetShader.setFloat("u_logarithmicDepthConstant", 1f);
+        planetShader.setFloat("u_logarithmicDepthConstant", LOGDEPTHCONSTANT);
         planetShader.setMat4("projection", projection);
 
         starShader.use();
         starShader.setFloat("og_farPlaneDistance", MAXVIEWDISTANCE);
-        starShader.setFloat("u_logarithmicDepthConstant", 1f);
+        starShader.setFloat("u_logarithmicDepthConstant", LOGDEPTHCONSTANT);
         starShader.setMat4("projection", projection);
 
         billboardShader.use();
         billboardShader.setFloat("og_farPlaneDistance", MAXVIEWDISTANCE);
-        billboardShader.setFloat("u_logarithmicDepthConstant", 1f);
+        billboardShader.setFloat("u_logarithmicDepthConstant", LOGDEPTHCONSTANT);
         billboardShader.setMat4("projection", projection);
 
         lensGlowShader.use();
@@ -216,7 +224,7 @@ public class Renderer implements Disposable{
 
         pointShader.use();
         pointShader.setFloat("og_farPlaneDistance", MAXVIEWDISTANCE);
-        pointShader.setFloat("u_logarithmicDepthConstant", 1f);
+        pointShader.setFloat("u_logarithmicDepthConstant", LOGDEPTHCONSTANT);
         pointShader.setMat4("projection", projection);
 
         for(SimulationObject object : toDraw){
@@ -251,6 +259,11 @@ public class Renderer implements Disposable{
         } else {
             return position.set(-1,-1,-1);
         }
+    }
+
+    public float getFramebufferDepthComponent(int x, int y){
+        Gdx.gl.glReadPixels(x,y,1,1,Gdx.gl.GL_DEPTH_COMPONENT,Gdx.gl.GL_FLOAT,outBuff);
+        return outBuff.get(0);
     }
 
 
