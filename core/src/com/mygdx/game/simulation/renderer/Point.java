@@ -77,7 +77,7 @@ public class Point implements Disposable{
         Gdx.gl30.glBindVertexArray(0);
     }
 
-    private void setPosition(int x, int y, int z){
+    public void setPosition(double x, double y, double z){
         this.position.set(x,y,z);
     }
 
