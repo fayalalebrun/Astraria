@@ -212,6 +212,10 @@ public class Renderer implements Disposable{
         lensGlowShader.setMat4("projection", projection);
         lensGlowShader.setVec3f("camDir", camera.getFront());
 
+        pointShader.use();
+        pointShader.setFloat("og_farPlaneDistance", MAXVIEWDISTANCE);
+        pointShader.setFloat("u_logarithmicDepthConstant", 1f);
+        pointShader.setMat4("projection", projection);
 
         for(SimulationObject object : toDraw){
             object.render(camera);
