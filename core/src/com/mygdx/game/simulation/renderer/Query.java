@@ -31,14 +31,14 @@ public class Query implements Disposable{
     public boolean isResultReady(){
         IntBuffer result = BufferUtils.newIntBuffer(1);
         Gdx.gl30.glGetQueryObjectuiv(id,Gdx.gl30.GL_QUERY_RESULT_AVAILABLE, result);
-        return result.get() == Gdx.gl.GL_TRUE;
+        return result.get(0) == Gdx.gl.GL_TRUE;
     }
 
     public int getResult(){
         inUse = false;
         IntBuffer result = BufferUtils.newIntBuffer(1);
         Gdx.gl30.glGetQueryObjectuiv(id, Gdx.gl30.GL_QUERY_RESULT, result);
-        return result.get();
+        return result.get(0);
     }
 
     public boolean isInUse(){
