@@ -3,6 +3,7 @@ package com.mygdx.game.simulation.renderer;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.utils.BufferUtils;
 import com.badlogic.gdx.utils.Disposable;
+import com.mygdx.game.simulation.Star;
 import org.joml.Vector3d;
 import org.joml.Vector3f;
 
@@ -14,7 +15,7 @@ import java.util.List;
 import static com.badlogic.gdx.graphics.GL20.GL_ARRAY_BUFFER;
 
 public class LensGlow implements Disposable {
-    private int textureID, spectrumTexID, width, height;
+    private int textureID, spectrumTexID;
 
     private int VAO, EBO;
 
@@ -24,6 +25,7 @@ public class LensGlow implements Disposable {
 
     private List<Integer> vboList;
 
+    private Star star;
 
     private final Vector3d position, temp;
 
@@ -31,14 +33,11 @@ public class LensGlow implements Disposable {
 
     private final Vector3f temp2, rotation;
 
-    private float temperature;
 
-    public LensGlow(double x, double y, double z, int textureID, int spectrumTexID, float temperature, int width, int height, Transformation transformation) {
+    public LensGlow(double x, double y, double z, int textureID, int spectrumTexID, Star star, Transformation transformation) {
         this.textureID = textureID;
-        this.width = width;
-        this.height = height;
         this.spectrumTexID = spectrumTexID;
-        this.temperature = temperature;
+        this.star = star;
         this.position = new Vector3d(x,y,z);
         this.transformation = transformation;
 
@@ -95,7 +94,7 @@ public class LensGlow implements Disposable {
     }
 
     public void render(Shader shader, int screenWidth, int screenHeight, Camera cam){
-        float size = (float)calculateGlowSize(1391400000,temperature,getPositionRelativeToCamera(cam).length());
+        float size = (float)calculateGlowSize(star.getSize()*200,star.getTemperature(),getPositionRelativeToCamera(cam).length());
 
         shader.use();
         shader.setMat4("modelView", transformation.getModelViewMatrix(transformation.getViewMatrix(cam),getPositionRelativeToCamera(cam),rotation, 1));
@@ -104,7 +103,7 @@ public class LensGlow implements Disposable {
         shader.setFloat("screenWidth", screenWidth);
         shader.setFloat("screenHeight", screenHeight);
         shader.setVec3f("uPos", getPositionRelativeToCamera(cam));
-        shader.setFloat("temperature", temperature);
+        shader.setFloat("temperature", star.getTemperature());
 
 
         Gdx.gl30.glBindVertexArray(VAO);
@@ -156,7 +155,11 @@ public class LensGlow implements Disposable {
         double d = distance; // Distance
         double D = diameter * DSUN;
         double L = (D * D) * Math.pow(temperature / TSUN, 4.0); // Luminosity
-        return 0.016 * Math.pow(L, 0.25) / Math.pow(d, 0.35); // Size
+        return 0.016 * Math.pow(L, 0.25) / Math.pow(d, 0.3); // Size
+    }
+
+    public void setPosition(double x, double y, double z){
+        position.set(x,y,z);
     }
 
     @Override

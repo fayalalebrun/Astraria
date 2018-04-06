@@ -13,7 +13,7 @@ import org.joml.Vector3f;
  * Created by Fran on 3/17/2018.
  */
 public class SimulationObject implements Disposable{
-    private final Vector3d position, temp;
+    protected final Vector3d position, temp;
     private final Vector3f temp2;
     private final Model model;
     private final Vector3f rotation;
@@ -49,6 +49,10 @@ public class SimulationObject implements Disposable{
 
     public String getName() {
         return name;
+    }
+
+    public float getSize() {
+        return size;
     }
 
     @Override
