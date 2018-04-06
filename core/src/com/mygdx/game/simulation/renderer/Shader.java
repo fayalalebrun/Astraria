@@ -6,6 +6,7 @@ import com.badlogic.gdx.utils.BufferUtils;
 import com.badlogic.gdx.utils.Disposable;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+import org.joml.Vector4f;
 
 import java.io.File;
 import java.nio.ByteBuffer;
@@ -83,6 +84,10 @@ public class Shader implements Disposable{
 
     public void setVec3f(String name, Vector3f value){
         Gdx.gl.glUniform3f(uniforms.get(name), value.x, value.y, value.z);
+    }
+
+    public void setVec4f(String name, Vector4f value){
+        Gdx.gl.glUniform4f(uniforms.get(name),value.x,value.y,value.z,value.w);
     }
 
     public void use(){
