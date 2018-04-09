@@ -17,23 +17,23 @@ public class SimulationObject implements Disposable{
     private final Vector3f temp2;
     private final Model model;
     private final Vector3f rotation;
-    private float size;
+    private float diameter;
     private final String name;
     private final Shader shader;
 
-    public SimulationObject(double x, double y, double z, Model model, Shader shader, float size, String name) {
+    public SimulationObject(double x, double y, double z, Model model, Shader shader, float diameter, String name) {
         position = new Vector3d(x,y,z);
         this.model = model;
         this.temp = new Vector3d();
         this.temp2 = new Vector3f();
         rotation = new Vector3f();
-        this.size = size;
+        this.diameter = diameter;
         this.name = name;
         this.shader = shader;
     }
 
     private void update(Camera cam){
-        model.setScale(size);
+        model.setScale(diameter);
         model.setPosition(getPositionRelativeToCamera(cam));
     }
 
@@ -51,8 +51,8 @@ public class SimulationObject implements Disposable{
         return name;
     }
 
-    public float getSize() {
-        return size;
+    public float getDiameter() {
+        return diameter;
     }
 
     @Override

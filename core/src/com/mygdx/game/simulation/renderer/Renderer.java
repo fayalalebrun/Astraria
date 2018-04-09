@@ -257,7 +257,7 @@ public class Renderer implements Disposable{
     }
 
     public Vector2f projectPoint(Vector3f position){
-        worldSpaceToDeviceCoords(temp4f.set(position, 1));
+        temp4f.set(worldSpaceToDeviceCoords(temp4f.set(position.x,position.y,position.z, 1)));
         temp4f.x*=screenWidth;
         temp4f.y*=screenHeight;
 
@@ -266,6 +266,8 @@ public class Renderer implements Disposable{
         }
 
         //System.out.println(getFramebufferDepthComponent((int)temp4f.x,(int)temp4f.y));
+        //System.out.println(position.x + " " + position.y + " " + position.z);
+        //System.out.println(temp4f.x + " " + temp4f.y);
 
         return temp2f.set(temp4f.x,temp4f.y);
 
@@ -289,8 +291,10 @@ public class Renderer implements Disposable{
         view.transform(temp4f);
         projection.transform(temp4f);
 
-        temp4f.x = (temp4f.x / temp4f.w + 1) / 2f;
-        temp4f.y = (temp4f.y / temp4f.w + 1) / 2f;
+        //System.out.println(temp4f.x + " "+temp4f.y);
+
+        temp4f.x = ((temp4f.x / temp4f.w) + 1) / 2f;
+        temp4f.y = ((temp4f.y / temp4f.w) + 1) / 2f;
 
 
         temp4f.z = ((2.0f * (float)Math.log(LOGDEPTHCONSTANT * temp4f.z + 1.0f) /

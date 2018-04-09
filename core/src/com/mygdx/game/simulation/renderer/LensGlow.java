@@ -128,7 +128,7 @@ public class LensGlow implements Disposable {
             return;
         }
 
-        float size = (float)calculateGlowSize(star.getSize()*200,star.getTemperature(),getPositionRelativeToCamera(cam).length());
+        float size = (float)calculateGlowSize(star.getDiameter()*200,star.getTemperature(),getPositionRelativeToCamera(cam).length());
 
         shader.use();
         shader.setMat4("modelView", transformation.getModelViewMatrix(transformation.getViewMatrix(cam),getPositionRelativeToCamera(cam),rotation, 1));
@@ -172,20 +172,26 @@ public class LensGlow implements Disposable {
         temp.set(cam.getPosition());
         temp.sub(position);
         temp.normalize();
-        temp.mul(star.getSize()*10);
+        temp.mul(star.getDiameter()*10);
         temp.add(position);
+        temp.sub(cam.getPosition());
 
-        this.distanceModifier = getDistanceModifier(temp);
+
+        this.distanceModifier = 1f;
+        getDistanceModifier(temp);
+
 
         Vector2f screenpos = renderer.projectPoint(temp2.set(temp));
         Vector4f transPos = renderer.worldSpaceToDeviceCoords(temp4.set((float)temp.x,(float)temp.y,(float)temp.z,1.0f));
 
+
+
         if(screenpos==null){
             return false;
         }
-
-        int x = (int)screenpos.x;
-        int y = (int)screenpos.y;
+        //System.out.println(screenpos.x + " " + screenpos.y);
+        int x = (int)(transPos.x * renderer.getScreenWidth());
+        int y = (int)(transPos.y * renderer.getScreenHeight());
 
         if(x<0||x>renderer.getScreenWidth()||y<0||y>renderer.getScreenHeight()){
             return false;
@@ -193,12 +199,14 @@ public class LensGlow implements Disposable {
 
         float storedZ = renderer.getFramebufferDepthComponent(x,y);
 
+        //System.out.println(storedZ + " " + transPos.z);
+
         return Float.compare(storedZ,transPos.z)>0;
     }
 
     private float getDistanceModifier(Vector3d pointPos){
         temp2.set(pointPos).sub(temp5.set(cam.getPosition()));
-        float amount = temp2.length()/(star.getSize()*50f);
+        float amount = temp2.length()/(star.getDiameter()*50f);
 
         if(amount > 1f) {
             return 1f;
