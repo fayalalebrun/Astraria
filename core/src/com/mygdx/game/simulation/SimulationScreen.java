@@ -13,6 +13,7 @@ import com.mygdx.game.Boot;
 import com.mygdx.game.ViewportListener;
 import com.mygdx.game.simulation.renderer.*;
 import org.joml.Matrix4f;
+import org.joml.Vector2f;
 import org.joml.Vector3f;
 
 import java.nio.ByteBuffer;
@@ -33,7 +34,7 @@ public class SimulationScreen extends BaseScreen {
     private ArrayList<SimulationObject> simulationObjects;
     private final BitmapFont labelFont;
     private SpriteBatch fontBatch;
-    private final Vector3f temp;
+    private Vector2f temp;
 
 
     public SimulationScreen(Boot boot) {
@@ -44,7 +45,7 @@ public class SimulationScreen extends BaseScreen {
 
         processor = new SimCamInputProcessor(renderer.getCamera());
 
-        temp = new Vector3f();
+        temp = new Vector2f();
 
         labelFont = Boot.manager.get("Euclid10.fnt", BitmapFont.class);
         fontBatch = new SpriteBatch();
@@ -56,10 +57,10 @@ public class SimulationScreen extends BaseScreen {
         simulationObjects.add(new Star(149598000,0,0,renderer.getModelManager().loadModel("sphere3.obj", renderer.getTransformation()),
                 renderer,695700,"Sun2",5500));
 
-        simulationObjects.add(new SimulationObject(3,0,0,renderer.getModelManager().loadModel("sphere3.obj", renderer.getTransformation()),
+        /*simulationObjects.add(new SimulationObject(3,0,0,renderer.getModelManager().loadModel("sphere3.obj", renderer.getTransformation()),
                 renderer.getPlanetShader(), 1,"earth"));
         simulationObjects.add(new SimulationObject(0,0,10000000000f,renderer.getModelManager().loadModel("sphere3.obj", renderer.getTransformation())
-                ,renderer.getPlanetShader(), 1000000000f,"sun"));
+                ,renderer.getPlanetShader(), 1000000000f,"sun"));*/
 
 
     }
@@ -83,8 +84,8 @@ public class SimulationScreen extends BaseScreen {
 
         fontBatch.begin();
         for(SimulationObject object : this.simulationObjects){
-            temp.set(renderer.projectPoint(object.getPositionRelativeToCamera(renderer.getCamera())));
-            if(temp.x!=-1&&temp.y!=-1) {
+            temp = renderer.projectPoint(object.getPositionRelativeToCamera(renderer.getCamera()));
+            if(temp!=null) {
                 labelFont.draw(fontBatch, object.getName(), temp.x, temp.y);
             }
         }

@@ -56,6 +56,10 @@ public class Renderer implements Disposable{
 
     private final Vector3f temp;
 
+    private final Vector2f temp2f;
+
+    private final Vector4f temp4f;
+
     private final Matrix4f combined;
 
 
@@ -182,6 +186,9 @@ public class Renderer implements Disposable{
         }
 
 
+        temp2f = new Vector2f();
+
+        temp4f = new Vector4f();
     }
 
     public Camera getCamera() {
@@ -249,22 +256,17 @@ public class Renderer implements Disposable{
         Gdx.gl.glDisable(Gdx.gl.GL_BLEND);
     }
 
-    public Vector3f projectPoint(Vector3f position){
-        /*temp.set(position);
-        temp.normalize();
-        float res = temp.dot(camera.getFront());
-        combined.project(position, new int[]{0,0,screenWidth,screenHeight}, position);
+    public Vector2f projectPoint(Vector3f position){
+        worldSpaceToScreenSpace(temp4f.set(position, 1));
+        temp4f.x*=screenWidth;
+        temp4f.y*=screenHeight;
 
-        if(res>0) {
-            return position;
-        } else {
-            return position.set(-1,-1,-1);
-        }*/
-        worldSpaceToScreenSpace(temp.set(position));
+        if (temp4f.w < 0){
+            return null;
+        }
 
-        System.out.println(pos);
+        return temp2f.set(temp4f.x,temp4f.y);
 
-        return worldSpaceToScreenSpace(temp.set(position));
     }
 
     public float getFramebufferDepthComponent(int x, int y){
@@ -278,15 +280,17 @@ public class Renderer implements Disposable{
         screenHeight = height;
     }
 
-    public Vector3f worldSpaceToScreenSpace(Vector3f pos){
-        Vector4f coords = new Vector4f(pos.x,pos.y,pos.z,1.0f);
-        pos = temp.set(pos);
+    public Vector4f worldSpaceToScreenSpace(Vector4f pos){
+        temp4f.set(pos);
         Matrix4f projection = transformation.getProjectionMatrix(FOV, screenWidth,screenHeight,1f,MAXVIEWDISTANCE);
         Matrix4f view = transformation.getViewMatrix(camera);
-        view.transform(coords);
-        projection.transform(coords);
-        coords.div(coords.w);
-        return pos.set(coords.x,coords.y,coords.z);
+        view.transform(temp4f);
+        projection.transform(temp4f);
+
+        float x = (temp4f.x / temp4f.w + 1) / 2f;
+        float y = (temp4f.y / temp4f.w + 1) / 2f;
+
+        return temp4f.set(x,y,temp4f.z,temp4f.w);
     }
 
 
