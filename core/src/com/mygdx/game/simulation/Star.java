@@ -71,7 +71,7 @@ public class Star extends SimulationObject implements LightEmitter{
     private void doOcclusionTest(Camera cam){
         if(query.isResultReady()){
             int visibleSamples = query.getResult();
-            //System.out.println(visibleSamples);
+            System.out.println(visibleSamples);
         }
 
 
