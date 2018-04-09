@@ -257,13 +257,15 @@ public class Renderer implements Disposable{
     }
 
     public Vector2f projectPoint(Vector3f position){
-        worldSpaceToScreenSpace(temp4f.set(position, 1));
+        worldSpaceToDeviceCoords(temp4f.set(position, 1));
         temp4f.x*=screenWidth;
         temp4f.y*=screenHeight;
 
         if (temp4f.w < 0){
             return null;
         }
+
+        System.out.println(getFramebufferDepthComponent((int)temp4f.x,(int)temp4f.y));
 
         return temp2f.set(temp4f.x,temp4f.y);
 
@@ -280,17 +282,23 @@ public class Renderer implements Disposable{
         screenHeight = height;
     }
 
-    public Vector4f worldSpaceToScreenSpace(Vector4f pos){
+    public Vector4f worldSpaceToDeviceCoords(Vector4f pos){
         temp4f.set(pos);
         Matrix4f projection = transformation.getProjectionMatrix(FOV, screenWidth,screenHeight,1f,MAXVIEWDISTANCE);
         Matrix4f view = transformation.getViewMatrix(camera);
         view.transform(temp4f);
         projection.transform(temp4f);
 
-        float x = (temp4f.x / temp4f.w + 1) / 2f;
-        float y = (temp4f.y / temp4f.w + 1) / 2f;
+        temp4f.x = (temp4f.x / temp4f.w + 1) / 2f;
+        temp4f.y = (temp4f.y / temp4f.w + 1) / 2f;
 
-        return temp4f.set(x,y,temp4f.z,temp4f.w);
+
+        temp4f.z = ((2.0f * (float)Math.log(LOGDEPTHCONSTANT * temp4f.z + 1.0f) /
+                (float)Math.log(LOGDEPTHCONSTANT * MAXVIEWDISTANCE + 1.0f)) - 1.0f) * temp4f.w;
+        temp4f.z /= temp4f.w;
+        temp4f.z = (temp4f.z + 1)/2f;
+
+        return temp4f;
     }
 
 
