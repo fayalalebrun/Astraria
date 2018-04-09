@@ -56,14 +56,14 @@ public class Star extends SimulationObject implements LightEmitter{
 
 
 
-        lensGlow.prepare(renderer.getLensGlowShader(), renderer.getScreenWidth(), renderer.getScreenHeight(),cam,
+        lensGlow.prepare(renderer,renderer.getLensGlowShader(), renderer.getScreenWidth(), renderer.getScreenHeight(),cam,
                 position.x,position.y,position.z);
 
-        //renderer.submitLensGlow(lensGlow);
+        renderer.submitLensGlow(lensGlow);
 
 
 
-        doOcclusionTest(cam);
+        //doOcclusionTest(cam);
 
 
     }

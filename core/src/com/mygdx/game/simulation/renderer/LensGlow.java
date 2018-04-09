@@ -4,8 +4,10 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.utils.BufferUtils;
 import com.badlogic.gdx.utils.Disposable;
 import com.mygdx.game.simulation.Star;
+import org.joml.Vector2f;
 import org.joml.Vector3d;
 import org.joml.Vector3f;
+import org.joml.Vector4f;
 
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
@@ -33,11 +35,15 @@ public class LensGlow implements Disposable {
 
     private final Vector3f temp2, rotation;
 
+    private final Vector4f temp4;
+
     boolean prepared;
 
     Shader shader;
     int screenWidth, screenHeight;
     Camera cam;
+
+    Renderer renderer;
 
 
     public LensGlow(double x, double y, double z, int textureID, int spectrumTexID, Star star, Transformation transformation) {
@@ -50,6 +56,7 @@ public class LensGlow implements Disposable {
         this.temp = new Vector3d();
         this.temp2 = new Vector3f();
         this.rotation = new Vector3f();
+        this.temp4 = new Vector4f();
 
         this.vboList = new ArrayList<Integer>();
 
@@ -99,13 +106,14 @@ public class LensGlow implements Disposable {
         Gdx.gl.glDisableVertexAttribArray(1);
     }
 
-    public void prepare(Shader shader, int screenWidth, int screenHeight, Camera cam, double x, double y, double z){
+    public void prepare(Renderer renderer, Shader shader, int screenWidth, int screenHeight, Camera cam, double x, double y, double z){
         this.prepared = true;
         this.shader = shader;
         this.screenWidth = screenWidth;
         this.screenHeight = screenHeight;
         this.cam = cam;
         this.setPosition(x,y,z);
+        this.renderer = renderer;
     }
 
     public void render() throws Exception {
@@ -113,6 +121,10 @@ public class LensGlow implements Disposable {
             throw new Exception("LensGlow not prepared before rendering");
         }
         prepared = false;
+
+        if(!checkIfVisible()){
+            return;
+        }
 
         float size = (float)calculateGlowSize(star.getSize()*200,star.getTemperature(),getPositionRelativeToCamera(cam).length());
 
@@ -152,6 +164,32 @@ public class LensGlow implements Disposable {
         Gdx.gl30.glBindVertexArray(0);
 
         Gdx.gl.glDepthMask(true);
+    }
+
+    private boolean checkIfVisible(){
+        temp.set(cam.getPosition());
+        temp.sub(position);
+        temp.normalize();
+        temp.mul(star.getSize()*50);
+        temp.add(position);
+
+        Vector2f screenpos = renderer.projectPoint(temp2.set(temp));
+        Vector4f transPos = renderer.worldSpaceToDeviceCoords(temp4.set((float)temp.x,(float)temp.y,(float)temp.z,1.0f));
+
+        if(screenpos==null){
+            return false;
+        }
+
+        int x = (int)screenpos.x;
+        int y = (int)screenpos.y;
+
+        if(x<0||x>renderer.getScreenWidth()||y<0||y>renderer.getScreenHeight()){
+            return false;
+        }
+
+        float storedZ = renderer.getFramebufferDepthComponent(x,y);
+
+        return Float.compare(storedZ,transPos.z)>0;
     }
 
     protected IntBuffer toIntBuffer(int[] arr){
