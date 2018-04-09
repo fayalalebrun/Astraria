@@ -33,18 +33,19 @@ public class LensGlow implements Disposable {
 
     private Transformation transformation;
 
-    private final Vector3f temp2, rotation;
+    private final Vector3f temp2, rotation, temp5;
 
     private final Vector4f temp4;
 
-    boolean prepared;
+    private boolean prepared;
 
-    Shader shader;
-    int screenWidth, screenHeight;
-    Camera cam;
+    private Shader shader;
+    private int screenWidth, screenHeight;
+    private Camera cam;
 
-    Renderer renderer;
+    private Renderer renderer;
 
+    private float distanceModifier = 1f;
 
     public LensGlow(double x, double y, double z, int textureID, int spectrumTexID, Star star, Transformation transformation) {
         this.textureID = textureID;
@@ -57,6 +58,7 @@ public class LensGlow implements Disposable {
         this.temp2 = new Vector3f();
         this.rotation = new Vector3f();
         this.temp4 = new Vector4f();
+        this.temp5 = new Vector3f();
 
         this.vboList = new ArrayList<Integer>();
 
@@ -130,8 +132,8 @@ public class LensGlow implements Disposable {
 
         shader.use();
         shader.setMat4("modelView", transformation.getModelViewMatrix(transformation.getViewMatrix(cam),getPositionRelativeToCamera(cam),rotation, 1));
-        shader.setFloat("width", size);
-        shader.setFloat("height", size * (screenWidth/screenHeight));
+        shader.setFloat("width", size*distanceModifier);
+        shader.setFloat("height", (size * (screenWidth/screenHeight))*distanceModifier);
         shader.setFloat("screenWidth", screenWidth);
         shader.setFloat("screenHeight", screenHeight);
         shader.setVec3f("uPos", getPositionRelativeToCamera(cam));
@@ -170,8 +172,10 @@ public class LensGlow implements Disposable {
         temp.set(cam.getPosition());
         temp.sub(position);
         temp.normalize();
-        temp.mul(star.getSize()*50);
+        temp.mul(star.getSize()*10);
         temp.add(position);
+
+        this.distanceModifier = getDistanceModifier(temp);
 
         Vector2f screenpos = renderer.projectPoint(temp2.set(temp));
         Vector4f transPos = renderer.worldSpaceToDeviceCoords(temp4.set((float)temp.x,(float)temp.y,(float)temp.z,1.0f));
@@ -190,6 +194,16 @@ public class LensGlow implements Disposable {
         float storedZ = renderer.getFramebufferDepthComponent(x,y);
 
         return Float.compare(storedZ,transPos.z)>0;
+    }
+
+    private float getDistanceModifier(Vector3d pointPos){
+        temp2.set(pointPos).sub(temp5.set(cam.getPosition()));
+        float amount = temp2.length()/(star.getSize()*50f);
+
+        if(amount > 1f) {
+            return 1f;
+        }
+        return amount;
     }
 
     protected IntBuffer toIntBuffer(int[] arr){
