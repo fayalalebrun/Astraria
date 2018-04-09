@@ -59,6 +59,7 @@ public class Renderer implements Disposable{
     private final Matrix4f combined;
 
 
+
     Queue<LensGlow> lensGlows;
 
     FloatBuffer outBuff;
@@ -200,7 +201,7 @@ public class Renderer implements Disposable{
 
 
 
-        Matrix4f projection = transformation.getProjectionMatrix(FOV, screenWidth,screenHeight,1f,10000000f);
+        Matrix4f projection = transformation.getProjectionMatrix(FOV, screenWidth,screenHeight,1f,MAXVIEWDISTANCE);
         combined.set(projection).mul(transformation.getViewMatrix(camera));
 
         planetShader.use();
@@ -249,7 +250,7 @@ public class Renderer implements Disposable{
     }
 
     public Vector3f projectPoint(Vector3f position){
-        temp.set(position);
+        /*temp.set(position);
         temp.normalize();
         float res = temp.dot(camera.getFront());
         combined.project(position, new int[]{0,0,screenWidth,screenHeight}, position);
@@ -258,7 +259,12 @@ public class Renderer implements Disposable{
             return position;
         } else {
             return position.set(-1,-1,-1);
-        }
+        }*/
+        worldSpaceToScreenSpace(temp.set(position));
+
+        System.out.println(pos);
+
+        return worldSpaceToScreenSpace(temp.set(position));
     }
 
     public float getFramebufferDepthComponent(int x, int y){
@@ -270,6 +276,17 @@ public class Renderer implements Disposable{
     public void updateScreenSize(int width, int height){
         screenWidth = width;
         screenHeight = height;
+    }
+
+    public Vector3f worldSpaceToScreenSpace(Vector3f pos){
+        Vector4f coords = new Vector4f(pos.x,pos.y,pos.z,1.0f);
+        pos = temp.set(pos);
+        Matrix4f projection = transformation.getProjectionMatrix(FOV, screenWidth,screenHeight,1f,MAXVIEWDISTANCE);
+        Matrix4f view = transformation.getViewMatrix(camera);
+        view.transform(coords);
+        projection.transform(coords);
+        coords.div(coords.w);
+        return pos.set(coords.x,coords.y,coords.z);
     }
 
 

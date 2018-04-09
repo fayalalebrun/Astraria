@@ -66,6 +66,7 @@ public class Point implements Disposable{
         shader.setMat4("modelView", transformation.getModelViewMatrix(transformation.getViewMatrix(cam),getPositionRelativeToCamera(cam),rotation, 1));
         shader.setVec4f("color", color);
 
+
         Gdx.gl30.glBindVertexArray(VAO);
 
         Gdx.gl.glEnableVertexAttribArray(0);
