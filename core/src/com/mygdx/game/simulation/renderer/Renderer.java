@@ -265,7 +265,7 @@ public class Renderer implements Disposable{
             return null;
         }
 
-        System.out.println(getFramebufferDepthComponent((int)temp4f.x,(int)temp4f.y));
+        //System.out.println(getFramebufferDepthComponent((int)temp4f.x,(int)temp4f.y));
 
         return temp2f.set(temp4f.x,temp4f.y);
 
