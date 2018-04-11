@@ -17,9 +17,10 @@ public class AtmospherePlanet extends SimulationObject{
 
         this.atmosphereShader = atmosphereShader;
 
-        atmosphereSphere = new Sphere(renderer.getModelManager(),renderer.getTransformation(),-1);
+        atmosphereSphere = new Sphere(renderer.getModelManager(),renderer.getTransformation(),-1, false);
         
         atmosphericRadius = radius*1.025f;
+
     }
 
     @Override
