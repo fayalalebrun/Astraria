@@ -1,5 +1,6 @@
 package com.mygdx.game.simulation;
 
+import com.badlogic.gdx.Gdx;
 import com.mygdx.game.simulation.renderer.*;
 import sun.security.provider.SHA;
 
@@ -17,7 +18,10 @@ public class AtmospherePlanet extends SimulationObject{
 
         this.atmosphereShader = atmosphereShader;
 
-        atmosphereSphere = new Sphere(renderer.getModelManager(),renderer.getTransformation(),-1, false);
+        atmosphereSphere = new Sphere(renderer.getModelManager(),
+                renderer.getTransformation(),
+                -1,
+                false);
         
         atmosphericRadius = radius*1.025f;
 
@@ -27,7 +31,7 @@ public class AtmospherePlanet extends SimulationObject{
     protected void update(Camera cam) {
         super.update(cam);
 
-        atmosphereSphere.setScale(getRadius());
+        atmosphereSphere.setScale(atmosphericRadius);
         atmosphereSphere.setPosition(getPositionRelativeToCamera(cam));
     }
 
@@ -35,7 +39,9 @@ public class AtmospherePlanet extends SimulationObject{
     public void render(Camera cam) {
         super.render(cam);
 
+        Gdx.gl.glCullFace(Gdx.gl.GL_FRONT);
         atmosphereSphere.render(cam, atmosphereShader);
+        Gdx.gl.glCullFace(Gdx.gl.GL_BACK);
     }
 
     @Override
