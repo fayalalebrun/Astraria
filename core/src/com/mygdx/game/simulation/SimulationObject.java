@@ -4,8 +4,6 @@ import com.badlogic.gdx.utils.Disposable;
 import com.mygdx.game.simulation.renderer.Camera;
 import com.mygdx.game.simulation.renderer.Model;
 import com.mygdx.game.simulation.renderer.Shader;
-import com.mygdx.game.simulation.renderer.Transformation;
-import org.joml.Matrix4f;
 import org.joml.Vector3d;
 import org.joml.Vector3f;
 
@@ -17,7 +15,7 @@ public class SimulationObject implements Disposable{
     private final Vector3f temp2;
     private final Model model;
     private final Vector3f rotation;
-    private float diameter;
+    private float radius;
     private final String name;
     private final Shader shader;
 
@@ -27,13 +25,13 @@ public class SimulationObject implements Disposable{
         this.temp = new Vector3d();
         this.temp2 = new Vector3f();
         rotation = new Vector3f();
-        this.diameter = radius;
+        this.radius = radius;
         this.name = name;
         this.shader = shader;
     }
 
-    private void update(Camera cam){
-        model.setScale(diameter);
+    protected void update(Camera cam){
+        model.setScale(radius);
         model.setPosition(getPositionRelativeToCamera(cam));
     }
 
@@ -52,7 +50,7 @@ public class SimulationObject implements Disposable{
     }
 
     public float getRadius() {
-        return diameter;
+        return radius;
     }
 
     @Override
