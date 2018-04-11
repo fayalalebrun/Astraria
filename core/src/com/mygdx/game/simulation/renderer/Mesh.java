@@ -89,15 +89,6 @@ public class Mesh implements Disposable{
 
     public void render(Shader shader){
 
-
-        if(diffuseTexture  == -1){
-            try {
-                throw new Exception("Mesh diffuse texture not set");
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
         shader.use();
 
         if(useTexture) {
