@@ -66,4 +66,8 @@ public class LightSourceManager {
 
     }
 
+    public LightEmitter getTop(){
+        return lightSources.peek();
+    }
+
 }

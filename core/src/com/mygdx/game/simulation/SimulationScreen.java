@@ -53,19 +53,21 @@ public class SimulationScreen extends BaseScreen {
 
         simulationObjects.add(new Star(149598000,0,0,new Sphere(renderer.getModelManager(),renderer.getTransformation(),
                         renderer.getOpenGLTextureManager().addTexture(Gdx.files.internal("models/earth.jpg").path())),
-                renderer,695700,"Sun2",5500));
+                renderer,695700,"Sun2",renderer.getTransformation(),5500));
 
 
         simulationObjects.add(new SimulationObject(3,0,0,new Sphere(renderer.getModelManager(),renderer.getTransformation(),
                 renderer.getOpenGLTextureManager().addTexture(Gdx.files.internal("models/earth.jpg").path())),
-                renderer.getPlanetShader(), 1,"earth"));
+                renderer.getPlanetShader(), 1,"earth",renderer.getTransformation()));
         simulationObjects.add(new SimulationObject(0,0,10000000000f,new Sphere(renderer.getModelManager(),renderer.getTransformation(),
                 renderer.getOpenGLTextureManager().addTexture(Gdx.files.internal("models/earth.jpg").path()))
-                ,renderer.getPlanetShader(), 1000000000f,"sun"));
+                ,renderer.getPlanetShader(), 1000000000f,"sun",renderer.getTransformation()));
 
-        simulationObjects.add(new AtmospherePlanet(10,0,0,new Sphere(renderer.getModelManager(),renderer.getTransformation(),
-                renderer.getOpenGLTextureManager().addTexture(Gdx.files.internal("models/earth.jpg").path())),
-                renderer.getGroundFromSpaceShader(), renderer.getSkyFromSpaceShader(),1f,"atmo",renderer));
+        simulationObjects.add(new AtmospherePlanet(0,0,0, new Sphere(renderer.getModelManager(),renderer.getTransformation(),
+                renderer.getOpenGLTextureManager().addTexture(Gdx.files.internal("models/earth.jpg").path())),renderer.getPlanetAtmoShader(), 1f,
+                "atmo",renderer.getTransformation(),
+                renderer.getOpenGLTextureManager().addTexture(Gdx.files.internal("atmosphere1D.bmp").path()),
+                renderer.getLightSourceManager()));
 
 
     }
