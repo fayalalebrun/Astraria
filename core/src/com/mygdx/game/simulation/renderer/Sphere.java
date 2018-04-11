@@ -20,4 +20,10 @@ public class Sphere extends Model implements Disposable {
         meshes.add(mesh);
     }
 
+    public Sphere(ModelManager modelManager, Transformation transformation, int diffuseTexture, boolean textured){
+        this(modelManager,transformation,diffuseTexture);
+        meshes.get(0).setUseTexture(textured);
+
+    }
+
 }
