@@ -1,16 +1,15 @@
-//
-// Atmospheric scattering fragment shader
-//
-// Author: Sean O'Neil
-//
-// Copyright (c) 2004 Sean O'Neil
-//
+#version 330 core
+out vec4 FragColor;
 
-//uniform sampler2D s2Tex1;
-//uniform sampler2D s2Tex2;
+in vec4 primaryColor;
+in vec4 secondaryColor;
+in vec2 TexCoord;
+
+uniform sampler2D diffuseTex;
 
 void main (void)
 {
-	gl_FragColor = gl_Color + 0.25 * gl_SecondaryColor;
+	FragColor = primaryColor + 0.25 * secondaryColor;
+	FragColor = texture(diffuseTex, TexCoord) + FragColor - texture(diffuseTex,TexCoord);
 	//gl_FragColor = gl_Color + texture2D(s2Tex1, gl_TexCoord[0].st) * texture2D(s2Tex2, gl_TexCoord[1].st) * gl_SecondaryColor;
 }
