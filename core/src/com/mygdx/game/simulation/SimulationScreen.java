@@ -51,13 +51,16 @@ public class SimulationScreen extends BaseScreen {
 
         simulationObjects = new ArrayList<SimulationObject>();
 
-        simulationObjects.add(new Star(149598000,0,0,renderer.getModelManager().loadModel("sphere3.obj", renderer.getTransformation()),
+        simulationObjects.add(new Star(149598000,0,0,new Sphere(renderer.getModelManager(),renderer.getTransformation(),
+                        renderer.getOpenGLTextureManager().addTexture(Gdx.files.internal("models/earth.jpg").path())),
                 renderer,695700,"Sun2",5500));
 
 
-        simulationObjects.add(new SimulationObject(3,0,0,renderer.getModelManager().loadModel("sphere3.obj", renderer.getTransformation()),
+        simulationObjects.add(new SimulationObject(3,0,0,new Sphere(renderer.getModelManager(),renderer.getTransformation(),
+                renderer.getOpenGLTextureManager().addTexture(Gdx.files.internal("models/earth.jpg").path())),
                 renderer.getPlanetShader(), 1,"earth"));
-        simulationObjects.add(new SimulationObject(0,0,10000000000f,renderer.getModelManager().loadModel("sphere3.obj", renderer.getTransformation())
+        simulationObjects.add(new SimulationObject(0,0,10000000000f,new Sphere(renderer.getModelManager(),renderer.getTransformation(),
+                renderer.getOpenGLTextureManager().addTexture(Gdx.files.internal("models/earth.jpg").path()))
                 ,renderer.getPlanetShader(), 1000000000f,"sun"));
 
 
