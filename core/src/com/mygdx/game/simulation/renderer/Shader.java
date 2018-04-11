@@ -75,19 +75,19 @@ public class Shader implements Disposable{
     }
 
     public void setInt(String name, int value){
-        Gdx.gl.glUniform1i(uniforms.get(name), value);
+        Gdx.gl.glUniform1i(getUniformLocation(name), value);
     }
 
     public void setFloat(String name, float value){
-        Gdx.gl.glUniform1f(uniforms.get(name), value);
+        Gdx.gl.glUniform1f(getUniformLocation(name), value);
     }
 
     public void setVec3f(String name, Vector3f value){
-        Gdx.gl.glUniform3f(uniforms.get(name), value.x, value.y, value.z);
+        Gdx.gl.glUniform3f(getUniformLocation(name), value.x, value.y, value.z);
     }
 
     public void setVec4f(String name, Vector4f value){
-        Gdx.gl.glUniform4f(uniforms.get(name),value.x,value.y,value.z,value.w);
+        Gdx.gl.glUniform4f(getUniformLocation(name),value.x,value.y,value.z,value.w);
     }
 
     public void use(){
@@ -98,7 +98,7 @@ public class Shader implements Disposable{
 
         FloatBuffer fb = BufferUtils.newFloatBuffer(16);
         value.get(fb);
-        Gdx.gl.glUniformMatrix4fv(uniforms.get(name),1,false, fb);
+        Gdx.gl.glUniformMatrix4fv(getUniformLocation(name),1,false, fb);
     }
 
     public void createUniform(String uniformName) throws Exception{
@@ -107,6 +107,20 @@ public class Shader implements Disposable{
             throw new Exception("Could not find uniform: "+uniformName);
         }
         uniforms.put(uniformName, uniformLocation);
+    }
+
+    public int getUniformLocation(String name){
+        if(uniforms.containsKey(name)){
+            return uniforms.get(name);
+        }
+
+        try{
+            createUniform(name);
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+
+        return uniforms.get(name);
     }
 
 
