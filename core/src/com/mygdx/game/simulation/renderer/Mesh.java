@@ -83,6 +83,15 @@ public class Mesh implements Disposable{
 
     public void render(Shader shader){
 
+
+        if(diffuseTexture  == -1){
+            try {
+                throw new Exception("Mesh diffuse texture not set");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
         shader.use();
 
         Gdx.gl.glActiveTexture(Gdx.gl.GL_TEXTURE0);
@@ -128,5 +137,9 @@ public class Mesh implements Disposable{
         buff.put(arr);
         buff.flip();
         return buff;
+    }
+
+    public void setDiffuseTexture(int diffuseTexture) {
+        this.diffuseTexture = diffuseTexture;
     }
 }
