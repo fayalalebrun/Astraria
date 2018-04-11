@@ -21,13 +21,13 @@ public class SimulationObject implements Disposable{
     private final String name;
     private final Shader shader;
 
-    public SimulationObject(double x, double y, double z, Model model, Shader shader, float diameter, String name) {
+    public SimulationObject(double x, double y, double z, Model model, Shader shader, float radius, String name) {
         position = new Vector3d(x,y,z);
         this.model = model;
         this.temp = new Vector3d();
         this.temp2 = new Vector3f();
         rotation = new Vector3f();
-        this.diameter = diameter;
+        this.diameter = radius;
         this.name = name;
         this.shader = shader;
     }
@@ -51,7 +51,7 @@ public class SimulationObject implements Disposable{
         return name;
     }
 
-    public float getDiameter() {
+    public float getRadius() {
         return diameter;
     }
 

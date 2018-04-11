@@ -128,7 +128,7 @@ public class LensGlow implements Disposable {
             return;
         }
 
-        float size = (float)calculateGlowSize(star.getDiameter()*200,star.getTemperature(),getPositionRelativeToCamera(cam).length());
+        float size = (float)calculateGlowSize(star.getRadius()*200,star.getTemperature(),getPositionRelativeToCamera(cam).length());
 
         shader.use();
         shader.setMat4("modelView", transformation.getModelViewMatrix(transformation.getViewMatrix(cam),getPositionRelativeToCamera(cam),rotation, 1));
@@ -172,7 +172,7 @@ public class LensGlow implements Disposable {
         temp.set(cam.getPosition());
         temp.sub(position);
         temp.normalize();
-        temp.mul(star.getDiameter()*10);
+        temp.mul(star.getRadius()*10);
         temp.add(position);
         temp.sub(cam.getPosition());
 
@@ -206,7 +206,7 @@ public class LensGlow implements Disposable {
 
     private float getDistanceModifier(Vector3d pointPos){
         temp2.set(pointPos).sub(temp5.set(cam.getPosition()));
-        float amount = temp2.length()/(star.getDiameter()*50f);
+        float amount = temp2.length()/(star.getRadius()*50f);
 
         if(amount > 1f) {
             return 1f;

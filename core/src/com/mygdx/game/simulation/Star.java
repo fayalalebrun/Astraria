@@ -18,8 +18,8 @@ public class Star extends SimulationObject implements LightEmitter{
 
     private final Query query;
 
-    public Star(double x, double y, double z, Model model, Renderer renderer, float diameter, String name, float temperature) {
-        super(x, y, z, model, renderer.getStarShader(), diameter, name);
+    public Star(double x, double y, double z, Model model, Renderer renderer, float radius, String name, float temperature) {
+        super(x, y, z, model, renderer.getStarShader(), radius, name);
         this.temperature = temperature;
 
         this.temp3 = new Vector3f();
@@ -77,7 +77,7 @@ public class Star extends SimulationObject implements LightEmitter{
         temp4.set(cam.getPosition());
         temp4.sub(position);
         temp4.normalize();
-        temp4.mul(getDiameter()*10);
+        temp4.mul(getRadius()*10);
         temp4.add(position);
         occlusionTestPoint.setPosition(temp4.x,temp4.y,temp4.z);
 
