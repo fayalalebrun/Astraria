@@ -72,4 +72,8 @@ public class Model implements Disposable{
     public void setScale(float scale) {
         this.scale = scale;
     }
+
+    public ArrayList<Mesh> getMeshes() {
+        return meshes;
+    }
 }
