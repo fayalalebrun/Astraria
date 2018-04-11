@@ -1,20 +1,19 @@
-//
-// Atmospheric scattering vertex shader
-//
-// Author: Sean O'Neil
-//
-// Copyright (c) 2004 Sean O'Neil
-//
+#version 330 core
+layout (location = 0) in vec3 aPos;
+layout (location = 1) in vec2 aTexCoord;
+layout (location = 2) in vec3 aNormal;
 
-uniform vec3 v3CameraPos;		// The camera's current position
+uniform mat4 modelView;
+uniform mat4 projection;
+
 uniform vec3 v3LightPos;		// The direction vector to the light source
 uniform vec3 v3InvWavelength;	// 1 / pow(wavelength, 4) for the red, green, and blue channels
-uniform float fCameraHeight;	// The camera's current height
+//uniform float fCameraHeight;	// The camera's current height
 uniform float fCameraHeight2;	// fCameraHeight^2
 uniform float fOuterRadius;		// The outer (atmosphere) radius
 uniform float fOuterRadius2;	// fOuterRadius^2
 uniform float fInnerRadius;		// The inner (planetary) radius
-uniform float fInnerRadius2;	// fInnerRadius^2
+//uniform float fInnerRadius2;	// fInnerRadius^2
 uniform float fKrESun;			// Kr * ESun
 uniform float fKmESun;			// Km * ESun
 uniform float fKr4PI;			// Kr * 4 * PI
@@ -23,10 +22,15 @@ uniform float fScale;			// 1 / (fOuterRadius - fInnerRadius)
 uniform float fScaleDepth;		// The scale depth (i.e. the altitude at which the atmosphere's average density is found)
 uniform float fScaleOverScaleDepth;	// fScale / fScaleDepth
 
+uniform float og_farPlaneDistance;
+uniform float u_logarithmicDepthConstant;
+
 const int nSamples = 2;
 const float fSamples = 2.0;
 
-varying vec3 v3Direction;
+out vec3 v3Direction;
+out vec4 primaryColor;
+out vec4 secondaryColor;
 
 
 float scale(float fCos)
@@ -35,22 +39,29 @@ float scale(float fCos)
 	return fScaleDepth * exp(-0.00287 + x*(0.459 + x*(3.83 + x*(-6.80 + x*5.25))));
 }
 
+vec4 modelToClipCoordinates(vec4 position, mat4 modelViewPerspectiveMatrix, float depthConstant, float farPlaneDistance){
+	vec4 clip = modelViewPerspectiveMatrix * position;
+
+	clip.z = ((2.0 * log(depthConstant * clip.z + 1.0) / log(depthConstant * farPlaneDistance + 1.0)) - 1.0) * clip.w;
+	return clip;
+}
+
 void main(void)
 {
 	// Get the ray from the camera to the vertex and its length (which is the far point of the ray passing through the atmosphere)
-	vec3 v3Pos = gl_Vertex.xyz;
-	vec3 v3Ray = v3Pos - v3CameraPos;
+	vec3 v3Pos = vec3(modelView*vec4(aPos,1.0));
+	vec3 v3Ray = v3Pos;
 	float fFar = length(v3Ray);
 	v3Ray /= fFar;
 
 	// Calculate the closest intersection of the ray with the outer atmosphere (which is the near point of the ray passing through the atmosphere)
-	float B = 2.0 * dot(v3CameraPos, v3Ray);
+	float B = 2.0 * dot(vec3(0.0,0.0,0.0), v3Ray);
 	float C = fCameraHeight2 - fOuterRadius2;
 	float fDet = max(0.0, B*B - 4.0 * C);
 	float fNear = 0.5 * (-B - sqrt(fDet));
 
 	// Calculate the ray's starting position, then calculate its scattering offset
-	vec3 v3Start = v3CameraPos + v3Ray * fNear;
+	vec3 v3Start = v3Ray * fNear;
 	fFar -= fNear;
 	float fStartAngle = dot(v3Ray, v3Start) / fOuterRadius;
 	float fStartDepth = exp(-1.0 / fScaleDepth);
@@ -78,8 +89,8 @@ void main(void)
 	}
 
 	// Finally, scale the Mie and Rayleigh colors and set up the varying variables for the pixel shader
-	gl_FrontSecondaryColor.rgb = v3FrontColor * fKmESun;
-	gl_FrontColor.rgb = v3FrontColor * (v3InvWavelength * fKrESun);
-	gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
-	v3Direction = v3CameraPos - v3Pos;
+	secondaryColor = vec4(v3FrontColor * fKmESun,1.0);
+	primaryColor = vec4(v3FrontColor * (v3InvWavelength * fKrESun),1.0);
+	gl_Position = modelToClipCoordinates(vec4(aPos,1.0),projection*modelView,u_logarithmicDepthConstant,og_farPlaneDistance);
+	v3Direction = -v3Pos;
 }

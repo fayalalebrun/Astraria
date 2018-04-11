@@ -17,7 +17,7 @@ public class SimulationObject implements Disposable{
     private final Vector3f rotation;
     private float radius;
     private final String name;
-    private final Shader shader;
+    protected final Shader shader;
 
     public SimulationObject(double x, double y, double z, Model model, Shader shader, float radius, String name) {
         position = new Vector3d(x,y,z);

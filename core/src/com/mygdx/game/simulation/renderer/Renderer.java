@@ -44,6 +44,10 @@ public class Renderer implements Disposable{
 
     private Shader pointShader;
 
+    private Shader skyFromSpace;
+
+    private Shader groundFromSpace;
+
     private Transformation transformation;
     private static float FOV =(float)Math.toRadians(45f);
     private final OpenGLTextureManager openGLTextureManager;
@@ -97,6 +101,10 @@ public class Renderer implements Disposable{
         lensGlowShader = new Shader(Gdx.files.internal("shaders/lensGlow.vert"), Gdx.files.internal("shaders/lensGlow.frag"));
 
         pointShader = new Shader(Gdx.files.internal("shaders/point.vert"), Gdx.files.internal("shaders/point.frag"));
+
+        skyFromSpace = new Shader(Gdx.files.internal("shaders/SkyFromSpace.vert"), Gdx.files.internal("shaders/SkyFromSpace.frag"));
+
+        groundFromSpace = new Shader(Gdx.files.internal("shaders/GroundFromSpace.vert"), Gdx.files.internal("shaders/GroundFromSpace.frag"));
 
         lensGlows = new LinkedBlockingQueue<LensGlow>();
 
@@ -185,6 +193,65 @@ public class Renderer implements Disposable{
             e.printStackTrace();
         }
 
+        skyFromSpace.use();
+
+        try{
+            skyFromSpace.createUniform("modelView");
+            skyFromSpace.createUniform("projection");
+
+            skyFromSpace.createUniform("v3LightPos");
+            skyFromSpace.createUniform("v3InvWavelength");
+            //skyFromSpace.createUniform("fCameraHeight");
+            skyFromSpace.createUniform("fCameraHeight2");
+            skyFromSpace.createUniform("fOuterRadius");
+            skyFromSpace.createUniform("fOuterRadius2");
+            skyFromSpace.createUniform("fInnerRadius");
+            //skyFromSpace.createUniform("fInnerRadius2");
+            skyFromSpace.createUniform("fKrESun");
+            skyFromSpace.createUniform("fKmESun");
+            skyFromSpace.createUniform("fKr4PI");
+            skyFromSpace.createUniform("fKm4PI");
+            skyFromSpace.createUniform("fScale");
+            skyFromSpace.createUniform("fScaleDepth");
+            skyFromSpace.createUniform("fScaleOverScaleDepth");
+            skyFromSpace.createUniform("og_farPlaneDistance");
+            skyFromSpace.createUniform("u_logarithmicDepthConstant");
+            skyFromSpace.createUniform("g");
+            skyFromSpace.createUniform("g2");
+
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+
+
+        groundFromSpace.use();
+
+        try {
+            groundFromSpace.createUniform("modelView");
+            groundFromSpace.createUniform("projection");
+
+            groundFromSpace.createUniform("v3LightPos");
+            groundFromSpace.createUniform("v3InvWavelength");
+            //groundFromSpace.createUniform("fCameraHeight");
+            groundFromSpace.createUniform("fCameraHeight2");
+            groundFromSpace.createUniform("fOuterRadius");
+            groundFromSpace.createUniform("fOuterRadius2");
+            groundFromSpace.createUniform("fInnerRadius");
+            //groundFromSpace.createUniform("fInnerRadius2");
+            groundFromSpace.createUniform("fKrESun");
+            groundFromSpace.createUniform("fKmESun");
+            groundFromSpace.createUniform("fKr4PI");
+            groundFromSpace.createUniform("fKm4PI");
+            groundFromSpace.createUniform("fScale");
+            groundFromSpace.createUniform("fScaleDepth");
+            groundFromSpace.createUniform("fScaleOverScaleDepth");
+            groundFromSpace.createUniform("og_farPlaneDistance");
+            groundFromSpace.createUniform("u_logarithmicDepthConstant");
+
+            groundFromSpace.createUniform("diffuseTex");
+        } catch (Exception e){
+            e.printStackTrace();
+        }
 
         temp2f = new Vector2f();
 
@@ -234,6 +301,16 @@ public class Renderer implements Disposable{
         pointShader.setFloat("og_farPlaneDistance", MAXVIEWDISTANCE);
         pointShader.setFloat("u_logarithmicDepthConstant", LOGDEPTHCONSTANT);
         pointShader.setMat4("projection", projection);
+
+        skyFromSpace.use();
+        skyFromSpace.setFloat("og_farPlaneDistance", MAXVIEWDISTANCE);
+        skyFromSpace.setFloat("u_logarithmicDepthConstant", LOGDEPTHCONSTANT);
+        skyFromSpace.setMat4("projection",projection);
+
+        groundFromSpace.use();
+        groundFromSpace.setFloat("og_farPlaneDistance", MAXVIEWDISTANCE);
+        groundFromSpace.setFloat("u_logarithmicDepthConstant", LOGDEPTHCONSTANT);
+        groundFromSpace.setMat4("projection",projection);
 
         for(SimulationObject object : toDraw){
             object.render(camera);
@@ -347,6 +424,14 @@ public class Renderer implements Disposable{
 
     public void submitLensGlow(LensGlow lensGlow){
         lensGlows.add(lensGlow);
+    }
+
+    public Shader getSkyFromSpaceShader() {
+        return skyFromSpace;
+    }
+
+    public Shader getGroundFromSpaceShader() {
+        return groundFromSpace;
     }
 
     @Override
