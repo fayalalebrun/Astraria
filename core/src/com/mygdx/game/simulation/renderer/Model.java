@@ -22,7 +22,7 @@ import java.util.*;
  */
 public class Model implements Disposable{
 
-    private ArrayList<Mesh> meshes;
+    protected ArrayList<Mesh> meshes;
     private final Vector3f position, rotation;
     private final Transformation transformation;
     private float scale;

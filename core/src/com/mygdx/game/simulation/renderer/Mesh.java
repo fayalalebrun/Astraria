@@ -40,6 +40,10 @@ public class Mesh implements Disposable{
         setupMesh();
     }
 
+    protected Mesh copy(){
+        return new Mesh(indices,vertices,texCoords, normals,diffuseTexture);
+    }
+
     protected void setupMesh(){
         int[] tempv = new int[1];
         Gdx.gl30.glGenVertexArrays(1, tempv, 0);
