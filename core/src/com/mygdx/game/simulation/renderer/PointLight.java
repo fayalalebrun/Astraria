@@ -1,5 +1,6 @@
 package com.mygdx.game.simulation.renderer;
 
+import org.joml.Vector3d;
 import org.joml.Vector3f;
 
 /**
@@ -20,6 +21,10 @@ public class PointLight implements LightEmitter{
         return transformation.getViewMatrix(camera).transformProject(temp.set(position).sub(temp2.set(camera.getPosition())));
     }
 
+    @Override
+    public Vector3d getAbsolutePosition() {
+        return new Vector3d(position);
+    }
 
     @Override
     public Vector3f getAmbient() {

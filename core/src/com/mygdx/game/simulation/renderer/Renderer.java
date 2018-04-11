@@ -48,6 +48,8 @@ public class Renderer implements Disposable{
 
     private Shader groundFromSpace;
 
+    private Shader planetAtmoShader;
+
     private Transformation transformation;
     private static float FOV =(float)Math.toRadians(45f);
     private final OpenGLTextureManager openGLTextureManager;
@@ -105,6 +107,8 @@ public class Renderer implements Disposable{
         skyFromSpace = new Shader(Gdx.files.internal("shaders/SkyFromSpace.vert"), Gdx.files.internal("shaders/SkyFromSpace.frag"));
 
         groundFromSpace = new Shader(Gdx.files.internal("shaders/GroundFromSpace.vert"), Gdx.files.internal("shaders/GroundFromSpace.frag"));
+
+        planetAtmoShader = new Shader(Gdx.files.internal("shaders/planetAtmo.vert"), Gdx.files.internal("shaders/planetAtmo.frag"));
 
         lensGlows = new LinkedBlockingQueue<LensGlow>();
 
@@ -312,6 +316,11 @@ public class Renderer implements Disposable{
         groundFromSpace.setFloat("u_logarithmicDepthConstant", LOGDEPTHCONSTANT);
         groundFromSpace.setMat4("projection",projection);
 
+        planetAtmoShader.use();
+        planetAtmoShader.setFloat("og_farPlaneDistance", MAXVIEWDISTANCE);
+        planetAtmoShader.setFloat("u_logarithmicDepthConstant", LOGDEPTHCONSTANT);
+        planetAtmoShader.setMat4("projection",projection);
+
         for(SimulationObject object : toDraw){
             object.render(camera);
         }
@@ -401,6 +410,9 @@ public class Renderer implements Disposable{
         lightSourceManager.addLight(light);
     }
 
+    public LightSourceManager getLightSourceManager() {
+        return lightSourceManager;
+    }
 
     public Transformation getTransformation() {
         return transformation;
@@ -432,6 +444,10 @@ public class Renderer implements Disposable{
 
     public Shader getGroundFromSpaceShader() {
         return groundFromSpace;
+    }
+
+    public Shader getPlanetAtmoShader() {
+        return planetAtmoShader;
     }
 
     @Override

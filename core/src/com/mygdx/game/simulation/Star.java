@@ -18,8 +18,8 @@ public class Star extends SimulationObject implements LightEmitter{
 
     private final Query query;
 
-    public Star(double x, double y, double z, Model model, Renderer renderer, float radius, String name, float temperature) {
-        super(x, y, z, model, renderer.getStarShader(), radius, name);
+    public Star(double x, double y, double z, Model model, Renderer renderer, float radius, String name, Transformation transformation, float temperature) {
+        super(x, y, z, model, renderer.getStarShader(), radius, name, transformation);
         this.temperature = temperature;
 
         this.temp3 = new Vector3f();
@@ -113,5 +113,8 @@ public class Star extends SimulationObject implements LightEmitter{
         return temp3.set(1.0f,1.0f,1.0f);
     }
 
-
+    @Override
+    public Vector3d getAbsolutePosition() {
+        return position;
+    }
 }
