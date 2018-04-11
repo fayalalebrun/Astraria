@@ -85,12 +85,11 @@ public class ModelManager {
                         }
                     }
 
+                    diffuseTexture = -1;
 
                     if (materials.containsKey(mesh.getMaterialName())) {
                         MTLMaterial mat = materials.get(mesh.getMaterialName());
                         diffuseTexture = textures.addTexture(getPath(mat.getDiffuseTexture()));
-                    } else {
-                        throw new Exception("Could not find mesh material: " + mesh.getMaterialName());
                     }
 
                     meshes.add(new Mesh(convertIntegers(indices), convertFloats(vertices), convertFloats(texCoords),convertFloats(normals), diffuseTexture));
