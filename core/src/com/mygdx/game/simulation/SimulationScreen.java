@@ -75,6 +75,9 @@ public class SimulationScreen extends BaseScreen {
                 Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal("atmoGradient.png").path()),
                 renderer.getLightSourceManager(), Color.WHITE));
 
+        addObject(new Star(new Sphere(renderer.getTransformation(),
+                Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal("models/earth.jpg").path())),
+                renderer,695700,"Sun",renderer.getTransformation(),new Body(1.9891e30, -149598000000.0, 0, 0, 0, 0, 0),5500));
 
     }
 
