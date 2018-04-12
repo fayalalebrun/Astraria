@@ -2,11 +2,10 @@ package com.mygdx.game.simulation;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
-import com.mygdx.game.logic.Body;
+import com.mygdx.game.simulation.logic.Body;
 import com.mygdx.game.simulation.renderer.*;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
-import sun.security.provider.SHA;
 
 /**
  * Created by Fran on 4/10/2018.
@@ -22,9 +21,9 @@ public class AtmospherePlanet extends SimulationObject{
     private Color atmosphereColor;
 
     public AtmospherePlanet( Model model, Shader shader, float radius, String name, Transformation transformation, Body body,
-                             int atmosphereMapTexture, LightSourceManager lightSourceManager, Color atmosphereColor) {
+                             LightSourceManager lightSourceManager, Color atmosphereColor) {
         super(model, shader, radius, name, transformation, body);
-        this.atmosphereMapTexture = atmosphereMapTexture;
+        this.atmosphereMapTexture = Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal("atmoGradient.png").path());
         this.lightSourceManager = lightSourceManager;
 
         starPos = new Vector3f();

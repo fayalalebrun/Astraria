@@ -1,32 +1,18 @@
 package com.mygdx.game.simulation;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.Pixmap;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.profiling.GLProfiler;
-import com.badlogic.gdx.utils.BufferUtils;
 import com.mygdx.game.BaseScreen;
 import com.mygdx.game.Boot;
-import com.mygdx.game.ViewportListener;
-import com.mygdx.game.logic.Body;
-import com.mygdx.game.logic.algorithms.NBodyAlgorithm;
-import com.mygdx.game.logic.algorithms.VelocityVerlet;
+import com.mygdx.game.simulation.logic.Body;
+import com.mygdx.game.simulation.logic.algorithms.NBodyAlgorithm;
+import com.mygdx.game.simulation.logic.algorithms.VelocityVerlet;
 import com.mygdx.game.simulation.renderer.*;
-import org.joml.Matrix4f;
 import org.joml.Vector2f;
-import org.joml.Vector3f;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
 import java.util.ArrayList;
-import java.util.Queue;
-import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Created by fraayala19 on 12/12/17.
@@ -72,7 +58,6 @@ public class SimulationScreen extends BaseScreen {
        addObject(new AtmospherePlanet(new Sphere(renderer.getTransformation(),
                 Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal("models/earth.jpg").path())),renderer.getPlanetAtmoShader(), 1,
                 "atmo",renderer.getTransformation(), new Body(5.97219e24, 0, 0, 0, 0, 0,0),
-                Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal("atmoGradient.png").path()),
                 renderer.getLightSourceManager(), Color.WHITE));
 
         addObject(new Star(new Sphere(renderer.getTransformation(),
