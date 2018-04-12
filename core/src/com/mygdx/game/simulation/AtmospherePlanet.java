@@ -15,7 +15,7 @@ public class AtmospherePlanet extends SimulationObject{
 
     private LightSourceManager lightSourceManager;
 
-    private final Vector3f starPos;
+    private final Vector3f starPos, temp;
     private final Vector4f temp4f;
 
     public AtmospherePlanet(double x, double y, double z, Model model, Shader shader, float radius, String name, Transformation transformation, int atmosphereMapTexture,LightSourceManager lightSourceManager) {
@@ -24,6 +24,7 @@ public class AtmospherePlanet extends SimulationObject{
         this.lightSourceManager = lightSourceManager;
 
         starPos = new Vector3f();
+        temp = new Vector3f();
         temp4f = new Vector4f();
 
     }
@@ -38,10 +39,9 @@ public class AtmospherePlanet extends SimulationObject{
 
     private void setUniforms(Camera cam){
         shader.use();
-        shader.setVec3f("star_pos",starPos.set(lightSourceManager.getTop().getLightPosition(cam,transformation)));
+
+        shader.setVec3f("star_pos",starPos.set(lightSourceManager.getTop().getAbsolutePosition()).sub(temp.set(cam.getPosition())));
         shader.setVec3f("planet_pos",getPositionRelativeToCamera(cam));
-        shader.setFloat("planet_r",getRadius());
-        shader.setFloat("overglow",0f);
 
 
         Gdx.gl.glActiveTexture(Gdx.gl.GL_TEXTURE1);
