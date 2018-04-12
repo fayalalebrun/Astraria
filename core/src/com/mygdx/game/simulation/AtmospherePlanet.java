@@ -1,6 +1,7 @@
 package com.mygdx.game.simulation;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Color;
 import com.mygdx.game.logic.Body;
 import com.mygdx.game.simulation.renderer.*;
 import org.joml.Vector3f;
@@ -18,8 +19,10 @@ public class AtmospherePlanet extends SimulationObject{
 
     private final Vector3f starPos, temp;
     private final Vector4f temp4f;
+    private Color atmosphereColor;
 
-    public AtmospherePlanet( Model model, Shader shader, float radius, String name, Transformation transformation, Body body, int atmosphereMapTexture, LightSourceManager lightSourceManager) {
+    public AtmospherePlanet( Model model, Shader shader, float radius, String name, Transformation transformation, Body body,
+                             int atmosphereMapTexture, LightSourceManager lightSourceManager, Color atmosphereColor) {
         super(model, shader, radius, name, transformation, body);
         this.atmosphereMapTexture = atmosphereMapTexture;
         this.lightSourceManager = lightSourceManager;
@@ -27,7 +30,7 @@ public class AtmospherePlanet extends SimulationObject{
         starPos = new Vector3f();
         temp = new Vector3f();
         temp4f = new Vector4f();
-
+        this.atmosphereColor = new Color().set(atmosphereColor);
     }
 
     @Override
@@ -43,6 +46,7 @@ public class AtmospherePlanet extends SimulationObject{
 
         shader.setVec3f("star_pos",starPos.set(lightSourceManager.getTopAbsPos()).sub(temp.set(cam.getPosition())));
         shader.setVec3f("planet_pos",getPositionRelativeToCamera(cam));
+        shader.setVec4f("atmoColorMod", temp4f.set(atmosphereColor.r,atmosphereColor.g,atmosphereColor.b,atmosphereColor.a));
 
 
         Gdx.gl.glActiveTexture(Gdx.gl.GL_TEXTURE1);

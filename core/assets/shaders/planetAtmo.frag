@@ -8,6 +8,8 @@ uniform vec3 planet_pos;	// planet center position [GCS]
 
 uniform sampler2D diffuseTex;
 uniform sampler2D txratm; //Texture where gradient is stored
+uniform vec4 atmoColorMod;
+
 in vec3 lpos;			// point light source position (Sun) [camera space]
 in vec3 ppos;			// planet center position [camera space]
 in vec3 pixel_pos;		// fragment position [camera space]
@@ -33,6 +35,7 @@ void main()
 
     vec2 gradientLevel = vec2(angleIncidence, 0.5);
     c1 = colAtmosphere * texture(txratm, gradientLevel) * 1.4;
+    c1 = c1 * atmoColorMod;
 
 	c0=texture(diffuseTex,pixel_txy).rgb * li;
 
