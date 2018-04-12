@@ -15,7 +15,7 @@ public class VelocityVerlet extends NBodyAlgorithm{
 
     @Override
     protected void runAlgorithm() {
-            double delta = getDelta();
+            double delta = getDelta()*1;
             //delta *= GameScreen.simSpeed;
         synchronized (bodies) {
             for (Body b : this.bodies) {

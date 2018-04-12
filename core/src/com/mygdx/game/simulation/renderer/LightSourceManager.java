@@ -1,5 +1,6 @@
 package com.mygdx.game.simulation.renderer;
 
+import org.joml.Vector3d;
 import org.joml.Vector3f;
 
 import java.util.Queue;
@@ -66,8 +67,11 @@ public class LightSourceManager {
 
     }
 
-    public LightEmitter getTop(){
-        return lightSources.peek();
+    public Vector3d getTopAbsPos(){
+        if(lightSources.isEmpty()){
+            return new Vector3d(0,0,0);
+        }
+        return lightSources.peek().getAbsolutePosition();
     }
 
 }

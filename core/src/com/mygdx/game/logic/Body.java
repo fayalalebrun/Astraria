@@ -11,13 +11,13 @@ public class Body {
 
 
     public Body(double mass, double x, double y, double z, double vX, double vY, double vZ) {
-        this.mass = mass;
-        this.x = x;
-        this.y = y;
-        this.z = z;
-        this.vX = vX;
-        this.vY = vY;
-        this.vZ = vZ;
+        this.mass = mass; //kilograms
+        this.x = x; //meters
+        this.y = y; //meters
+        this.z = z; //meters
+        this.vX = vX; //meters per second
+        this.vY = vY; //meters per second
+        this.vZ = vZ; //meters per second
     }
 
     public double getMass() {

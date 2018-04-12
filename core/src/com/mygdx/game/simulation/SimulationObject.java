@@ -1,6 +1,7 @@
 package com.mygdx.game.simulation;
 
 import com.badlogic.gdx.utils.Disposable;
+import com.mygdx.game.logic.Body;
 import com.mygdx.game.simulation.renderer.Camera;
 import com.mygdx.game.simulation.renderer.Model;
 import com.mygdx.game.simulation.renderer.Shader;
@@ -20,20 +21,26 @@ public class SimulationObject implements Disposable{
     private final String name;
     protected final Shader shader;
     protected final Transformation transformation;
+    protected final Body body;
 
-    public SimulationObject(double x, double y, double z, Model model, Shader shader, float radius, String name, Transformation transformation) {
-        position = new Vector3d(x,y,z);
+    public SimulationObject(Model model, Shader shader, float radius, String name, Transformation transformation, Body body) {
+        position = new Vector3d();
         this.model = model;
         this.temp = new Vector3d();
         this.temp2 = new Vector3f();
-        rotation = new Vector3f();
-        this.radius = radius;
+        rotation = new Vector3f(); //degrees
+        this.radius = radius; //km
         this.name = name;
         this.shader = shader;
         this.transformation = transformation;
+        this.body = body;
     }
 
     protected void update(Camera cam){
+        synchronized (body){
+            this.position.set(body.getX()/100, body.getY()/100, body.getZ()/100);
+        }
+
         model.setScale(radius);
         model.setPosition(getPositionRelativeToCamera(cam));
         model.setRotation(rotation.x,rotation.y,rotation.z);
@@ -62,4 +69,7 @@ public class SimulationObject implements Disposable{
 
     }
 
+    public Body getBody() {
+        return body;
+    }
 }
