@@ -19,11 +19,11 @@ out vec3 pixel_pos;		// fragment position [camera space]
 out vec3 pixel_nor;		// fragment surface normal
 out vec2 pixel_txy;		// fragment surface texture coord
 out float angleIncidence;
-out vec4 colAtmosphere;
-out vec3 lightDir;
+out vec4 colAtmosphere; //color of the atmosphere
+out vec3 lightDir; //direction of light in camera space
 
 const float PI = 3.14159265f;
-const float transitionWidth = 0.1f;
+const float transitionWidth = 0.1f; //How prominent the atmosphere is
 const float fresnelExponent = 20f;
 
 
@@ -49,12 +49,17 @@ void main()
 
 	vec3 viewDir = normalize(-pixel_pos);
 
+    float dotProd = dot(lightDir, pixel_nor);
+    dotProd = min(dotProd,1.0);
 
-	angleIncidence = acos(dot(lightDir, pixel_nor)) / PI;
+	angleIncidence = acos(dotProd) / PI;
 
     float shadeFactor = 0.1 * (1 - angleIncidence) + 0.9 * (1 - (clamp(angleIncidence, 0.5, 0.5 + transitionWidth) - 0.5) / transitionWidth);
 
-    float angleToViewer = sin(acos(dot(pixel_nor, viewDir)));
+    float dotProd2 = dot(pixel_nor, viewDir);
+    dotProd2 = min(dotProd2,1.0);
+
+    float angleToViewer = sin(acos(dotProd2));
 
     float perspectiveFactor = 0.3 + 0.2 * pow(angleToViewer, fresnelExponent) + 0.5 * pow(angleToViewer, fresnelExponent * 20);
 
