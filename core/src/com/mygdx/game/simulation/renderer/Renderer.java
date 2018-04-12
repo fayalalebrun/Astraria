@@ -52,10 +52,6 @@ public class Renderer implements Disposable{
 
     private Transformation transformation;
     private static float FOV =(float)Math.toRadians(45f);
-    private final OpenGLTextureManager openGLTextureManager;
-
-
-    private final ModelManager modelManager;
 
 
     private LightSourceManager lightSourceManager;
@@ -83,8 +79,6 @@ public class Renderer implements Disposable{
 
         outBuff = BufferUtils.newFloatBuffer(1);
 
-        openGLTextureManager = new OpenGLTextureManager();
-        this.modelManager = new ModelManager(openGLTextureManager);
 
         this.temp = new Vector3f();
 
@@ -391,9 +385,6 @@ public class Renderer implements Disposable{
     }
 
 
-    public ModelManager getModelManager() {
-        return modelManager;
-    }
 
     public Shader getPlanetShader() {
         return planetShader;
@@ -417,10 +408,6 @@ public class Renderer implements Disposable{
 
     public Transformation getTransformation() {
         return transformation;
-    }
-
-    public OpenGLTextureManager getOpenGLTextureManager() {
-        return openGLTextureManager;
     }
 
     public Shader getLensGlowShader() {

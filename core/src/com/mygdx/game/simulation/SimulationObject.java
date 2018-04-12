@@ -59,7 +59,7 @@ public class SimulationObject implements Disposable{
 
     @Override
     public void dispose() {
-        model.dispose();
+
     }
 
 }

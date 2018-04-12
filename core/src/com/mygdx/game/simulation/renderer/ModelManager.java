@@ -1,6 +1,7 @@
 package com.mygdx.game.simulation.renderer;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.utils.Disposable;
 import com.mokiat.data.front.parser.*;
 
 import java.io.FileInputStream;
@@ -12,7 +13,7 @@ import java.util.*;
 /**
  * Created by Fran on 3/19/2018.
  */
-public class ModelManager {
+public class ModelManager implements Disposable{
 
     final OpenGLTextureManager textures;
     final Map<String, Model> models;
@@ -132,5 +133,13 @@ public class ModelManager {
             ret[i] = iterator.next().floatValue();
         }
         return ret;
+    }
+
+
+    @Override
+    public void dispose() {
+        for(Model model : this.models.values()){
+            model.dispose();
+        }
     }
 }

@@ -38,7 +38,7 @@ public class SimulationScreen extends BaseScreen {
 
     public SimulationScreen(Boot boot) {
         super(boot);
-
+        Warehouse.init();
 
         renderer = new Renderer(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
@@ -51,22 +51,22 @@ public class SimulationScreen extends BaseScreen {
 
         simulationObjects = new ArrayList<SimulationObject>();
 
-        simulationObjects.add(new Star(149598000,0,0,new Sphere(renderer.getModelManager(),renderer.getTransformation(),
-                        renderer.getOpenGLTextureManager().addTexture(Gdx.files.internal("models/earth.jpg").path())),
+        simulationObjects.add(new Star(149598000,0,0,new Sphere(renderer.getTransformation(),
+                        Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal("models/earth.jpg").path())),
                 renderer,695700,"Sun2",renderer.getTransformation(),5500));
 
 
-        simulationObjects.add(new SimulationObject(3,0,0,new Sphere(renderer.getModelManager(),renderer.getTransformation(),
-                renderer.getOpenGLTextureManager().addTexture(Gdx.files.internal("models/earth.jpg").path())),
+        simulationObjects.add(new SimulationObject(3,0,0,new Sphere(renderer.getTransformation(),
+                Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal("models/earth.jpg").path())),
                 renderer.getPlanetShader(), 1,"earth",renderer.getTransformation()));
-        simulationObjects.add(new SimulationObject(0,0,10000000000f,new Sphere(renderer.getModelManager(),renderer.getTransformation(),
-                renderer.getOpenGLTextureManager().addTexture(Gdx.files.internal("models/earth.jpg").path()))
+        simulationObjects.add(new SimulationObject(0,0,10000000000f,new Sphere(renderer.getTransformation(),
+                Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal("models/earth.jpg").path()))
                 ,renderer.getPlanetShader(), 1000000000f,"sun",renderer.getTransformation()));
 
-        simulationObjects.add(new AtmospherePlanet(10,0,0, new Sphere(renderer.getModelManager(),renderer.getTransformation(),
-                renderer.getOpenGLTextureManager().addTexture(Gdx.files.internal("models/earth.jpg").path())),renderer.getPlanetAtmoShader(), 1f,
+        simulationObjects.add(new AtmospherePlanet(6,0,0, new Sphere(renderer.getTransformation(),
+                Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal("models/earth.jpg").path())),renderer.getPlanetAtmoShader(), 6500f,
                 "atmo",renderer.getTransformation(),
-                renderer.getOpenGLTextureManager().addTexture(Gdx.files.internal("atmoGradient.png").path()),
+                Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal("atmoGradient.png").path()),
                 renderer.getLightSourceManager()));
 
 
@@ -127,6 +127,7 @@ public class SimulationScreen extends BaseScreen {
 
     @Override
     public void dispose() {
+        Warehouse.dispose();
     }
 
 }
