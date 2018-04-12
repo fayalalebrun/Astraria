@@ -1,6 +1,7 @@
 package com.mygdx.game.simulation;
 
 import com.badlogic.gdx.Gdx;
+import com.mygdx.game.logic.Body;
 import com.mygdx.game.simulation.renderer.*;
 import org.joml.Vector3d;
 import org.joml.Vector3f;
@@ -18,8 +19,8 @@ public class Star extends SimulationObject implements LightEmitter{
 
     private final Query query;
 
-    public Star(double x, double y, double z, Model model, Renderer renderer, float radius, String name, Transformation transformation, float temperature) {
-        super(x, y, z, model, renderer.getStarShader(), radius, name, transformation);
+    public Star(Model model, Renderer renderer, float radius, String name, Transformation transformation, Body body, float temperature) {
+        super(model, renderer.getStarShader(), radius, name, transformation, body);
         this.temperature = temperature;
 
         this.temp3 = new Vector3f();

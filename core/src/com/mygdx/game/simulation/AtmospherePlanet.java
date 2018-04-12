@@ -1,6 +1,7 @@
 package com.mygdx.game.simulation;
 
 import com.badlogic.gdx.Gdx;
+import com.mygdx.game.logic.Body;
 import com.mygdx.game.simulation.renderer.*;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
@@ -18,8 +19,8 @@ public class AtmospherePlanet extends SimulationObject{
     private final Vector3f starPos, temp;
     private final Vector4f temp4f;
 
-    public AtmospherePlanet(double x, double y, double z, Model model, Shader shader, float radius, String name, Transformation transformation, int atmosphereMapTexture,LightSourceManager lightSourceManager) {
-        super(x, y, z, model, shader, radius, name, transformation);
+    public AtmospherePlanet( Model model, Shader shader, float radius, String name, Transformation transformation, Body body, int atmosphereMapTexture, LightSourceManager lightSourceManager) {
+        super(model, shader, radius, name, transformation, body);
         this.atmosphereMapTexture = atmosphereMapTexture;
         this.lightSourceManager = lightSourceManager;
 
@@ -40,7 +41,7 @@ public class AtmospherePlanet extends SimulationObject{
 
         shader.use();
 
-        shader.setVec3f("star_pos",starPos.set(lightSourceManager.getTop().getAbsolutePosition()).sub(temp.set(cam.getPosition())));
+        shader.setVec3f("star_pos",starPos.set(lightSourceManager.getTopAbsPos()).sub(temp.set(cam.getPosition())));
         shader.setVec3f("planet_pos",getPositionRelativeToCamera(cam));
 
 

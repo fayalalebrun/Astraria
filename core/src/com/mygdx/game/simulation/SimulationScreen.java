@@ -11,6 +11,9 @@ import com.badlogic.gdx.utils.BufferUtils;
 import com.mygdx.game.BaseScreen;
 import com.mygdx.game.Boot;
 import com.mygdx.game.ViewportListener;
+import com.mygdx.game.logic.Body;
+import com.mygdx.game.logic.algorithms.NBodyAlgorithm;
+import com.mygdx.game.logic.algorithms.VelocityVerlet;
 import com.mygdx.game.simulation.renderer.*;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
@@ -29,6 +32,10 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class SimulationScreen extends BaseScreen {
 
+    Thread algorithmThread;
+
+    NBodyAlgorithm algorithm;
+
     private final Renderer renderer;
     private final SimCamInputProcessor processor;
     private ArrayList<SimulationObject> simulationObjects;
@@ -39,6 +46,10 @@ public class SimulationScreen extends BaseScreen {
     public SimulationScreen(Boot boot) {
         super(boot);
         Warehouse.init();
+
+        algorithm = new VelocityVerlet();
+        algorithmThread = new Thread(algorithm);
+        algorithmThread.start();
 
         renderer = new Renderer(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
@@ -51,21 +62,15 @@ public class SimulationScreen extends BaseScreen {
 
         simulationObjects = new ArrayList<SimulationObject>();
 
-        simulationObjects.add(new Star(149598000,0,0,new Sphere(renderer.getTransformation(),
+        /*addObject(new Star(new Sphere(renderer.getTransformation(),
                         Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal("models/earth.jpg").path())),
-                renderer,695700,"Sun2",renderer.getTransformation(),5500));
+                renderer,695700,"Sun2",renderer.getTransformation(),new Body(1.9891e30, 149598000000.0, 0, 0, 0, 0, 0),5500));*/
 
 
-        simulationObjects.add(new SimulationObject(3,0,0,new Sphere(renderer.getTransformation(),
-                Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal("models/earth.jpg").path())),
-                renderer.getPlanetShader(), 1,"earth",renderer.getTransformation()));
-        simulationObjects.add(new SimulationObject(0,0,10000000000f,new Sphere(renderer.getTransformation(),
-                Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal("models/earth.jpg").path()))
-                ,renderer.getPlanetShader(), 1000000000f,"sun",renderer.getTransformation()));
 
-        simulationObjects.add(new AtmospherePlanet(6,0,0, new Sphere(renderer.getTransformation(),
-                Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal("models/earth.jpg").path())),renderer.getPlanetAtmoShader(), 6500f,
-                "atmo",renderer.getTransformation(),
+       addObject(new AtmospherePlanet(new Sphere(renderer.getTransformation(),
+                Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal("models/earth.jpg").path())),renderer.getPlanetAtmoShader(), 1,
+                "atmo",renderer.getTransformation(), new Body(5.97219e24, 0, 0, 0, 0, 0,0),
                 Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal("atmoGradient.png").path()),
                 renderer.getLightSourceManager()));
 
@@ -100,6 +105,10 @@ public class SimulationScreen extends BaseScreen {
 
     }
 
+    public void addObject(SimulationObject simulationObject){
+        simulationObjects.add(simulationObject);
+        algorithm.addBody(simulationObject.getBody());
+    }
 
 
     @Override
@@ -128,6 +137,7 @@ public class SimulationScreen extends BaseScreen {
     @Override
     public void dispose() {
         Warehouse.dispose();
+        algorithmThread.interrupt();
     }
 
 }
