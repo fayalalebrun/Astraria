@@ -15,7 +15,7 @@ public class SimulationObject implements Disposable{
     protected final Vector3d position, temp;
     private final Vector3f temp2;
     private final Model model;
-    private final Vector3f rotation;
+    protected final Vector3f rotation;
     private float radius;
     private final String name;
     protected final Shader shader;
@@ -36,6 +36,7 @@ public class SimulationObject implements Disposable{
     protected void update(Camera cam){
         model.setScale(radius);
         model.setPosition(getPositionRelativeToCamera(cam));
+        model.setRotation(rotation.x,rotation.y,rotation.z);
     }
 
     public void render(Camera cam){

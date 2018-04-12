@@ -8,6 +8,7 @@ uniform vec3 star_pos;		// point light source position (Sun) [GCS]
 uniform vec3 planet_pos;	// planet center position [GCS]
 uniform float overglow;		// cos(angle) of terminator propagation\
 
+uniform mat4 view;
 uniform mat4 modelView;
 uniform mat4 projection;
 uniform float og_farPlaneDistance;
@@ -38,8 +39,8 @@ void main()
 	{
 
 
-	lpos=(modelView*vec4(star_pos,1.0)).xyz;
-	ppos=(modelView*vec4(planet_pos,1.0)).xyz;
+	lpos=(view*vec4(star_pos,1.0)).xyz;
+	ppos=(view*vec4(planet_pos,1.0)).xyz;
 
 	lightDir =normalize(lpos-ppos);
 
