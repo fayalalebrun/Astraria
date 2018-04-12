@@ -11,17 +11,17 @@ import java.util.ArrayList;
 public class Sphere extends Model implements Disposable {
 
 
-    public Sphere(ModelManager modelManager, Transformation transformation, int diffuseTexture){
+    public Sphere(Transformation transformation, int diffuseTexture){
         super(new ArrayList<Mesh>(),transformation);
 
-        Mesh mesh = modelManager.loadModel("sphere.obj", transformation).getMeshes().get(0).copy();
+        Mesh mesh = Warehouse.getModelManager().loadModel("sphere.obj", transformation).getMeshes().get(0).copy();
         mesh.setDiffuseTexture(diffuseTexture);
 
         meshes.add(mesh);
     }
 
-    public Sphere(ModelManager modelManager, Transformation transformation, int diffuseTexture, boolean textured){
-        this(modelManager,transformation,diffuseTexture);
+    public Sphere(Transformation transformation, int diffuseTexture, boolean textured){
+        this(transformation,diffuseTexture);
         meshes.get(0).setUseTexture(textured);
 
     }

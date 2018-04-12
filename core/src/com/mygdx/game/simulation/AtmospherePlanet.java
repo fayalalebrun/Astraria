@@ -31,13 +31,13 @@ public class AtmospherePlanet extends SimulationObject{
 
     @Override
     protected void update(Camera cam) {
-
         super.update(cam);
 
     }
 
 
     private void setUniforms(Camera cam){
+
         shader.use();
 
         shader.setVec3f("star_pos",starPos.set(lightSourceManager.getTop().getAbsolutePosition()).sub(temp.set(cam.getPosition())));

@@ -31,8 +31,8 @@ public class Star extends SimulationObject implements LightEmitter{
 
         renderer.addLight(this);
 
-        this.lensGlow = new LensGlow(position.x,position.y,position.z,renderer.getOpenGLTextureManager().addTexture(Gdx.files.internal("star_glow.png").path()),
-                renderer.getOpenGLTextureManager().addTexture(Gdx.files.internal("starspectrum.png").path()),this,renderer.getTransformation());
+        this.lensGlow = new LensGlow(position.x,position.y,position.z,Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal("star_glow.png").path()),
+                Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal("starspectrum.png").path()),this,renderer.getTransformation());
 
         occlusionTestPoint = new Point(new Vector4f(1,0,0,1),renderer.getTransformation());
 
@@ -95,7 +95,6 @@ public class Star extends SimulationObject implements LightEmitter{
     public void dispose() {
         super.dispose();
         query.dispose();
-        lensGlow.dispose();
     }
 
     @Override

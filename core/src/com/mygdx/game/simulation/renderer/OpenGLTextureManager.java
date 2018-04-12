@@ -5,6 +5,7 @@ import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.utils.BufferUtils;
+import com.badlogic.gdx.utils.Disposable;
 
 import java.nio.IntBuffer;
 import java.util.HashMap;
@@ -13,7 +14,7 @@ import java.util.Map;
 /**
  * Created by fraayala19 on 3/15/18.
  */
-public class OpenGLTextureManager {
+public class OpenGLTextureManager implements Disposable{
     private Map<String, Integer> textures;
 
     public OpenGLTextureManager() {
@@ -51,5 +52,13 @@ public class OpenGLTextureManager {
         Gdx.gl.glGenerateMipmap(Gdx.gl.GL_TEXTURE_2D);
         pixmap.dispose();
         return texture;
+    }
+
+
+    @Override
+    public void dispose() {
+        for(Integer i : textures.values()){
+            Gdx.gl.glDeleteTexture(i);
+        }
     }
 }
