@@ -6,7 +6,6 @@ layout (location = 2) in vec3 aNormal;
 // Vertex
 uniform vec3 star_pos;		// point light source position (Sun) [GCS]
 uniform vec3 planet_pos;	// planet center position [GCS]
-uniform float planet_r;		// planet radius
 uniform float overglow;		// cos(angle) of terminator propagation\
 
 uniform mat4 modelView;
@@ -19,7 +18,13 @@ out vec3 ppos;			// planet center position [camera space]
 out vec3 pixel_pos;		// fragment position [camera space]
 out vec3 pixel_nor;		// fragment surface normal
 out vec2 pixel_txy;		// fragment surface texture coord
-out float atm1d_tx;		// fragment surface texture coord
+out float angleIncidence;
+out vec4 colAtmosphere;
+out vec3 lightDir;
+
+const float PI = 3.14159265f;
+const float transitionWidth = 0.1f;
+const float fresnelExponent = 20f;
 
 
 vec4 modelToClipCoordinates(vec4 position, mat4 modelViewPerspectiveMatrix, float depthConstant, float farPlaneDistance){
@@ -31,14 +36,29 @@ vec4 modelToClipCoordinates(vec4 position, mat4 modelViewPerspectiveMatrix, floa
 
 void main()
 	{
-	lpos=vec3(modelView*vec4(star_pos,1.0));
-	ppos=vec3(modelView*vec4(planet_pos,1.0));
+
+
+	lpos=(modelView*vec4(star_pos,1.0)).xyz;
+	ppos=(modelView*vec4(planet_pos,1.0)).xyz;
+
+	lightDir =normalize(lpos-ppos);
 
 	pixel_pos=vec3(modelView*vec4(aPos,1.0));
 	pixel_nor=mat3(transpose(inverse(modelView))) * aNormal;
 	pixel_txy=aTexCoord;
 
-	atm1d_tx=length(vec2(pixel_pos.xy-ppos.xy))/planet_r;
+	vec3 viewDir = normalize(-pixel_pos);
+
+
+	angleIncidence = acos(dot(lightDir, pixel_nor)) / PI;
+
+    float shadeFactor = 0.1 * (1 - angleIncidence) + 0.9 * (1 - (clamp(angleIncidence, 0.5, 0.5 + transitionWidth) - 0.5) / transitionWidth);
+
+    float angleToViewer = sin(acos(dot(pixel_nor, viewDir)));
+
+    float perspectiveFactor = 0.3 + 0.2 * pow(angleToViewer, fresnelExponent) + 0.5 * pow(angleToViewer, fresnelExponent * 20);
+
+    colAtmosphere = vec4(perspectiveFactor*shadeFactor);
 
 	gl_Position = modelToClipCoordinates(vec4(aPos, 1.0), projection * modelView, u_logarithmicDepthConstant, og_farPlaneDistance);
 	}

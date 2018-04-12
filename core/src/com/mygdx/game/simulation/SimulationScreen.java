@@ -63,10 +63,10 @@ public class SimulationScreen extends BaseScreen {
                 renderer.getOpenGLTextureManager().addTexture(Gdx.files.internal("models/earth.jpg").path()))
                 ,renderer.getPlanetShader(), 1000000000f,"sun",renderer.getTransformation()));
 
-        simulationObjects.add(new AtmospherePlanet(0,0,0, new Sphere(renderer.getModelManager(),renderer.getTransformation(),
+        simulationObjects.add(new AtmospherePlanet(10,0,0, new Sphere(renderer.getModelManager(),renderer.getTransformation(),
                 renderer.getOpenGLTextureManager().addTexture(Gdx.files.internal("models/earth.jpg").path())),renderer.getPlanetAtmoShader(), 1f,
                 "atmo",renderer.getTransformation(),
-                renderer.getOpenGLTextureManager().addTexture(Gdx.files.internal("atmosphere1D.bmp").path()),
+                renderer.getOpenGLTextureManager().addTexture(Gdx.files.internal("atmoGradient.png").path()),
                 renderer.getLightSourceManager()));
 
 
