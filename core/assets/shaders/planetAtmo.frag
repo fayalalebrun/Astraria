@@ -7,7 +7,7 @@ uniform vec3 planet_pos;	// planet center position [GCS]
 //uniform vec3 planet_r;		// planet radius
 
 uniform sampler2D diffuseTex;
-uniform sampler2D txratm;
+uniform sampler2D txratm; //Texture where gradient is stored
 in vec3 lpos;			// point light source position (Sun) [camera space]
 in vec3 ppos;			// planet center position [camera space]
 in vec3 pixel_pos;		// fragment position [camera space]
@@ -37,7 +37,7 @@ void main()
 	c0=texture(diffuseTex,pixel_txy).rgb * li;
 
 
-    c = c1.a * c1.rgb + (vec3(1.0, 1.0, 1.0) - c1.a) * c0;
+    c = c1.a * c1.rgb + (vec3(1.0, 1.0, 1.0) - c1.a) * c0; //Blend atmosphere with diffuse color
 
 
 	FragColor=vec4(c,1.0);
