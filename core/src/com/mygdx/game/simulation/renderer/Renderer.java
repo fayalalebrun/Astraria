@@ -320,6 +320,7 @@ public class Renderer implements Disposable{
         planetAtmoShader.setFloat("og_farPlaneDistance", MAXVIEWDISTANCE);
         planetAtmoShader.setFloat("u_logarithmicDepthConstant", LOGDEPTHCONSTANT);
         planetAtmoShader.setMat4("projection",projection);
+        planetAtmoShader.setMat4("view",transformation.getViewMatrix(camera));
 
         for(SimulationObject object : toDraw){
             object.render(camera);
