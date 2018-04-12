@@ -1,7 +1,7 @@
-package com.mygdx.game.logic.algorithms;
+package com.mygdx.game.simulation.logic.algorithms;
 
-import com.mygdx.game.logic.Body;
-import com.mygdx.game.logic.helpers.Units;
+import com.mygdx.game.simulation.logic.Body;
+import com.mygdx.game.simulation.logic.helpers.Units;
 
 /**
  * Created by fraayala19 on 4/12/18.

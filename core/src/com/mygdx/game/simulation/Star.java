@@ -1,7 +1,7 @@
 package com.mygdx.game.simulation;
 
 import com.badlogic.gdx.Gdx;
-import com.mygdx.game.logic.Body;
+import com.mygdx.game.simulation.logic.Body;
 import com.mygdx.game.simulation.renderer.*;
 import org.joml.Vector3d;
 import org.joml.Vector3f;

@@ -1,4 +1,4 @@
-package com.mygdx.game.logic;
+package com.mygdx.game.simulation.logic;
 
 /**
  * Created by fraayala19 on 12/12/17.

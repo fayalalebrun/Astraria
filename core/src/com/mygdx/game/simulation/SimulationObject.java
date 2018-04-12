@@ -1,7 +1,7 @@
 package com.mygdx.game.simulation;
 
 import com.badlogic.gdx.utils.Disposable;
-import com.mygdx.game.logic.Body;
+import com.mygdx.game.simulation.logic.Body;
 import com.mygdx.game.simulation.renderer.Camera;
 import com.mygdx.game.simulation.renderer.Model;
 import com.mygdx.game.simulation.renderer.Shader;

@@ -1,4 +1,4 @@
-package com.mygdx.game.logic.helpers;
+package com.mygdx.game.simulation.logic.helpers;
 
 /**
  * Created by fraayala19 on 12/13/17.

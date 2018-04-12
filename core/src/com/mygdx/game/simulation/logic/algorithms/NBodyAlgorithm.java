@@ -1,8 +1,7 @@
-package com.mygdx.game.logic.algorithms;
+package com.mygdx.game.simulation.logic.algorithms;
 
-import com.mygdx.game.logic.Body;
+import com.mygdx.game.simulation.logic.Body;
 
-import java.util.ArrayList;
 import java.util.Vector;
 
 /**
