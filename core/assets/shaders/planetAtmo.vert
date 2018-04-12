@@ -24,7 +24,7 @@ out vec4 colAtmosphere; //color of the atmosphere
 out vec3 lightDir; //direction of light in camera space
 
 const float PI = 3.14159265;
-const float transitionWidth = 0.1; //How prominent the atmosphere is
+const float transitionWidth = 1.0; //How prominent the atmosphere is
 const float fresnelExponent = 20;
 
 
@@ -51,14 +51,14 @@ void main()
 	vec3 viewDir = normalize(-pixel_pos);
 
     float dotProd = dot(lightDir, pixel_nor);
-    dotProd = min(dotProd,1.0);
+    dotProd = clamp(dotProd,-1.0,1.0);
 
 	angleIncidence = acos(dotProd) / PI;
 
     float shadeFactor = 0.1 * (1 - angleIncidence) + 0.9 * (1 - (clamp(angleIncidence, 0.5, 0.5 + transitionWidth) - 0.5) / transitionWidth);
 
     float dotProd2 = dot(pixel_nor, viewDir);
-    dotProd2 = min(dotProd2,1.0);
+    dotProd2 = clamp(dotProd2,-1.0,1.0);
 
     float angleToViewer = sin(acos(dotProd2));
 

@@ -19,25 +19,41 @@ in float angleIncidence;
 in vec4 colAtmosphere;
 in vec3 lightDir;
 
+struct PointLight {
+    vec3 position;
+
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+};
+uniform PointLight pointLights[8];
+
+uniform int nLights;
+
+vec4 calcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
+
 void main()
 	{
 	float li;
 	vec3 c,lt_dir,c0;
 	vec4 c1;
-	lt_dir=lightDir; // vector from fragment to point light source
-	li=dot(pixel_nor,lt_dir);
-	if (li<0.0) {
-	    li=0.0;
-	}
-	if (li>1.0) {
-	    li=1.0;
-	}
+
+
+    vec3 norm = normalize(pixel_nor);
+    vec3 viewDir = normalize(-pixel_pos);
+
+    vec4 result = vec4(0.0);
+
+    for(int i = 0; i < nLights; i++){
+        result+=calcPointLight(pointLights[i], norm, pixel_pos, viewDir);
+    }
+
+    c0 = result.xyz;
 
     vec2 gradientLevel = vec2(angleIncidence, 0.5);
     c1 = colAtmosphere * texture(txratm, gradientLevel) * 1.4;
     c1 = c1 * atmoColorMod;
 
-	c0=texture(diffuseTex,pixel_txy).rgb * li;
 
 
     c = c1.a * c1.rgb + (vec3(1.0, 1.0, 1.0) - c1.a) * c0; //Blend atmosphere with diffuse color
@@ -46,3 +62,15 @@ void main()
 	FragColor=vec4(c,1.0);
 //	gl_FragDepth=0.0;
 	}
+
+vec4 calcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
+{
+    vec3 lightDir = normalize(light.position - fragPos);
+    // diffuse shading
+    float diff = max(dot(normal, lightDir), 0.0);
+    // combine results
+    vec4 ambient  = vec4(light.ambient,1.0)  * texture(diffuseTex, pixel_txy);
+    vec4 diffuse  = vec4(light.diffuse,1.0)  * diff * texture(diffuseTex, pixel_txy);
+
+    return ambient + diffuse;
+}

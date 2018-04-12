@@ -106,7 +106,9 @@ public class Renderer implements Disposable{
 
         lensGlows = new LinkedBlockingQueue<LensGlow>();
 
-        lightSourceManager = new LightSourceManager(planetShader, camera, transformation);
+        lightSourceManager = new LightSourceManager(camera, transformation);
+        lightSourceManager.addShader(planetShader);
+        lightSourceManager.addShader(planetAtmoShader);
 
         planetShader.use();
 

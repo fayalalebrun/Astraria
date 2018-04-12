@@ -3,6 +3,7 @@ package com.mygdx.game.simulation.renderer;
 import org.joml.Vector3d;
 import org.joml.Vector3f;
 
+import java.util.ArrayList;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -10,33 +11,20 @@ import java.util.concurrent.LinkedBlockingQueue;
  * Created by Fran on 3/18/2018.
  */
 public class LightSourceManager {
-    private Shader shader;
+    private ArrayList<Shader> shaders;
     private final Vector3f temp;
     private Queue<LightEmitter> lightSources;
     private Camera camera;
     private Transformation transformation;
 
-    public LightSourceManager(Shader shader, Camera camera, Transformation transformation)  {
+    public LightSourceManager(Camera camera, Transformation transformation)  {
         lightSources = new LinkedBlockingQueue<LightEmitter>();
-        this.shader = shader;
+        shaders = new ArrayList<Shader>();
+
         temp = new Vector3f();
         this.camera = camera;
         this.transformation = transformation;
 
-        try {
-            shader.use();
-            for (int i = 0; i < 8; i++) {
-                String s = "pointLights[" + i + "]";
-                shader.createUniform(s + ".position");
-                shader.createUniform(s+".ambient");
-                shader.createUniform(s+".diffuse");
-                shader.createUniform(s+".specular");
-            }
-            shader.createUniform("nLights");
-            shader.setInt("nLights",0);
-        } catch (Exception e){
-            e.printStackTrace();
-        }
     }
 
     public void addLight(LightEmitter light){
@@ -48,23 +36,25 @@ public class LightSourceManager {
     }
 
     public void update(){
-        int i = 0;
-        shader.use();
-        for(LightEmitter light : lightSources){
-            String s = "pointLights[" + i + "]";
-            shader.setVec3f(s+".position", light.getLightPosition(camera, transformation));
-            shader.setVec3f(s+".ambient", light.getAmbient());
-            shader.setVec3f(s+".diffuse", light.getDiffuse());
-            shader.setVec3f(s+".specular", light.getSpecular());
 
-            i++;
-            if(i==8){
-                break;
+        for(Shader shader : this.shaders) {
+            int i = 0;
+            shader.use();
+            for (LightEmitter light : lightSources) {
+                String s = "pointLights[" + i + "]";
+                shader.setVec3f(s + ".position", light.getLightPosition(camera, transformation));
+                shader.setVec3f(s + ".ambient", light.getAmbient());
+                shader.setVec3f(s + ".diffuse", light.getDiffuse());
+                shader.setVec3f(s + ".specular", light.getSpecular());
+
+                i++;
+                if (i == 8) {
+                    break;
+                }
             }
+
+            shader.setInt("nLights", i);
         }
-
-        shader.setInt("nLights", i);
-
     }
 
     public Vector3d getTopAbsPos(){
@@ -72,6 +62,10 @@ public class LightSourceManager {
             return new Vector3d(0,0,0);
         }
         return lightSources.peek().getAbsolutePosition();
+    }
+
+    public void addShader(Shader shader){
+        shaders.add(shader);
     }
 
 }
