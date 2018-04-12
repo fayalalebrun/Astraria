@@ -44,7 +44,7 @@ void main()
 	lightDir =normalize(lpos-ppos);
 
 	pixel_pos=vec3(modelView*vec4(aPos,1.0));
-	pixel_nor=mat3(transpose(inverse(modelView))) * aNormal;
+	pixel_nor=normalize(mat3(transpose(inverse(modelView))) * aNormal);
 	pixel_txy=aTexCoord;
 
 	vec3 viewDir = normalize(-pixel_pos);
