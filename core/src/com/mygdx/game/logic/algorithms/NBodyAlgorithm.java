@@ -1,8 +1,8 @@
 package com.mygdx.game.logic.algorithms;
 
 import com.mygdx.game.logic.Body;
-import com.mygdx.game.logic.DetailedBody;
 
+import java.util.ArrayList;
 import java.util.Vector;
 
 /**
@@ -10,68 +10,53 @@ import java.util.Vector;
  */
 public abstract class NBodyAlgorithm implements Runnable{
 
-    protected Vector<DetailedBody> bodies;
-    private boolean terminate = false;
-    private double lastTime;
-    protected final Object lock;
+    private static final boolean PRINT_CALC_PER_SEC = true;
 
-    private double tmp;
+    protected final Vector<Body> bodies;
+
+    protected final Vector<Body> toRemove;
+
+    protected final Vector<Body> toAdd;
+
+    public boolean terminate;
+
+    private double lastTime, lastDelta;
 
 
-    public NBodyAlgorithm(Vector<DetailedBody> bodies, Object lock) {
-        this.bodies = bodies;
+    private int calcSec;
+    private double timeSinceCalcSec;
 
-        this.lock = lock;
+    public NBodyAlgorithm() {
+        this.bodies = new Vector<Body>();
+        toRemove = new Vector<Body>();
+        toAdd  = new Vector<Body>();
     }
 
     @Override
     public void run() {
-
-        int calcSec = 0;
-        double timeSinceCalcSec = 0;
-
-        double average = 0;
-        double times = 0;
-
-
         while (!terminate){
-           runAlgorithm();
-        // System.out.println("Algorithm done");
 
-            //System.out.println(tmp);
+            runAlgorithm();
 
-
-            if(true) {
+            if(PRINT_CALC_PER_SEC) {
                 calcSec++;
-                timeSinceCalcSec += tmp;
+                timeSinceCalcSec += lastDelta;
                 if (timeSinceCalcSec >= 1) {
                     timeSinceCalcSec = 0;
-                    System.out.println("Calc: "+calcSec);
-
-                    average = (average*times+calcSec)/(times+1);
-
-                    System.out.println("Avg: "+average);
-
-
-
+                    System.out.println(calcSec);
                     calcSec = 0;
-                    times++;
                 }
             }
 
+            bodies.removeAll(toRemove);
+            toRemove.clear();
+            bodies.addAll(toAdd);
+            toAdd.clear();
+
         }
-
-        endThreads();
     }
-
 
     protected abstract void runAlgorithm();
-
-    private void terminate(){
-        terminate = true;
-    }
-
-    protected abstract void endThreads();
 
     protected double getDelta(){
         double currTime = (double)System.nanoTime()/1000000000.0;
@@ -80,9 +65,23 @@ public abstract class NBodyAlgorithm implements Runnable{
         }
         double temp = currTime - lastTime;
         lastTime = currTime;
-
-        this.tmp = temp;
-
+        lastDelta = temp;
         return temp;
+    }
+
+    protected double cb(double x){
+        return x*x*x;
+    }
+
+    protected double sq(double x){
+        return x*x;
+    }
+
+    public void addBody(Body body){
+        toAdd.add(body);
+    }
+
+    public void removeBody(Body body){
+        toRemove.add(body);
     }
 }
