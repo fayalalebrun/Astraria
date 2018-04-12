@@ -99,6 +99,14 @@ public class SimulationScreen extends BaseScreen {
         algorithm.addBody(simulationObject.getBody());
     }
 
+    public void clearObjects(){
+        for(SimulationObject simulationObject : simulationObjects){
+            algorithm.removeBody(simulationObject.getBody());
+        }
+
+        simulationObjects.clear();
+    }
+
 
     @Override
     public void resume() {
