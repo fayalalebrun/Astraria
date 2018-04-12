@@ -17,10 +17,12 @@ public class ModelManager implements Disposable{
 
     final OpenGLTextureManager textures;
     final Map<String, Model> models;
+    final ArrayList<Model> extraModels;
 
     public ModelManager(OpenGLTextureManager openGLTextureManager) {
         this.textures = openGLTextureManager;
         models = new HashMap<String, Model>();
+        extraModels = new ArrayList<Model>();
     }
 
     public Model loadModel(String name, Transformation transformation){
@@ -135,10 +137,18 @@ public class ModelManager implements Disposable{
         return ret;
     }
 
+    public void addModel(Model model){
+        extraModels.add(model);
+    }
+
 
     @Override
     public void dispose() {
         for(Model model : this.models.values()){
+            model.dispose();
+        }
+
+        for (Model model : extraModels){
             model.dispose();
         }
     }

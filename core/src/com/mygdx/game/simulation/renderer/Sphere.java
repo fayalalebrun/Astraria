@@ -18,6 +18,8 @@ public class Sphere extends Model implements Disposable {
         mesh.setDiffuseTexture(diffuseTexture);
 
         meshes.add(mesh);
+
+        Warehouse.getModelManager().addModel(this);
     }
 
     public Sphere(Transformation transformation, int diffuseTexture, boolean textured){
@@ -25,5 +27,4 @@ public class Sphere extends Model implements Disposable {
         meshes.get(0).setUseTexture(textured);
 
     }
-
 }
