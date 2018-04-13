@@ -38,7 +38,7 @@ public class SimulationObject implements Disposable{
 
     protected void update(Camera cam){
         synchronized (body){
-            this.position.set(body.getX()/100, body.getY()/100, body.getZ()/100);
+            this.position.set(body.getX()/100, body.getZ()/100, body.getY()/100);
         }
 
         model.setScale(radius);

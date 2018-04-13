@@ -24,7 +24,7 @@ out vec4 colAtmosphere; //color of the atmosphere
 out vec3 lightDir; //direction of light in camera space
 
 const float PI = 3.14159265;
-const float transitionWidth = 1.0; //How prominent the atmosphere is
+const float transitionWidth = 0.1; //How prominent the atmosphere is
 const float fresnelExponent = 20;
 
 

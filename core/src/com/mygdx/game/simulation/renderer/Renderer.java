@@ -26,7 +26,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class Renderer implements Disposable{
 
-    private static final float MAXVIEWDISTANCE = 10000000000f;
+    private static final float MAXVIEWDISTANCE = 100000000000f;
 
     private static final float LOGDEPTHCONSTANT = 1f;
 
@@ -269,6 +269,7 @@ public class Renderer implements Disposable{
         Gdx.gl.glEnable(Gdx.gl.GL_CULL_FACE);
         Gdx.gl.glEnable(Gdx.gl.GL_DEPTH_TEST);
         Gdx.gl.glEnable(Gdx.gl.GL_BLEND);
+        Gdx.gl.glBlendFunc(Gdx.gl.GL_SRC_ALPHA, Gdx.gl.GL_ONE);
 
         Gdx.gl.glClearColor(0.0f,0.0f,0.0f,1.0f);
         Gdx.gl.glClear(Gdx.gl.GL_COLOR_BUFFER_BIT | Gdx.gl.GL_DEPTH_BUFFER_BIT);
