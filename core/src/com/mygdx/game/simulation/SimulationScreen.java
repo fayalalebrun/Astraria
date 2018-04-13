@@ -1,6 +1,7 @@
 package com.mygdx.game.simulation;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -30,7 +31,7 @@ public class SimulationScreen extends BaseScreen {
     private SpriteBatch fontBatch;
 
 
-    public SimulationScreen(Boot boot) {
+    public SimulationScreen(Boot boot, String loadPath) {
         super(boot);
         Warehouse.init();
 
@@ -49,7 +50,7 @@ public class SimulationScreen extends BaseScreen {
 
         simulationObjects = new ArrayList<SimulationObject>();
 
-        addObject(new Star(new Sphere(renderer.getTransformation(),
+        /*addObject(new Star(new Sphere(renderer.getTransformation(),
                         Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal("models/earth.jpg").path())),
                 renderer,695700,"Sun2",renderer.getTransformation(),new Body(1.9891e30, 149598000000.0, 0, 0, 0, 0, 0),5500));
 
@@ -62,7 +63,11 @@ public class SimulationScreen extends BaseScreen {
 
         addObject(new Star(new Sphere(renderer.getTransformation(),
                 Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal("models/earth.jpg").path())),
-                renderer,695700,"Sun",renderer.getTransformation(),new Body(1.9891e30, -149598000000.0, 0, 0, 0, 0, 0),5500));
+                renderer,695700,"Sun",renderer.getTransformation(),new Body(1.9891e30, -149598000000.0, 0, 0, 0, 0, 0),5500));*/
+
+        if(!loadPath.equals("")){
+            SaveFileManager.loadGame(this,renderer,new FileHandle(loadPath));
+        }
 
     }
 
