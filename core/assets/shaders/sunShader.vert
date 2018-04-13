@@ -14,6 +14,7 @@ uniform mat4 view;
 uniform float og_farPlaneDistance;
 uniform float u_logarithmicDepthConstant;
 
+
 vec4 modelToClipCoordinates(vec4 position, mat4 modelViewPerspectiveMatrix, float depthConstant, float farPlaneDistance){
 	vec4 clip = modelViewPerspectiveMatrix * position;
 
@@ -23,7 +24,7 @@ vec4 modelToClipCoordinates(vec4 position, mat4 modelViewPerspectiveMatrix, floa
 
 void main()
 {
-    modelViewPos = vec3(view*vec4(aPos,1.0));
+    modelViewPos = vec3(modelView*vec4(aPos,0.0));
     gl_Position = modelToClipCoordinates(vec4(aPos, 1.0), projection * modelView, u_logarithmicDepthConstant, og_farPlaneDistance);
     FragPos = vec3(modelView * vec4(aPos, 1.0));
     Normal = mat3(transpose(inverse(modelView))) * aNormal;

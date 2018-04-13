@@ -59,11 +59,8 @@ public class Star extends SimulationObject implements LightEmitter{
         shader.use();
         Matrix4f view = transformation.getViewMatrix(cam);
         temp2.set(getPositionRelativeToCamera(cam));
-        temp4f.set(temp2.x,temp2.y,temp2.z,1.0f).mul(view);
-        temp2.set(temp4f.x,temp4f.y,temp4f.z);
-        temp2.normalize();
-        shader.setVec3f("camToSunDir", temp2);
-        shader.setMat4("view",view);
+        shader.setVec3f("sunPos", temp2);
+
 
         super.render(cam);
 
