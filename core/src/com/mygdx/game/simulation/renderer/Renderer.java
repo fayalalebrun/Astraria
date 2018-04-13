@@ -12,6 +12,7 @@ import com.badlogic.gdx.utils.Disposable;
 import com.mygdx.game.simulation.SimulationObject;
 import com.sun.media.jfxmediaimpl.MediaDisposer;
 import org.joml.*;
+import sun.security.provider.SHA;
 
 import java.lang.Math;
 import java.nio.Buffer;
@@ -50,6 +51,8 @@ public class Renderer implements Disposable{
 
     private Shader planetAtmoShader;
 
+    private Shader skyboxShader;
+
     private Transformation transformation;
     private static float FOV =(float)Math.toRadians(45f);
 
@@ -65,12 +68,11 @@ public class Renderer implements Disposable{
     private final Matrix4f combined;
 
 
-
     Queue<LensGlow> lensGlows;
 
     FloatBuffer outBuff;
 
-
+    private Skybox skybox;
 
     public Renderer(int screenWidth, int screenHeight) {
         this.screenWidth = screenWidth;
@@ -103,6 +105,8 @@ public class Renderer implements Disposable{
         groundFromSpace = new Shader(Gdx.files.internal("shaders/GroundFromSpace.vert"), Gdx.files.internal("shaders/GroundFromSpace.frag"));
 
         planetAtmoShader = new Shader(Gdx.files.internal("shaders/planetAtmo.vert"), Gdx.files.internal("shaders/planetAtmo.frag"));
+
+        skyboxShader = new Shader(Gdx.files.internal("shaders/skybox.vert"), Gdx.files.internal("shaders/skybox.frag"));
 
         lensGlows = new LinkedBlockingQueue<LensGlow>();
 
@@ -256,6 +260,23 @@ public class Renderer implements Disposable{
         temp2f = new Vector2f();
 
         temp4f = new Vector4f();
+
+        skybox = loadSkybox();
+    }
+
+    private Skybox loadSkybox(){
+        FileHandle[] fileHandles = new FileHandle[]{
+                Gdx.files.internal("skybox/right.jpg"),
+                Gdx.files.internal("skybox/left.jpg"),
+                Gdx.files.internal("skybox/top.jpg"),
+                Gdx.files.internal("skybox/bottom.jpg"),
+                Gdx.files.internal("skybox/front.jpg"),
+                Gdx.files.internal("skybox/back.jpg")
+        };
+
+        int cubemap = Warehouse.getOpenGLTextureManager().loadCubeMap(fileHandles);
+
+        return new Skybox(cubemap, skyboxShader);
     }
 
     public Camera getCamera() {
@@ -269,6 +290,7 @@ public class Renderer implements Disposable{
         Gdx.gl.glEnable(Gdx.gl.GL_CULL_FACE);
         Gdx.gl.glEnable(Gdx.gl.GL_DEPTH_TEST);
         Gdx.gl.glEnable(Gdx.gl.GL_BLEND);
+
         Gdx.gl.glBlendFunc(Gdx.gl.GL_SRC_ALPHA, Gdx.gl.GL_ONE);
 
         Gdx.gl.glClearColor(0.0f,0.0f,0.0f,1.0f);
@@ -278,6 +300,7 @@ public class Renderer implements Disposable{
 
         Matrix4f projection = transformation.getProjectionMatrix(FOV, screenWidth,screenHeight,1f,MAXVIEWDISTANCE);
         combined.set(projection).mul(transformation.getViewMatrix(camera));
+        Matrix4f view = transformation.getViewMatrix(camera);
 
         planetShader.use();
         planetShader.setFloat("og_farPlaneDistance", MAXVIEWDISTANCE);
@@ -317,12 +340,19 @@ public class Renderer implements Disposable{
         planetAtmoShader.setFloat("og_farPlaneDistance", MAXVIEWDISTANCE);
         planetAtmoShader.setFloat("u_logarithmicDepthConstant", LOGDEPTHCONSTANT);
         planetAtmoShader.setMat4("projection",projection);
-        planetAtmoShader.setMat4("view",transformation.getViewMatrix(camera));
+        planetAtmoShader.setMat4("view",view);
+
+        skyboxShader.use();
+        skyboxShader.setMat4("projection",projection);
+        skyboxShader.setMat4("view",view);
+
+
 
         for(SimulationObject object : toDraw){
             object.render(camera);
         }
 
+        skybox.render();
 
         while(!lensGlows.isEmpty()){
             try {
