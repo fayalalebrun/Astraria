@@ -311,6 +311,7 @@ public class Renderer implements Disposable{
         starShader.setFloat("og_farPlaneDistance", MAXVIEWDISTANCE);
         starShader.setFloat("u_logarithmicDepthConstant", LOGDEPTHCONSTANT);
         starShader.setMat4("projection", projection);
+        starShader.setMat4("view",view);
 
         billboardShader.use();
         billboardShader.setFloat("og_farPlaneDistance", MAXVIEWDISTANCE);
