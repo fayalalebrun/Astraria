@@ -474,6 +474,6 @@ public class Renderer implements Disposable{
 
     @Override
     public void dispose() {
-
+        skybox.dispose();
     }
 }

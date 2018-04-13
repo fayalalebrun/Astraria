@@ -2,6 +2,7 @@ package com.mygdx.game.simulation.renderer;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.utils.BufferUtils;
+import com.badlogic.gdx.utils.Disposable;
 
 import java.nio.FloatBuffer;
 
@@ -10,7 +11,7 @@ import static com.badlogic.gdx.graphics.GL20.GL_ARRAY_BUFFER;
 /**
  * Created by fraayala19 on 4/13/18.
  */
-public class Skybox {
+public class Skybox implements Disposable{
     protected float[] vertices;
 
     private int VAO;
@@ -122,5 +123,12 @@ public class Skybox {
         buff.put(arr);
         buff.flip();
         return buff;
+    }
+
+    @Override
+    public void dispose() {
+        Gdx.gl.glDeleteBuffer(VBO);
+        Gdx.gl30.glDeleteVertexArrays(1, new int[VAO], 0);
+        Gdx.gl.glDeleteTexture(cubeMap);
     }
 }
