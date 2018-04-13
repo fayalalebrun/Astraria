@@ -22,6 +22,8 @@ public class Star extends SimulationObject implements LightEmitter{
 
     private final Query query;
 
+    private int colorSpectrum;
+
     public Star(Model model, Renderer renderer, float radius, String name, Transformation transformation, Body body, float temperature) {
         super(model, renderer.getStarShader(), radius, name, transformation, body);
         this.temperature = temperature;
@@ -40,6 +42,8 @@ public class Star extends SimulationObject implements LightEmitter{
         this.lensGlow = new LensGlow(position.x,position.y,position.z,Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal("star_glow.png").path()),
                 Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal("starspectrum.png").path()),this,renderer.getTransformation());
 
+        colorSpectrum = Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal("star_spectrum_1D.png").path());
+
         occlusionTestPoint = new Point(new Vector4f(1,0,0,1),renderer.getTransformation());
 
         this.query = new Query(Gdx.gl30.GL_ANY_SAMPLES_PASSED);
@@ -57,9 +61,12 @@ public class Star extends SimulationObject implements LightEmitter{
     @Override
     public void render(Camera cam) {
         shader.use();
-        Matrix4f view = transformation.getViewMatrix(cam);
         temp2.set(getPositionRelativeToCamera(cam));
         shader.setVec3f("sunPos", temp2);
+        shader.setFloat("temperature", temperature);
+        Gdx.gl.glActiveTexture(Gdx.gl.GL_TEXTURE1);
+        shader.setInt("sunGradient",1);
+        Gdx.gl.glBindTexture(Gdx.gl.GL_TEXTURE_2D, colorSpectrum);
 
 
         super.render(cam);
