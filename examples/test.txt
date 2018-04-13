@@ -1,0 +1,30 @@
+v3
+
+type: star
+name: sun
+radius: 1
+mass: 50
+velocity: 10 0 0
+position: 1000 0 0
+texture: ./Planet Textures/8k_sun.jpg
+orbit_color: 1 1 1 1
+temperature: 5500
+
+type: planet
+name: earth
+radius: 1
+mass: 500
+velocity: 0.1 0 0
+position: 0 0 0
+texture: ./Planet Textures/earth.jpg
+orbit_color: 1 1 1 1
+
+type: planet_atmo
+name: earthAtmo
+radius: 1
+mass: 50
+velocity: 0 0 0
+position -1000 0 0
+texture: ./Planet Textures/earth.jpg
+orbit_color: 1 1 1 1
+atmo_color: 1 1 1 1
