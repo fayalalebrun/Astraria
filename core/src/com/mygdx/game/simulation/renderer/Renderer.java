@@ -266,12 +266,12 @@ public class Renderer implements Disposable{
 
     private Skybox loadSkybox(){
         FileHandle[] fileHandles = new FileHandle[]{
-                Gdx.files.internal("skybox/right.jpg"),
-                Gdx.files.internal("skybox/left.jpg"),
-                Gdx.files.internal("skybox/top.jpg"),
-                Gdx.files.internal("skybox/bottom.jpg"),
-                Gdx.files.internal("skybox/front.jpg"),
-                Gdx.files.internal("skybox/back.jpg")
+                Gdx.files.internal("skybox/MilkyWayXP.png"),
+                Gdx.files.internal("skybox/MilkyWayXN.png"),
+                Gdx.files.internal("skybox/MilkyWayYP.png"),
+                Gdx.files.internal("skybox/MilkyWayYN.png"),
+                Gdx.files.internal("skybox/MilkyWayZP.png"),
+                Gdx.files.internal("skybox/MilkyWayZN.png")
         };
 
         int cubemap = Warehouse.getOpenGLTextureManager().loadCubeMap(fileHandles);
