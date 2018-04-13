@@ -90,7 +90,7 @@ public class Renderer implements Disposable{
 
         planetShader = new Shader(Gdx.files.internal("shaders/default.vert"), Gdx.files.internal("shaders/default.frag"));
 
-        starShader =  new Shader(Gdx.files.internal("shaders/default.vert"), Gdx.files.internal("shaders/sunShader.frag"));
+        starShader =  new Shader(Gdx.files.internal("shaders/sunShader.vert"), Gdx.files.internal("shaders/sunShader.frag"));
 
         billboardShader = new Shader(Gdx.files.internal("shaders/billboard.vert"), Gdx.files.internal("shaders/billboard.frag"));
 
