@@ -18,6 +18,16 @@ public class SaveFileManager {
         String str = file.readString();
         String part[] = str.replaceAll("\\r", "").split("\\n");
 
+        String name;
+        float radius;
+        double mass;
+        double vX, vY, vZ;
+        double x, y, z;
+        String texturePath;
+        float r, g, b, a;
+        float ar, ag, ab, aa;
+        float temperature;
+
         if(part[0].contains("v3")){
             int i = 1;
 
@@ -30,13 +40,6 @@ public class SaveFileManager {
                 }
 
                 if(type[1].equals("planet")){
-                    String name;
-                    float radius;
-                    double mass;
-                    double vX, vY, vZ;
-                    double x, y, z;
-                    String texturePath;
-                    float r,g,b,a;
 
                     name = part[i].substring(part[i].indexOf(':')+2);
                     i++;
@@ -73,14 +76,7 @@ public class SaveFileManager {
                     simulationScreen.addObject(new SimulationObject(s, renderer.getPlanetShader(),
                             radius,name,renderer.getTransformation(),new Body(mass,x,y,z,vX,vY,vZ)));
                 } else if (type[1].equals("star")){
-                    String name;
-                    float radius;
-                    double mass;
-                    double vX, vY, vZ;
-                    double x, y, z;
-                    String texturePath;
-                    float r, g, b, a;
-                    float temperature;
+
 
                     name = part[i].substring(part[i].indexOf(':')+2);
                     i++;
@@ -121,14 +117,6 @@ public class SaveFileManager {
                     simulationScreen.addObject(new Star(s, renderer, radius, name, renderer.getTransformation(),
                             new Body(mass, x, y, z, vX, vY, vZ), temperature));
                 } else if (type[1].equals("planet_atmo")){
-                    String name;
-                    float radius;
-                    double mass;
-                    double vX, vY, vZ;
-                    double x, y, z;
-                    String texturePath;
-                    float r, g, b, a;
-                    float ar, ag, ab, aa;
 
                     name = part[i].substring(part[i].indexOf(':')+2);
                     i++;
