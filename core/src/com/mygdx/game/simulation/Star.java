@@ -3,6 +3,7 @@ package com.mygdx.game.simulation;
 import com.badlogic.gdx.Gdx;
 import com.mygdx.game.simulation.logic.Body;
 import com.mygdx.game.simulation.renderer.*;
+import org.joml.Matrix4f;
 import org.joml.Vector3d;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
@@ -14,6 +15,8 @@ public class Star extends SimulationObject implements LightEmitter{
     private final Point occlusionTestPoint;
 
     private final Vector3f temp3, temp2;
+
+    private final Vector4f temp4f;
 
     private final Vector3d temp4;
 
@@ -27,6 +30,8 @@ public class Star extends SimulationObject implements LightEmitter{
         this.temp2 = new Vector3f();
 
         this.temp4 = new Vector3d();
+
+        this.temp4f = new Vector4f();
 
         this.renderer = renderer;
 
@@ -51,6 +56,15 @@ public class Star extends SimulationObject implements LightEmitter{
 
     @Override
     public void render(Camera cam) {
+        shader.use();
+        Matrix4f view = transformation.getViewMatrix(cam);
+        temp2.set(getPositionRelativeToCamera(cam));
+        temp4f.set(temp2.x,temp2.y,temp2.z,1.0f).mul(view);
+        temp2.set(temp4f.x,temp4f.y,temp4f.z);
+        temp2.normalize();
+        shader.setVec3f("camToSunDir", temp2);
+        shader.setMat4("view",view);
+
         super.render(cam);
 
 
