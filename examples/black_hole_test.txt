@@ -2,7 +2,7 @@ v3
 
 type: black_hole
 name: black_hole
-radius: 6500
+radius: 1
 mass: 10
 velocity: 0 0 0
 position: 0 0 0
