@@ -15,7 +15,7 @@ import java.util.concurrent.ArrayBlockingQueue;
  * Created by Fran on 4/14/2018.
  */
 public class Orbit {
-    private final static int MAX_POINTS = 300;
+    private final static int MAX_POINTS = 500;
 
     private Line line;
     private float segmentLength;
@@ -59,13 +59,13 @@ public class Orbit {
         }
 
 
-        fillArray(cam);
+        fillArray(cam,x,y,z);
         line.updateBufferData(vertices,positions.size()/3);
 
         line.render(shader);
     }
 
-    private void fillArray(Camera cam){
+    private void fillArray(Camera cam, double currX, double currY, double currZ){
         int i = 0, count = 0;
         Vector3d pos = new Vector3d();
         for(Double d : positions){
@@ -91,6 +91,15 @@ public class Orbit {
                 i++;
             }
         }
+        i-=3;
+        pos.set(currX,currY,currZ);
+        pos.sub(cam.getPosition());
+        vertices[i] = (float)pos.x;
+        i++;
+        vertices[i] = (float) pos.y;
+        i++;
+        vertices[i] = (float)pos.z;
+        i++;
     }
 
 
