@@ -2,6 +2,7 @@ package com.mygdx.game.simulation.renderer;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
@@ -55,6 +56,8 @@ public class Renderer implements Disposable{
 
     private Shader blackHoleShader;
 
+    private Shader lineShader;
+
     private Transformation transformation;
     private static float FOV =(float)Math.toRadians(45f);
 
@@ -75,6 +78,7 @@ public class Renderer implements Disposable{
     FloatBuffer outBuff;
 
     private Skybox skybox;
+
 
     public Renderer(int screenWidth, int screenHeight) {
         this.screenWidth = screenWidth;
@@ -112,154 +116,14 @@ public class Renderer implements Disposable{
 
         blackHoleShader = new Shader(Gdx.files.internal("shaders/blackHole.vert"), Gdx.files.internal("shaders/blackHole.frag"));
 
+        lineShader = new Shader(Gdx.files.internal("shaders/line.vert"), Gdx.files.internal("shaders/line.frag"));
+
         lensGlows = new LinkedBlockingQueue<LensGlow>();
 
         lightSourceManager = new LightSourceManager(camera, transformation);
         lightSourceManager.addShader(planetShader);
         lightSourceManager.addShader(planetAtmoShader);
 
-        planetShader.use();
-
-        try {
-            planetShader.createUniform("diffuseTex");
-            planetShader.createUniform("projection");
-            planetShader.createUniform("modelView");
-            planetShader.createUniform("og_farPlaneDistance");
-            planetShader.createUniform("u_logarithmicDepthConstant");
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        starShader.use();
-
-        try {
-            starShader.createUniform("diffuseTex");
-            starShader.createUniform("projection");
-            starShader.createUniform("modelView");
-            starShader.createUniform("og_farPlaneDistance");
-            starShader.createUniform("u_logarithmicDepthConstant");
-            //starShader.createUniform("unDT");
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        billboardShader.use();
-
-        try {
-            billboardShader.createUniform("billboardWidth");
-            billboardShader.createUniform("billboardHeight");
-            billboardShader.createUniform("screenWidth");
-            billboardShader.createUniform("screenHeight");
-            billboardShader.createUniform("billboardOrigin");
-
-            billboardShader.createUniform("modelView");
-            billboardShader.createUniform("projection");
-            billboardShader.createUniform("og_farPlaneDistance");
-            billboardShader.createUniform("u_logarithmicDepthConstant");
-
-            billboardShader.createUniform("tex");
-
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        lensGlowShader.use();
-
-        try {
-            lensGlowShader.createUniform("width");
-            lensGlowShader.createUniform("height");
-            lensGlowShader.createUniform("screenWidth");
-            lensGlowShader.createUniform("screenHeight");
-            lensGlowShader.createUniform("uPos");
-            lensGlowShader.createUniform("temperature");
-
-            lensGlowShader.createUniform("modelView");
-            lensGlowShader.createUniform("projection");
-
-            lensGlowShader.createUniform("tex");
-            lensGlowShader.createUniform("spectrumTex");
-
-            lensGlowShader.createUniform("camDir");
-
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        pointShader.use();
-
-        try {
-            pointShader.createUniform("projection");
-            pointShader.createUniform("modelView");
-            pointShader.createUniform("og_farPlaneDistance");
-            pointShader.createUniform("u_logarithmicDepthConstant");
-            pointShader.createUniform("color");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        skyFromSpace.use();
-
-        try{
-            skyFromSpace.createUniform("modelView");
-            skyFromSpace.createUniform("projection");
-
-            skyFromSpace.createUniform("v3LightPos");
-            skyFromSpace.createUniform("v3InvWavelength");
-            //skyFromSpace.createUniform("fCameraHeight");
-            skyFromSpace.createUniform("fCameraHeight2");
-            skyFromSpace.createUniform("fOuterRadius");
-            skyFromSpace.createUniform("fOuterRadius2");
-            skyFromSpace.createUniform("fInnerRadius");
-            //skyFromSpace.createUniform("fInnerRadius2");
-            skyFromSpace.createUniform("fKrESun");
-            skyFromSpace.createUniform("fKmESun");
-            skyFromSpace.createUniform("fKr4PI");
-            skyFromSpace.createUniform("fKm4PI");
-            skyFromSpace.createUniform("fScale");
-            skyFromSpace.createUniform("fScaleDepth");
-            skyFromSpace.createUniform("fScaleOverScaleDepth");
-            skyFromSpace.createUniform("og_farPlaneDistance");
-            skyFromSpace.createUniform("u_logarithmicDepthConstant");
-            skyFromSpace.createUniform("g");
-            skyFromSpace.createUniform("g2");
-
-        } catch (Exception e){
-            e.printStackTrace();
-        }
-
-
-        groundFromSpace.use();
-
-        try {
-            groundFromSpace.createUniform("modelView");
-            groundFromSpace.createUniform("projection");
-
-            groundFromSpace.createUniform("v3LightPos");
-            groundFromSpace.createUniform("v3InvWavelength");
-            //groundFromSpace.createUniform("fCameraHeight");
-            groundFromSpace.createUniform("fCameraHeight2");
-            groundFromSpace.createUniform("fOuterRadius");
-            groundFromSpace.createUniform("fOuterRadius2");
-            groundFromSpace.createUniform("fInnerRadius");
-            //groundFromSpace.createUniform("fInnerRadius2");
-            groundFromSpace.createUniform("fKrESun");
-            groundFromSpace.createUniform("fKmESun");
-            groundFromSpace.createUniform("fKr4PI");
-            groundFromSpace.createUniform("fKm4PI");
-            groundFromSpace.createUniform("fScale");
-            groundFromSpace.createUniform("fScaleDepth");
-            groundFromSpace.createUniform("fScaleOverScaleDepth");
-            groundFromSpace.createUniform("og_farPlaneDistance");
-            groundFromSpace.createUniform("u_logarithmicDepthConstant");
-
-            groundFromSpace.createUniform("diffuseTex");
-        } catch (Exception e){
-            e.printStackTrace();
-        }
 
         temp2f = new Vector2f();
 
@@ -354,6 +218,13 @@ public class Renderer implements Disposable{
         blackHoleShader.setFloat("u_logarithmicDepthConstant", LOGDEPTHCONSTANT);
         blackHoleShader.setMat4("projection",projection);
         blackHoleShader.setMat4("view",view);
+
+        lineShader.use();
+        lineShader.setFloat("og_farPlaneDistance", MAXVIEWDISTANCE);
+        lineShader.setFloat("u_logarithmicDepthConstant", LOGDEPTHCONSTANT);
+        lineShader.setMat4("projection",projection);
+        lineShader.setMat4("modelView", view);
+
 
         for(SimulationObject object : toDraw){
             object.render(camera);
