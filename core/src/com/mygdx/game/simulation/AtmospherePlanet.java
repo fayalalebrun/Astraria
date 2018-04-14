@@ -20,9 +20,10 @@ public class AtmospherePlanet extends SimulationObject{
     private final Vector4f temp4f;
     private Color atmosphereColor;
 
-    public AtmospherePlanet( Model model, Shader shader, float radius, String name, Transformation transformation, Body body,
+    public AtmospherePlanet( Model model, Shader shader, Shader orbitShader, float radius, String name, Color orbitColor,
+                             Transformation transformation, Body body,
                              LightSourceManager lightSourceManager, Color atmosphereColor) {
-        super(model, shader, radius, name, transformation, body);
+        super(model, shader, orbitShader, radius, name, transformation, body, orbitColor);
         this.atmosphereMapTexture = Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal("atmoGradient.png").path());
         this.lightSourceManager = lightSourceManager;
 

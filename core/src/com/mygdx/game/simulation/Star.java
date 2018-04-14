@@ -1,6 +1,7 @@
 package com.mygdx.game.simulation;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Color;
 import com.mygdx.game.simulation.logic.Body;
 import com.mygdx.game.simulation.renderer.*;
 import org.joml.Matrix4f;
@@ -24,8 +25,8 @@ public class Star extends SimulationObject implements LightEmitter{
 
     private int colorSpectrum;
 
-    public Star(Model model, Renderer renderer, float radius, String name, Transformation transformation, Body body, float temperature) {
-        super(model, renderer.getStarShader(), radius, name, transformation, body);
+    public Star(Model model, Renderer renderer, Shader orbitShader, float radius, String name, Transformation transformation, Body body, Color orbitColor, float temperature) {
+        super(model, renderer.getStarShader(), orbitShader,radius, name, transformation, body,orbitColor);
         this.temperature = temperature;
 
         this.temp3 = new Vector3f();

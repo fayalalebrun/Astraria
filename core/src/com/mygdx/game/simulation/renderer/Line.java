@@ -27,7 +27,7 @@ public class Line implements Disposable{
 
     public Line(int maxPoints, Color color) {
         this.maxPoints = maxPoints;
-        vertices = BufferUtils.newFloatBuffer(maxPoints);
+        vertices = BufferUtils.newFloatBuffer(maxPoints*3);
 
         this.color = new Vector4f(color.r, color.g, color.b, color.a);
 
@@ -44,7 +44,7 @@ public class Line implements Disposable{
 
         VBO = Gdx.gl.glGenBuffer();
         Gdx.gl.glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        Gdx.gl.glBufferData(GL_ARRAY_BUFFER, maxPoints*4, vertices, Gdx.gl.GL_STREAM_DRAW);
+        Gdx.gl.glBufferData(GL_ARRAY_BUFFER, maxPoints*3*4, vertices, Gdx.gl.GL_STREAM_DRAW);
         Gdx.gl.glEnableVertexAttribArray(0);
         Gdx.gl.glVertexAttribPointer(0, 3, Gdx.gl.GL_FLOAT, false, 0, 0);
 
@@ -55,6 +55,8 @@ public class Line implements Disposable{
     }
 
     public void render(Shader shader){
+        Gdx.gl.glLineWidth(1.5f);
+
         shader.use();
         shader.setVec4f("color", color);
 
@@ -63,22 +65,23 @@ public class Line implements Disposable{
         Gdx.gl.glEnableVertexAttribArray(0);
 
 
-        Gdx.gl.glDrawArrays(Gdx.gl.GL_LINES, 0, drawUntil);
+        Gdx.gl.glDrawArrays(Gdx.gl.GL_LINE_STRIP, 0, drawUntil);
 
         Gdx.gl.glDisableVertexAttribArray(0);
 
         Gdx.gl30.glBindVertexArray(0);
     }
 
-    public void updateBufferData(float[] vertices){
+    public void updateBufferData(float[] vertices, int numberOfPoints){
+        this.vertices.rewind();
         this.vertices.put(vertices);
         this.vertices.flip();
 
         Gdx.gl.glBindBuffer(Gdx.gl.GL_ARRAY_BUFFER, VBO);
-        Gdx.gl.glBufferData(Gdx.gl.GL_ARRAY_BUFFER, maxPoints*4, null, Gdx.gl.GL_STREAM_DRAW);
-        Gdx.gl.glBufferSubData(Gdx.gl.GL_ARRAY_BUFFER,0,maxPoints*4,this.vertices);
+        Gdx.gl.glBufferData(Gdx.gl.GL_ARRAY_BUFFER, maxPoints*3*4, null, Gdx.gl.GL_STREAM_DRAW);
+        Gdx.gl.glBufferSubData(Gdx.gl.GL_ARRAY_BUFFER,0,maxPoints*3*4,this.vertices);
 
-        drawUntil = vertices.length/3;
+        drawUntil = numberOfPoints;
     }
 
     @Override

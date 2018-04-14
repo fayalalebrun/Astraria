@@ -73,8 +73,8 @@ public class SaveFileManager {
                     i++;
                     Sphere s = new Sphere(renderer.getTransformation(),
                             Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal(texturePath).path()));
-                    simulationScreen.addObject(new SimulationObject(s, renderer.getPlanetShader(),
-                            radius,name,renderer.getTransformation(),new Body(mass,x,y,z,vX,vY,vZ)));
+                    simulationScreen.addObject(new SimulationObject(s, renderer.getPlanetShader(), renderer.getLineShader(),
+                            radius,name,renderer.getTransformation(),new Body(mass,x,y,z,vX,vY,vZ), new Color(r,g,b,a)));
                 } else if (type[1].equals("star")){
 
 
@@ -114,8 +114,8 @@ public class SaveFileManager {
 
                     Sphere s = new Sphere(renderer.getTransformation(),
                             Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal(texturePath).path()));
-                    simulationScreen.addObject(new Star(s, renderer, radius, name, renderer.getTransformation(),
-                            new Body(mass, x, y, z, vX, vY, vZ), temperature));
+                    simulationScreen.addObject(new Star(s, renderer, renderer.getLineShader(), radius, name, renderer.getTransformation(),
+                            new Body(mass, x, y, z, vX, vY, vZ),new Color(r,g,b,a), temperature));
                 } else if (type[1].equals("planet_atmo")){
 
                     name = part[i].substring(part[i].indexOf(':')+2);
@@ -159,7 +159,9 @@ public class SaveFileManager {
                     Sphere s = new Sphere(renderer.getTransformation(),
                             Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal(texturePath).path()));
 
-                    simulationScreen.addObject(new AtmospherePlanet(s, renderer.getPlanetAtmoShader(), radius, name,
+                    simulationScreen.addObject(new AtmospherePlanet(s, renderer.getPlanetAtmoShader(), renderer.getLineShader(),
+                            radius, name,
+                            new Color(r,g,b,a),
                             renderer.getTransformation(), new Body(mass,x,y,z,vX,vY,vZ),renderer.getLightSourceManager(),
                             new Color(ar,ag,ab,aa)));
                 } else if(type[1].equals("black_hole")){
@@ -193,8 +195,8 @@ public class SaveFileManager {
 
                     Sphere s = new Sphere(renderer.getTransformation(),
                             -1,false);
-                    simulationScreen.addObject(new BlackHole(s, renderer.getBlackHoleShader(),radius,name,
-                            renderer.getTransformation(), new Body(mass,x,y,z,vX,vY,vZ), renderer.getSkybox()));
+                    simulationScreen.addObject(new BlackHole(s, renderer.getBlackHoleShader(),renderer.getLineShader(),radius,name,
+                            renderer.getTransformation(), new Body(mass,x,y,z,vX,vY,vZ), new Color(r,g,b,a),renderer.getSkybox()));
                 }
             }
         }
