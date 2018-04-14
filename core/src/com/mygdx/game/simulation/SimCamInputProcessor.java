@@ -44,6 +44,14 @@ public class SimCamInputProcessor implements InputProcessor{
             case Input.Keys.DOWN:
                 camera.changeSpeed(-10);
                 return true;
+            case Input.Keys.LEFT:
+                SimulationScreen.simSpeed/=10;
+                System.out.println("Simspeed: "+SimulationScreen.simSpeed);
+                return true;
+            case Input.Keys.RIGHT:
+                SimulationScreen.simSpeed*=10;
+                System.out.println("Simspeed: "+SimulationScreen.simSpeed);
+                return true;
         }
         return false;
     }
