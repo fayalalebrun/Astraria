@@ -53,6 +53,8 @@ public class Renderer implements Disposable{
 
     private Shader skyboxShader;
 
+    private Shader blackHoleShader;
+
     private Transformation transformation;
     private static float FOV =(float)Math.toRadians(45f);
 
@@ -107,6 +109,8 @@ public class Renderer implements Disposable{
         planetAtmoShader = new Shader(Gdx.files.internal("shaders/planetAtmo.vert"), Gdx.files.internal("shaders/planetAtmo.frag"));
 
         skyboxShader = new Shader(Gdx.files.internal("shaders/skybox.vert"), Gdx.files.internal("shaders/skybox.frag"));
+
+        blackHoleShader = new Shader(Gdx.files.internal("shaders/blackHole.vert"), Gdx.files.internal("shaders/blackHole.frag"));
 
         lensGlows = new LinkedBlockingQueue<LensGlow>();
 
@@ -347,7 +351,11 @@ public class Renderer implements Disposable{
         skyboxShader.setMat4("projection",projection);
         skyboxShader.setMat4("view",view);
 
-
+        blackHoleShader.use();
+        blackHoleShader.setFloat("og_farPlaneDistance", MAXVIEWDISTANCE);
+        blackHoleShader.setFloat("u_logarithmicDepthConstant", LOGDEPTHCONSTANT);
+        blackHoleShader.setMat4("projection",projection);
+        blackHoleShader.setMat4("view",view);
 
         for(SimulationObject object : toDraw){
             object.render(camera);
@@ -470,6 +478,14 @@ public class Renderer implements Disposable{
 
     public Shader getPlanetAtmoShader() {
         return planetAtmoShader;
+    }
+
+    public Shader getBlackHoleShader() {
+        return blackHoleShader;
+    }
+
+    public Skybox getSkybox() {
+        return skybox;
     }
 
     @Override

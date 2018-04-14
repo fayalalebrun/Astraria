@@ -125,6 +125,10 @@ public class Skybox implements Disposable{
         return buff;
     }
 
+    public int getCubeMap() {
+        return cubeMap;
+    }
+
     @Override
     public void dispose() {
         Gdx.gl.glDeleteBuffer(VBO);
