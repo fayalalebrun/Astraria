@@ -193,8 +193,8 @@ public class SaveFileManager {
 
                     Sphere s = new Sphere(renderer.getTransformation(),
                             -1,false);
-                    simulationScreen.addObject(new SimulationObject(s, renderer.getBlackHoleShader(),radius,name,
-                            renderer.getTransformation(), new Body(mass,x,y,z,vX,vY,vZ)));
+                    simulationScreen.addObject(new BlackHole(s, renderer.getBlackHoleShader(),radius,name,
+                            renderer.getTransformation(), new Body(mass,x,y,z,vX,vY,vZ), renderer.getSkybox()));
                 }
             }
         }
