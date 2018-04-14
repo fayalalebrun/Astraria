@@ -96,7 +96,6 @@ public class SimulationScreen extends BaseScreen {
             }
         }
         fontBatch.end();
-
     }
 
     public void addObject(SimulationObject simulationObject){
