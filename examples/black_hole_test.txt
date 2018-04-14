@@ -1,0 +1,9 @@
+v3
+
+type: black_hole
+name: black_hole
+radius: 6500
+mass: 10
+velocity: 0 0 0
+position: 0 0 0
+orbit_color: 1 1 1 1

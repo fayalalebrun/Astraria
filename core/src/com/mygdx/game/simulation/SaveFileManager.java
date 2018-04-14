@@ -162,6 +162,39 @@ public class SaveFileManager {
                     simulationScreen.addObject(new AtmospherePlanet(s, renderer.getPlanetAtmoShader(), radius, name,
                             renderer.getTransformation(), new Body(mass,x,y,z,vX,vY,vZ),renderer.getLightSourceManager(),
                             new Color(ar,ag,ab,aa)));
+                } else if(type[1].equals("black_hole")){
+                    name = part[i].substring(part[i].indexOf(':')+2);
+                    i++;
+
+                    radius = Float.parseFloat(part[i].split(" ")[1]);
+                    i++;
+
+                    mass = Double.parseDouble(part[i].split(" ")[1]);
+                    i++;
+
+                    String[] vel =part[i].split(" ");
+                    vX = Double.parseDouble(vel[1]);
+                    vY = Double.parseDouble(vel[2]);
+                    vZ = Double.parseDouble(vel[3]);
+                    i++;
+
+                    String[] pos = part[i].split(" ");
+                    x = Double.parseDouble(pos[1]);
+                    y = Double.parseDouble(pos[2]);
+                    z = Double.parseDouble(pos[3]);
+                    i++;
+
+                    String[] orbitCol = part[i].split(" ");
+                    r = Float.parseFloat(orbitCol[1]);
+                    g = Float.parseFloat(orbitCol[2]);
+                    b = Float.parseFloat(orbitCol[3]);
+                    a = Float.parseFloat(orbitCol[4]);
+                    i++;
+
+                    Sphere s = new Sphere(renderer.getTransformation(),
+                            -1,false);
+                    simulationScreen.addObject(new SimulationObject(s, renderer.getBlackHoleShader(),radius,name,
+                            renderer.getTransformation(), new Body(mass,x,y,z,vX,vY,vZ)));
                 }
             }
         }
