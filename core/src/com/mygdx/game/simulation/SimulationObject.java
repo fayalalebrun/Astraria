@@ -38,7 +38,7 @@ public class SimulationObject implements Disposable{
         this.transformation = transformation;
         this.body = body;
         this.orbitColor = orbitColor;
-        orbit = new Orbit(orbitColor,100, orbitShader);
+        orbit = new Orbit(orbitColor,5000000f, orbitShader);
     }
 
     protected void update(Camera cam){
