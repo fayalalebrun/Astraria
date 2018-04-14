@@ -1,5 +1,6 @@
 package com.mygdx.game.simulation;
 
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.utils.Disposable;
 import com.mygdx.game.simulation.logic.Body;
 import com.mygdx.game.simulation.renderer.Camera;
@@ -22,8 +23,10 @@ public class SimulationObject implements Disposable{
     protected final Shader shader;
     protected final Transformation transformation;
     protected final Body body;
+    protected final Color orbitColor;
+    protected final Orbit orbit;
 
-    public SimulationObject(Model model, Shader shader, float radius, String name, Transformation transformation, Body body) {
+    public SimulationObject(Model model, Shader shader, Shader orbitShader, float radius, String name, Transformation transformation, Body body, Color orbitColor) {
         position = new Vector3d();
         this.model = model;
         this.temp = new Vector3d();
@@ -34,11 +37,14 @@ public class SimulationObject implements Disposable{
         this.shader = shader;
         this.transformation = transformation;
         this.body = body;
+        this.orbitColor = orbitColor;
+        orbit = new Orbit(orbitColor,100, orbitShader);
     }
 
     protected void update(Camera cam){
         synchronized (body){
             this.position.set(body.getX()/1000, body.getZ()/1000, body.getY()/1000);
+            orbit.render(body.getX()/1000, body.getZ()/1000, body.getY()/1000,cam);
         }
 
         model.setScale(radius);

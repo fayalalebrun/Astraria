@@ -204,11 +204,11 @@ public class Renderer implements Disposable{
         blackHoleShader.setMat4("view",view);
 
         lineShader.use();
-        lineShader.setFloat("og_farPlaneDistance", MAXVIEWDISTANCE);
+        //lineShader.setFloat("og_farPlaneDistance", MAXVIEWDISTANCE);
         lineShader.setFloat("u_logarithmicDepthConstant", LOGDEPTHCONSTANT);
         lineShader.setMat4("projection",projection);
-        lineShader.setMat4("modelView", view);
-
+        lineShader.setMat4("view", view);
+        lineShader.setFloat("FC",1.0f/(float)Math.log(MAXVIEWDISTANCE*LOGDEPTHCONSTANT + 1));
 
         for(SimulationObject object : toDraw){
             object.render(camera);
@@ -336,6 +336,10 @@ public class Renderer implements Disposable{
 
     public Skybox getSkybox() {
         return skybox;
+    }
+
+    public Shader getLineShader() {
+        return lineShader;
     }
 
     @Override
