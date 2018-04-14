@@ -1,5 +1,6 @@
 package com.mygdx.game.simulation.logic.algorithms;
 
+import com.mygdx.game.simulation.SimulationScreen;
 import com.mygdx.game.simulation.logic.Body;
 import com.mygdx.game.simulation.logic.helpers.Units;
 
@@ -15,8 +16,8 @@ public class VelocityVerlet extends NBodyAlgorithm{
 
     @Override
     protected void runAlgorithm() {
-            double delta = getDelta()*1;
-            //delta *= GameScreen.simSpeed;
+            double delta = getDelta();
+            delta *= SimulationScreen.simSpeed;
         synchronized (bodies) {
             for (Body b : this.bodies) {
 

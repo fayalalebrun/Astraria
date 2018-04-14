@@ -20,6 +20,8 @@ import java.util.ArrayList;
  */
 public class SimulationScreen extends BaseScreen {
 
+    public static float simSpeed = 1;
+
     Thread algorithmThread;
 
     NBodyAlgorithm algorithm;
