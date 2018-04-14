@@ -94,7 +94,6 @@ public class Skybox implements Disposable{
     }
 
     public void render(){
-        Gdx.gl.glDisable(Gdx.gl.GL_BLEND);
         Gdx.gl.glDepthMask(false);
 
         Gdx.gl.glDepthFunc(Gdx.gl.GL_LEQUAL);
@@ -114,7 +113,6 @@ public class Skybox implements Disposable{
         Gdx.gl30.glBindVertexArray(0);
 
         Gdx.gl.glDepthMask(true);
-        Gdx.gl.glEnable(Gdx.gl.GL_BLEND);
         Gdx.gl.glDepthFunc(Gdx.gl.GL_LESS);
     }
 
