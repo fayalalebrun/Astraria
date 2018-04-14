@@ -51,7 +51,7 @@ public class VelocityVerlet extends NBodyAlgorithm{
                 synchronized (b) {
                     pX = pX + (b.getvX() * delta) + (0.5 * b.getCurrAccelX() * sq(delta));
                     pY = pY + (b.getvY() * delta) + (0.5 * b.getCurrAccelY() * sq(delta));
-                    pZ = pZ + (b.getvY() * delta) + (0.5 * b.getCurrAccelZ() * sq(delta));
+                    pZ = pZ + (b.getvZ() * delta) + (0.5 * b.getCurrAccelZ() * sq(delta));
 
                     b.setX(pX);
                     b.setY(pY);
