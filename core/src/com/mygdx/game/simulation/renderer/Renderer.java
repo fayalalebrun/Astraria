@@ -46,10 +46,6 @@ public class Renderer implements Disposable{
 
     private Shader pointShader;
 
-    private Shader skyFromSpace;
-
-    private Shader groundFromSpace;
-
     private Shader planetAtmoShader;
 
     private Shader skyboxShader;
@@ -105,10 +101,6 @@ public class Renderer implements Disposable{
         lensGlowShader = new Shader(Gdx.files.internal("shaders/lensGlow.vert"), Gdx.files.internal("shaders/lensGlow.frag"));
 
         pointShader = new Shader(Gdx.files.internal("shaders/point.vert"), Gdx.files.internal("shaders/point.frag"));
-
-        skyFromSpace = new Shader(Gdx.files.internal("shaders/SkyFromSpace.vert"), Gdx.files.internal("shaders/SkyFromSpace.frag"));
-
-        groundFromSpace = new Shader(Gdx.files.internal("shaders/GroundFromSpace.vert"), Gdx.files.internal("shaders/GroundFromSpace.frag"));
 
         planetAtmoShader = new Shader(Gdx.files.internal("shaders/planetAtmo.vert"), Gdx.files.internal("shaders/planetAtmo.frag"));
 
@@ -193,15 +185,7 @@ public class Renderer implements Disposable{
         pointShader.setFloat("u_logarithmicDepthConstant", LOGDEPTHCONSTANT);
         pointShader.setMat4("projection", projection);
 
-        skyFromSpace.use();
-        skyFromSpace.setFloat("og_farPlaneDistance", MAXVIEWDISTANCE);
-        skyFromSpace.setFloat("u_logarithmicDepthConstant", LOGDEPTHCONSTANT);
-        skyFromSpace.setMat4("projection",projection);
 
-        groundFromSpace.use();
-        groundFromSpace.setFloat("og_farPlaneDistance", MAXVIEWDISTANCE);
-        groundFromSpace.setFloat("u_logarithmicDepthConstant", LOGDEPTHCONSTANT);
-        groundFromSpace.setMat4("projection",projection);
 
         planetAtmoShader.use();
         planetAtmoShader.setFloat("og_farPlaneDistance", MAXVIEWDISTANCE);
@@ -340,14 +324,6 @@ public class Renderer implements Disposable{
 
     public void submitLensGlow(LensGlow lensGlow){
         lensGlows.add(lensGlow);
-    }
-
-    public Shader getSkyFromSpaceShader() {
-        return skyFromSpace;
-    }
-
-    public Shader getGroundFromSpaceShader() {
-        return groundFromSpace;
     }
 
     public Shader getPlanetAtmoShader() {
