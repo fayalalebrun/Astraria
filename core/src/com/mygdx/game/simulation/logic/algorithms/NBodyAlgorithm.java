@@ -65,7 +65,7 @@ public abstract class NBodyAlgorithm implements Runnable{
         double temp = currTime - lastTime;
         lastTime = currTime;
         lastDelta = temp;
-        return temp;
+        return Math.min(temp,0.1);
     }
 
     protected double cb(double x){

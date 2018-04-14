@@ -41,11 +41,13 @@ public class VelocityVerlet extends NBodyAlgorithm{
                     ay *= Units.GRAV;
                     az *= Units.GRAV;
 
-                    b.setCurrAccelX(ax);
-                    b.setCurrAccelY(ay);
-                    b.setCurrAccelZ(az);
+                    synchronized (b) {
+                        b.setCurrAccelX(ax);
+                        b.setCurrAccelY(ay);
+                        b.setCurrAccelZ(az);
 
-                    b.setAccelInitTrue();
+                        b.setAccelInitTrue();
+                    }
                 }
 
                 synchronized (b) {
@@ -72,22 +74,27 @@ public class VelocityVerlet extends NBodyAlgorithm{
                 ay *= Units.GRAV;
                 az *= Units.GRAV;
 
-                b.setvX(b.getvX() + (((b.getCurrAccelX() + ax) / 2) * delta));
-                b.setvY(b.getvY() + (((b.getCurrAccelY() + ay) / 2) * delta));
-                b.setvZ(b.getvZ() + (((b.getCurrAccelZ() + az) / 2) * delta));
+                synchronized (b) {
+                    b.setvX(b.getvX() + (((b.getCurrAccelX() + ax) / 2) * delta));
+                    b.setvY(b.getvY() + (((b.getCurrAccelY() + ay) / 2) * delta));
+                    b.setvZ(b.getvZ() + (((b.getCurrAccelZ() + az) / 2) * delta));
 
-                b.setCurrAccelX(ax);
-                b.setCurrAccelY(ay);
-                b.setCurrAccelZ(az);
+                    b.setCurrAccelX(ax);
+                    b.setCurrAccelY(ay);
+                    b.setCurrAccelZ(az);
+                }
             }
         }
     }
 
     private void parseAcceleration(Body other, double pX, double pY, double pZ){
-        double oX = other.getX();
-        double oY = other.getY();
-        double oZ = other.getY();
-        temporary = other.getMass() / cb(Math.sqrt(sq(oX-pX) + sq(oY-pY) + sq(oZ - pZ)));
+        double oX, oY, oZ;
+        synchronized (other) {
+            oX = other.getX();
+            oY = other.getY();
+            oZ = other.getY();
+            temporary = other.getMass() / cb(Math.sqrt(sq(oX - pX) + sq(oY - pY) + sq(oZ - pZ)));
+        }
         ax += (oX - pX) * temporary;
         ay += (oY - pY) * temporary;
         az += (oZ - pZ) * temporary;
