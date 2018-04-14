@@ -293,9 +293,7 @@ public class Renderer implements Disposable{
 
         Gdx.gl.glEnable(Gdx.gl.GL_CULL_FACE);
         Gdx.gl.glEnable(Gdx.gl.GL_DEPTH_TEST);
-        Gdx.gl.glEnable(Gdx.gl.GL_BLEND);
 
-        Gdx.gl.glBlendFunc(Gdx.gl.GL_SRC_ALPHA, Gdx.gl.GL_ONE);
 
         Gdx.gl.glClearColor(0.0f,0.0f,0.0f,1.0f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT | (Gdx.graphics.getBufferFormat().coverageSampling?GL20.GL_COVERAGE_BUFFER_BIT_NV:0));
@@ -363,6 +361,9 @@ public class Renderer implements Disposable{
 
         skybox.render();
 
+        Gdx.gl.glEnable(Gdx.gl.GL_BLEND);
+        Gdx.gl.glBlendFunc(Gdx.gl.GL_SRC_ALPHA, Gdx.gl.GL_ONE);
+
         while(!lensGlows.isEmpty()){
             try {
                 lensGlows.poll().render();
@@ -371,12 +372,14 @@ public class Renderer implements Disposable{
             }
         }
 
+        Gdx.gl.glDisable(Gdx.gl.GL_BLEND);
+
 
         //simulationObject.render(camera);
         //simulationObject2.render(camera);
         Gdx.gl.glDisable(Gdx.gl.GL_CULL_FACE);
         Gdx.gl.glDisable(Gdx.gl.GL_DEPTH_TEST);
-        Gdx.gl.glDisable(Gdx.gl.GL_BLEND);
+
     }
 
     public Vector2f projectPoint(Vector3f position){
