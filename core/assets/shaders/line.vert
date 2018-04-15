@@ -22,6 +22,5 @@ void main()
     //gl_Position = modelToClipCoordinates(vec4(aPos, 1.0), projection * view, u_logarithmicDepthConstant, og_farPlaneDistance);
     gl_Position = projection * view * vec4(aPos,1.0);
 
-    logz = log(gl_Position.w*u_logarithmicDepthConstant + 1)*FC;
-    gl_Position.z = (2*logz - 1)*gl_Position.w;
+    logz = gl_Position.z;
 }
