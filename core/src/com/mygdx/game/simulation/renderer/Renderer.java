@@ -230,6 +230,10 @@ public class Renderer implements Disposable{
         Gdx.gl.glDisable(Gdx.gl.GL_BLEND);
 
 
+        for(SimulationObject object : toDraw){
+            object.getOrbit().render();
+        }
+
         //simulationObject.render(camera);
         //simulationObject2.render(camera);
         Gdx.gl.glDisable(Gdx.gl.GL_CULL_FACE);
