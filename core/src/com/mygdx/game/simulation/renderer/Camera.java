@@ -1,12 +1,9 @@
 package com.mygdx.game.simulation.renderer;
 
-import com.badlogic.gdx.math.Matrix3;
 import com.sun.org.apache.xpath.internal.operations.Bool;
-import org.joml.Matrix3f;
-import org.joml.Matrix4f;
-import org.joml.Vector3d;
-import org.joml.Vector3f;
+import org.joml.*;
 
+import java.lang.Math;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,46 +12,37 @@ import java.util.Map;
  */
 public class Camera {
 
-    private float movementSpeed = 2.5f;
-    private float sensitivity = 0.2f;
-    private final Vector3d position;
-    private final Vector3f front, up, right, worldUp, temp, temp2;
+    protected float movementSpeed = 2.5f;
+    protected float sensitivity = 0.002f;
+    protected final Vector3d position;
+    protected final Vector3f front, up, left, worldUp, temp, temp2;
 
-    private float yaw, pitch;
+    private float yawChange, pitchChange;
 
     private int scrolledAmount;
 
-    Map<Camera_Movement, Boolean> keysPressed;
+    private final Matrix3f tempMat;
+
+    private final AxisAngle4f tempAng;
+
+    protected Map<Camera_Movement, Boolean> keysPressed;
 
     public Camera(float posX, float posY, float posZ) {
         position = new Vector3d(posX,posY,posZ);
         worldUp = new Vector3f(0, 1, 0);
-        front = new Vector3f();
-        up = new Vector3f();
-        right = new Vector3f();
+        front = new Vector3f(0f, 0f, -1f);
+        up = new Vector3f(0f, 1f, 0f);
+        left = new Vector3f(-1f, 0f, 0f);
         temp = new Vector3f();
         temp2 = new Vector3f();
-        yaw = -90f;
-        pitch = 0f;
-        updateCameraVectors();
+        tempMat  = new Matrix3f();
+        tempAng = new AxisAngle4f();
 
         keysPressed = new HashMap<Camera_Movement, Boolean>();
         keysPressed.put(Camera_Movement.FORWARD, false);
         keysPressed.put(Camera_Movement.BACKWARD, false);
         keysPressed.put(Camera_Movement.RIGHT, false);
         keysPressed.put(Camera_Movement.LEFT, false);
-    }
-
-    private void updateCameraVectors() {
-        front.x = (float)(Math.cos(Math.toRadians(yaw))*Math.cos(Math.toRadians(pitch)));
-        front.y = (float)Math.sin(Math.toRadians(pitch));
-        front.z = (float)(Math.sin(Math.toRadians(yaw)) * Math.cos(Math.toRadians(pitch)));
-        front.normalize();
-
-        right.set(front).cross(worldUp).normalize();
-
-        up.set(right).cross(front).normalize();
-
     }
 
     public Vector3d getPosition(){
@@ -73,14 +61,22 @@ public class Camera {
                         position.add(temp.set(front).mul(-velocity));
                         break;
                     case RIGHT:
-                        position.add(temp.set(right).mul(velocity));
+                        position.add(temp.set(left).mul(-velocity));
                         break;
                     case LEFT:
-                        position.add(temp.set(right).mul(-velocity));
+                        position.add(temp.set(left).mul(velocity));
                         break;
                 }
             }
         }
+
+        tempMat.identity().set(tempAng.set(pitchChange,left)).transform(front);
+        tempMat.identity().set(tempAng.set(pitchChange,left)).transform(up);
+        pitchChange = 0;
+
+        tempMat.identity().set(tempAng.set(yawChange,up)).transform(front);
+        tempMat.identity().set(tempAng.set(yawChange,up)).transform(left);
+        yawChange = 0;
     }
 
     public void changeSpeed(int amount){
@@ -94,20 +90,13 @@ public class Camera {
     }
 
     public void processMouseMovement(float xOffset, float yOffset){
-        xOffset *= sensitivity;
-        yOffset *= sensitivity;
+        xOffset *= -sensitivity;
+        yOffset *= -sensitivity;
 
-        yaw += xOffset;
-        pitch += yOffset;
+        yawChange+=xOffset;
+        pitchChange+=yOffset;
 
-        if(pitch > 89f){
-            pitch = 89f;
-        }
-        if (pitch < -89f){
-            pitch = -89f;
-        }
 
-        updateCameraVectors();
     }
 
 
