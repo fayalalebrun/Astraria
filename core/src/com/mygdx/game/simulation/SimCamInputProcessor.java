@@ -5,6 +5,10 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 import com.mygdx.game.simulation.renderer.Camera;
 import com.mygdx.game.simulation.renderer.Camera_Movement;
+import org.joml.Vector2f;
+
+import java.util.ArrayList;
+import java.util.Collections;
 
 import static com.badlogic.gdx.Gdx.input;
 
@@ -19,8 +23,20 @@ public class SimCamInputProcessor implements InputProcessor{
 
     private boolean firstMove, rightClickDown;
 
+    private final Vector2f temp;
+
+    private ArrayList<Clickable3DObject> clickable3DObjects;
+
     public SimCamInputProcessor(Camera cam) {
         this.camera = cam;
+        clickable3DObjects = new ArrayList<Clickable3DObject>();
+        temp = new Vector2f();
+    }
+
+    public void updateClickableObjects(ArrayList<Clickable3DObject> objects){
+        clickable3DObjects.clear();
+        clickable3DObjects.addAll(objects);
+        Collections.sort(clickable3DObjects);
     }
 
     @Override
@@ -117,6 +133,19 @@ public class SimCamInputProcessor implements InputProcessor{
 
     @Override
     public boolean touchUp(int screenX, int screenY, int pointer, int button) {
+        if(button == Input.Buttons.LEFT){
+            screenY = Gdx.graphics.getHeight() - screenY;
+            for(Clickable3DObject object : this.clickable3DObjects){
+                temp.set(screenX,screenY);
+                temp.sub(object.getScreenCoords());
+                if(Math.abs(temp.length())<20){
+                    System.out.println(object.getParent().getName());
+                    camera.setLock(object.getParent());
+                    return true;
+                }
+            }
+        }
+
         if(button == Input.Buttons.RIGHT){
             rightClickDown = false;
             return true;

@@ -25,6 +25,7 @@ public class SimulationObject implements Disposable{
     protected final Body body;
     protected final Color orbitColor;
     protected final Orbit orbit;
+    protected final Clickable3DObject clickable3DObject;
 
     public SimulationObject(Model model, Shader shader, Shader orbitShader, float radius, String name, Transformation transformation, Body body, Color orbitColor) {
         position = new Vector3d();
@@ -39,6 +40,7 @@ public class SimulationObject implements Disposable{
         this.body = body;
         this.orbitColor = orbitColor;
         orbit = new Orbit(orbitColor,5000000f, orbitShader);
+        clickable3DObject = new Clickable3DObject(this);
     }
 
     public void updatePosition(){
@@ -92,5 +94,9 @@ public class SimulationObject implements Disposable{
 
     public Body getBody() {
         return body;
+    }
+
+    public Clickable3DObject getClickable3DObject() {
+        return clickable3DObject;
     }
 }
