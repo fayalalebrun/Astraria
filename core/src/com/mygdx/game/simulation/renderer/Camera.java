@@ -89,7 +89,7 @@ public class Camera {
             scrolledAmount = 1;
         }
         System.out.println(scrolledAmount);
-        movementSpeed = (float)2.5 * (float)Math.pow((double)scrolledAmount, 4);
+        movementSpeed = 0.0794f * (float)Math.pow(1.2637,scrolledAmount);
         System.out.println(movementSpeed);
     }
 
