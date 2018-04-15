@@ -216,6 +216,16 @@ public class Renderer implements Disposable{
 
         skybox.render();
 
+
+        for(LensGlow lensGlow : lensGlows){
+            lensGlow.checkVisibility();
+        }
+
+
+        for(SimulationObject object : toDraw){
+            object.getOrbit().render();
+        }
+
         Gdx.gl.glEnable(Gdx.gl.GL_BLEND);
         Gdx.gl.glBlendFunc(Gdx.gl.GL_SRC_ALPHA, Gdx.gl.GL_ONE);
 
@@ -228,11 +238,6 @@ public class Renderer implements Disposable{
         }
 
         Gdx.gl.glDisable(Gdx.gl.GL_BLEND);
-
-
-        for(SimulationObject object : toDraw){
-            object.getOrbit().render();
-        }
 
         //simulationObject.render(camera);
         //simulationObject2.render(camera);
