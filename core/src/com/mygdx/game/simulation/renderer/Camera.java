@@ -17,7 +17,7 @@ public class Camera {
     protected final Vector3d position;
     protected final Vector3f front, up, left, worldUp, temp, temp2;
 
-    private float yawChange, pitchChange;
+    private float yawChange, pitchChange, rollChange;
 
     private int scrolledAmount;
 
@@ -43,6 +43,8 @@ public class Camera {
         keysPressed.put(Camera_Movement.BACKWARD, false);
         keysPressed.put(Camera_Movement.RIGHT, false);
         keysPressed.put(Camera_Movement.LEFT, false);
+        keysPressed.put(Camera_Movement.ROLL_LEFT,false);
+        keysPressed.put(Camera_Movement.ROLL_RIGHT,false);
     }
 
     public Vector3d getPosition(){
@@ -66,6 +68,12 @@ public class Camera {
                     case LEFT:
                         position.add(temp.set(left).mul(velocity));
                         break;
+                    case ROLL_LEFT:
+                        rollChange-=delta;
+                        break;
+                    case ROLL_RIGHT:
+                        rollChange+=delta;
+                        break;
                 }
             }
         }
@@ -77,6 +85,10 @@ public class Camera {
         tempMat.identity().set(tempAng.set(yawChange,up)).transform(front);
         tempMat.identity().set(tempAng.set(yawChange,up)).transform(left);
         yawChange = 0;
+
+        tempMat.identity().set(tempAng.set(rollChange,front)).transform(up);
+        tempMat.identity().set(tempAng.set(rollChange,front)).transform(left);
+        rollChange = 0;
     }
 
     public void changeSpeed(int amount){
