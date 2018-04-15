@@ -99,6 +99,7 @@ public class SimulationScreen extends BaseScreen {
         for(SimulationObject object : this.simulationObjects){
             Vector2f temp = renderer.projectPoint(object.getPositionRelativeToCamera(renderer.getCamera()));
             if(temp!=null) {
+                //labelFont.setColor(object.getOrbitColor());
                 labelFont.draw(fontBatch, object.getName(), temp.x, temp.y);
             }
         }

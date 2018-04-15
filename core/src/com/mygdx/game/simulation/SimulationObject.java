@@ -82,6 +82,10 @@ public class SimulationObject implements Disposable{
         return position;
     }
 
+    public Color getOrbitColor() {
+        return orbitColor;
+    }
+
     public Orbit getOrbit() {
         return orbit;
     }
