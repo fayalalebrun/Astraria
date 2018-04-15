@@ -45,6 +45,8 @@ public class Camera {
         keysPressed.put(Camera_Movement.LEFT, false);
         keysPressed.put(Camera_Movement.ROLL_LEFT,false);
         keysPressed.put(Camera_Movement.ROLL_RIGHT,false);
+        keysPressed.put(Camera_Movement.UP, false);
+        keysPressed.put(Camera_Movement.DOWN, false);
     }
 
     public Vector3d getPosition(){
@@ -73,6 +75,12 @@ public class Camera {
                         break;
                     case ROLL_RIGHT:
                         rollChange+=delta;
+                        break;
+                    case UP:
+                        position.add(temp.set(up).mul(velocity));
+                        break;
+                    case DOWN:
+                        position.add(temp.set(up).mul(-velocity));
                         break;
                 }
             }

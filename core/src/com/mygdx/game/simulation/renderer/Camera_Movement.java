@@ -9,5 +9,7 @@ public enum Camera_Movement {
     LEFT,
     RIGHT,
     ROLL_LEFT,
-    ROLL_RIGHT
+    ROLL_RIGHT,
+    UP,
+    DOWN
 }
