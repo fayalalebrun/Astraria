@@ -44,7 +44,7 @@ public class SimulationObject implements Disposable{
     protected void update(Camera cam){
         synchronized (body){
             this.position.set(body.getX()/1000, body.getZ()/1000, body.getY()/1000);
-            orbit.render(body.getX()/1000, body.getZ()/1000, body.getY()/1000,cam);
+            orbit.prepare(body.getX()/1000, body.getZ()/1000, body.getY()/1000,cam);
         }
 
         model.setScale(radius);
@@ -73,6 +73,10 @@ public class SimulationObject implements Disposable{
     @Override
     public void dispose() {
 
+    }
+
+    public Orbit getOrbit() {
+        return orbit;
     }
 
     public Body getBody() {

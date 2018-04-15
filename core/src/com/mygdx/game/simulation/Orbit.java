@@ -36,7 +36,7 @@ public class Orbit {
         this.shader = shader;
     }
 
-    public void render(double x, double y, double z, Camera cam){
+    public void prepare(double x, double y, double z, Camera cam){
         while (positions.remainingCapacity()<10){
             positions.poll();
             positions.poll();
@@ -61,7 +61,9 @@ public class Orbit {
 
         fillArray(cam,x,y,z);
         line.updateBufferData(vertices,positions.size()/3);
+    }
 
+    public void render(){
         line.render(shader);
     }
 
