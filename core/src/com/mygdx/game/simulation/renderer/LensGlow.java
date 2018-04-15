@@ -45,6 +45,8 @@ public class LensGlow implements Disposable {
 
     private Renderer renderer;
 
+    private boolean visible = false;
+
     private float distanceModifier = 1f;
 
     public LensGlow(double x, double y, double z, int textureID, int spectrumTexID, Star star, Transformation transformation) {
@@ -108,6 +110,10 @@ public class LensGlow implements Disposable {
         Gdx.gl.glDisableVertexAttribArray(1);
     }
 
+    public void checkVisibility(){
+        this.visible = checkIfVisible();
+    }
+
     public void prepare(Renderer renderer, Shader shader, int screenWidth, int screenHeight, Camera cam, double x, double y, double z){
         this.prepared = true;
         this.shader = shader;
@@ -124,7 +130,7 @@ public class LensGlow implements Disposable {
         }
         prepared = false;
 
-        if(!checkIfVisible()){
+        if(!visible){
             return;
         }
 
