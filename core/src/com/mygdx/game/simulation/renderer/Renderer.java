@@ -247,7 +247,12 @@ public class Renderer implements Disposable{
     }
 
     public Vector2f projectPoint(Vector3f position){
-        temp4f.set(worldSpaceToDeviceCoords(temp4f.set(position.x,position.y,position.z, 1)));
+
+        return projectPoint(worldSpaceToDeviceCoords(temp4f.set(position.x,position.y,position.z, 1)));
+    }
+
+    public Vector2f projectPoint(Vector4f deviceCoords){
+        temp4f.set(deviceCoords);
         temp4f.x*=screenWidth;
         temp4f.y*=screenHeight;
 
@@ -255,10 +260,7 @@ public class Renderer implements Disposable{
         if (temp4f.w < 0){
             return null;
         }
-
-
         return temp2f.set(temp4f.x,temp4f.y);
-
     }
 
     public float getFramebufferDepthComponent(int x, int y){
