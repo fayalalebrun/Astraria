@@ -44,6 +44,12 @@ public class SimCamInputProcessor implements InputProcessor{
             case Input.Keys.E:
                 camera.processKeyboard(Camera_Movement.ROLL_RIGHT,false);
                 return true;
+            case Input.Keys.SPACE:
+                camera.processKeyboard(Camera_Movement.UP, false);
+                return true;
+            case Input.Keys.SHIFT_LEFT:
+                camera.processKeyboard(Camera_Movement.DOWN, false);
+                return true;
             case Input.Keys.UP:
                 camera.changeSpeed(10);
                 return true;
@@ -82,6 +88,12 @@ public class SimCamInputProcessor implements InputProcessor{
                 return true;
             case Input.Keys.E:
                 camera.processKeyboard(Camera_Movement.ROLL_RIGHT, true);
+                return true;
+            case Input.Keys.SPACE:
+                camera.processKeyboard(Camera_Movement.UP, true);
+                return true;
+            case Input.Keys.SHIFT_LEFT:
+                camera.processKeyboard(Camera_Movement.DOWN,true);
                 return true;
         }
         return false;
