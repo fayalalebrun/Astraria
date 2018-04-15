@@ -78,6 +78,10 @@ public class SimulationObject implements Disposable{
 
     }
 
+    public Vector3d getPosition() {
+        return position;
+    }
+
     public Orbit getOrbit() {
         return orbit;
     }
