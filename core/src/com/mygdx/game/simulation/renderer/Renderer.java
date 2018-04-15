@@ -258,7 +258,7 @@ public class Renderer implements Disposable{
 
         //If the point is not visible, return null
         if (temp4f.w < 0){
-            return null;
+            return temp2f.set(-1000,-1000);
         }
         return temp2f.set(temp4f.x,temp4f.y);
     }

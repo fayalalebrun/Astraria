@@ -31,6 +31,7 @@ public class SimulationScreen extends BaseScreen {
     private ArrayList<SimulationObject> simulationObjects;
     private final BitmapFont labelFont;
     private SpriteBatch fontBatch;
+    private final ArrayList<Clickable3DObject> clickable3DObjects;
 
 
     public SimulationScreen(Boot boot, String loadPath) {
@@ -70,7 +71,7 @@ public class SimulationScreen extends BaseScreen {
         if(!loadPath.equals("")){
             SaveFileManager.loadGame(this,renderer,new FileHandle(loadPath));
         }
-
+        clickable3DObjects = new ArrayList<Clickable3DObject>();
     }
 
 
@@ -94,6 +95,15 @@ public class SimulationScreen extends BaseScreen {
 
         renderer.render(delta, simulationObjects);
 
+        clickable3DObjects.clear();
+        for (SimulationObject simObj : simulationObjects){
+            simObj.getClickable3DObject().updateCoords(renderer);
+            if (simObj.getClickable3DObject().getDeviceCoords().w>0) {
+                clickable3DObjects.add(simObj.getClickable3DObject());
+            }
+        }
+
+        processor.updateClickableObjects(clickable3DObjects);
 
         fontBatch.begin();
         for(SimulationObject object : this.simulationObjects){
