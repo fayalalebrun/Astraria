@@ -84,6 +84,11 @@ public class SimulationScreen extends BaseScreen {
 
     @Override
     public void render(float delta) {
+        for (SimulationObject simObj : simulationObjects){
+            simObj.updatePosition();
+        }
+
+
         Gdx.gl.glClearColor(1f,1f,1f,1.0f);
         Gdx.gl.glClear(Gdx.gl.GL_COLOR_BUFFER_BIT|Gdx.gl.GL_DEPTH_BUFFER_BIT);
 

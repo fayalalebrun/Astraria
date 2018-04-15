@@ -41,12 +41,15 @@ public class SimulationObject implements Disposable{
         orbit = new Orbit(orbitColor,5000000f, orbitShader);
     }
 
-    protected void update(Camera cam){
+    public void updatePosition(){
         synchronized (body){
             this.position.set(body.getX()/1000, body.getZ()/1000, body.getY()/1000);
-            orbit.prepare(body.getX()/1000, body.getZ()/1000, body.getY()/1000,cam);
-        }
 
+        }
+    }
+
+    protected void update(Camera cam){
+        orbit.prepare(position.x, position.y, position.z,cam);
         model.setScale(radius);
         model.setPosition(getPositionRelativeToCamera(cam));
         model.setRotation(rotation.x,rotation.y,rotation.z);
