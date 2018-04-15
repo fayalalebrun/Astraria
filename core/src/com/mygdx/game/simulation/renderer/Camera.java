@@ -1,5 +1,6 @@
 package com.mygdx.game.simulation.renderer;
 
+import com.mygdx.game.simulation.SimulationObject;
 import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.joml.*;
 
@@ -24,6 +25,10 @@ public class Camera {
     private final Matrix3f tempMat;
 
     private final AxisAngle4f tempAng;
+
+    private SimulationObject lock = null;
+
+    private float distFromLock;
 
     protected Map<Camera_Movement, Boolean> keysPressed;
 
@@ -59,15 +64,19 @@ public class Camera {
             if(keysPressed.get(key)){
                 switch (key){
                     case FORWARD:
+                        lock = null;
                         position.add(temp.set(front).mul(velocity));
                         break;
                     case BACKWARD:
+                        lock = null;
                         position.add(temp.set(front).mul(-velocity));
                         break;
                     case RIGHT:
+                        lock = null;
                         position.add(temp.set(left).mul(-velocity));
                         break;
                     case LEFT:
+                        lock = null;
                         position.add(temp.set(left).mul(velocity));
                         break;
                     case ROLL_LEFT:
@@ -77,9 +86,11 @@ public class Camera {
                         rollChange+=delta;
                         break;
                     case UP:
+                        lock = null;
                         position.add(temp.set(up).mul(velocity));
                         break;
                     case DOWN:
+                        lock = null;
                         position.add(temp.set(up).mul(-velocity));
                         break;
                 }
@@ -97,6 +108,15 @@ public class Camera {
         tempMat.identity().set(tempAng.set(rollChange,front)).transform(up);
         tempMat.identity().set(tempAng.set(rollChange,front)).transform(left);
         rollChange = 0;
+
+        if(lock!=null){
+            temp.set(front).normalize().negate();
+            if(distFromLock<lock.getRadius()){
+                distFromLock=lock.getRadius();
+            }
+            temp.mul(lock.getRadius()+distFromLock);
+            position.set(lock.getPosition()).add(temp);
+        }
     }
 
     public void changeSpeed(int amount){
@@ -104,6 +124,12 @@ public class Camera {
         if(scrolledAmount<1){
             scrolledAmount = 1;
         }
+        if(lock!=null){
+            distFromLock = lock.getRadius()+ (0.0794f * (float)Math.pow(1.2637,scrolledAmount));
+            System.out.println(distFromLock);
+            return;
+        }
+
         System.out.println(scrolledAmount);
         movementSpeed = 0.0794f * (float)Math.pow(1.2637,scrolledAmount);
         System.out.println(movementSpeed);
@@ -123,6 +149,10 @@ public class Camera {
     public void processKeyboard(Camera_Movement direction, boolean down){
         down = !down;
         keysPressed.put(direction, down);
+    }
+
+    public void setLock(SimulationObject lock) {
+        this.lock = lock;
     }
 
     public Vector3f getFront() {
