@@ -147,6 +147,7 @@ public class LensGlow implements Disposable {
 
 
         Gdx.gl.glDepthMask(false);
+        Gdx.gl.glDepthFunc(Gdx.gl.GL_LEQUAL);
 
         Gdx.gl30.glBindVertexArray(VAO);
 
@@ -172,6 +173,7 @@ public class LensGlow implements Disposable {
         Gdx.gl30.glBindVertexArray(0);
 
         Gdx.gl.glDepthMask(true);
+        Gdx.gl.glDepthFunc(Gdx.gl.GL_LESS);
     }
 
     private boolean checkIfVisible(){
