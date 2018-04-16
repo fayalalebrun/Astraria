@@ -55,7 +55,6 @@ public class Line implements Disposable{
     }
 
     public void render(Shader shader){
-        Gdx.gl.glLineWidth(1.5f);
 
         shader.use();
         shader.setVec4f("color", color);
@@ -78,7 +77,7 @@ public class Line implements Disposable{
         this.vertices.flip();
 
         Gdx.gl.glBindBuffer(Gdx.gl.GL_ARRAY_BUFFER, VBO);
-        Gdx.gl.glBufferData(Gdx.gl.GL_ARRAY_BUFFER, maxPoints*3*4, null, Gdx.gl.GL_STREAM_DRAW);
+        //Gdx.gl.glBufferData(Gdx.gl.GL_ARRAY_BUFFER, maxPoints*3*4, null, Gdx.gl.GL_STREAM_DRAW);
         Gdx.gl.glBufferSubData(Gdx.gl.GL_ARRAY_BUFFER,0,maxPoints*3*4,this.vertices);
 
         drawUntil = numberOfPoints;
