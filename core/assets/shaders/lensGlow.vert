@@ -21,7 +21,7 @@ void main()
 {
     vec4 position = projection * modelView * vec4(uPos,1.0);
     position /= position.w;
-    position.z = -1;
+    position.z = -0.99;
 
     float offsetX = (width/screenWidth);
     float offsetY = (height/screenHeight);
