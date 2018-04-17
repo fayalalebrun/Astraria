@@ -6,6 +6,7 @@ uniform vec3 star_pos;		// point light source position (Sun) [GCS]
 uniform vec3 planet_pos;	// planet center position [GCS]
 //uniform vec3 planet_r;		// planet radius
 
+uniform sampler2D ambTex;
 uniform sampler2D diffuseTex;
 uniform sampler2D txratm; //Texture where gradient is stored
 uniform vec4 atmoColorMod;
@@ -30,6 +31,11 @@ uniform PointLight pointLights[8];
 
 uniform int nLights;
 
+
+uniform int useAmbTex;
+
+float minDiff = 1.0;
+
 vec4 calcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
 
 void main()
@@ -46,6 +52,18 @@ void main()
 
     for(int i = 0; i < nLights; i++){
         result+=calcPointLight(pointLights[i], norm, pixel_pos, viewDir);
+    }
+
+
+    if(minDiff<0 && useAmbTex == 1){
+            if(minDiff<-0.25){
+                minDiff = -0.25;
+            }
+
+            minDiff = minDiff * -4;
+
+            minDiff = 1.0 - minDiff;
+            result = mix(texture(ambTex, pixel_txy),result, minDiff);
     }
 
     c0 = result.xyz;
@@ -67,7 +85,14 @@ vec4 calcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
 {
     vec3 lightDir = normalize(light.position - fragPos);
     // diffuse shading
-    float diff = max(dot(normal, lightDir), 0.0);
+    float diffBef = dot(normal, lightDir);
+
+    float diff = max(diffBef, 0.0);
+
+    if(diffBef<minDiff){
+        minDiff = diffBef;
+    }
+
     // combine results
     vec4 ambient  = vec4(light.ambient,1.0)  * texture(diffuseTex, pixel_txy);
     vec4 diffuse  = vec4(light.diffuse,1.0)  * diff * texture(diffuseTex, pixel_txy);
