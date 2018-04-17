@@ -27,6 +27,7 @@ public class SaveFileManager {
         float r, g, b, a;
         float ar, ag, ab, aa;
         float temperature;
+        float incTilt, axisRightAsc, rotPeriod, offset;
 
         if(part[0].contains("v3")){
             int i = 1;
@@ -71,10 +72,21 @@ public class SaveFileManager {
                     b = Float.parseFloat(orbitCol[3]);
                     a = Float.parseFloat(orbitCol[4]);
                     i++;
+
+                    String rot[] = part[i].split(" ");
+                    incTilt = Float.parseFloat(rot[1]);
+                    axisRightAsc = Float.parseFloat(rot[2]);
+                    rotPeriod = Float.parseFloat(rot[3]);
+                    offset = Float.parseFloat(rot[4]);
+                    i++;
+
                     Sphere s = new Sphere(renderer.getTransformation(),
                             Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal(texturePath).path()));
-                    simulationScreen.addObject(new SimulationObject(s, renderer.getPlanetShader(), renderer.getLineShader(),
-                            radius,name,renderer.getTransformation(),new Body(mass,x,y,z,vX,vY,vZ), new Color(r,g,b,a)));
+                    SimulationObject simObj = new SimulationObject(s, renderer.getPlanetShader(), renderer.getLineShader(),
+                            radius,name,renderer.getTransformation(),new Body(mass,x,y,z,vX,vY,vZ), new Color(r,g,b,a));
+                    simObj.setRotationParameters(incTilt,axisRightAsc,rotPeriod,offset);
+
+                    simulationScreen.addObject(simObj);
                 } else if (type[1].equals("star")){
 
 
@@ -109,13 +121,23 @@ public class SaveFileManager {
                     a = Float.parseFloat(orbitCol[4]);
                     i++;
 
+                    String rot[] = part[i].split(" ");
+                    incTilt = Float.parseFloat(rot[1]);
+                    axisRightAsc = Float.parseFloat(rot[2]);
+                    rotPeriod = Float.parseFloat(rot[3]);
+                    offset = Float.parseFloat(rot[4]);
+                    i++;
+
                     temperature = Float.parseFloat(part[i].split(" ")[1]);
                     i++;
 
                     Sphere s = new Sphere(renderer.getTransformation(),
                             Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal(texturePath).path()));
-                    simulationScreen.addObject(new Star(s, renderer, renderer.getLineShader(), radius, name, renderer.getTransformation(),
-                            new Body(mass, x, y, z, vX, vY, vZ),new Color(r,g,b,a), temperature));
+
+                    SimulationObject simObj = new Star(s, renderer, renderer.getLineShader(), radius, name, renderer.getTransformation(),
+                            new Body(mass, x, y, z, vX, vY, vZ),new Color(r,g,b,a), temperature);
+                    simObj.setRotationParameters(incTilt,axisRightAsc,rotPeriod,offset);
+                    simulationScreen.addObject(simObj);
                 } else if (type[1].equals("planet_atmo")){
 
                     name = part[i].substring(part[i].indexOf(':')+2);
@@ -149,6 +171,13 @@ public class SaveFileManager {
                     a = Float.parseFloat(orbitCol[4]);
                     i++;
 
+                    String rot[] = part[i].split(" ");
+                    incTilt = Float.parseFloat(rot[1]);
+                    axisRightAsc = Float.parseFloat(rot[2]);
+                    rotPeriod = Float.parseFloat(rot[3]);
+                    offset = Float.parseFloat(rot[4]);
+                    i++;
+
                     String[] atmoCol = part[i].split(" ");
                     ar = Float.parseFloat(atmoCol[1]);
                     ag = Float.parseFloat(atmoCol[2]);
@@ -158,12 +187,13 @@ public class SaveFileManager {
 
                     Sphere s = new Sphere(renderer.getTransformation(),
                             Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal(texturePath).path()));
-
-                    simulationScreen.addObject(new AtmospherePlanet(s, renderer.getPlanetAtmoShader(), renderer.getLineShader(),
+                    SimulationObject simObj = new AtmospherePlanet(s, renderer.getPlanetAtmoShader(), renderer.getLineShader(),
                             radius, name,
                             new Color(r,g,b,a),
                             renderer.getTransformation(), new Body(mass,x,y,z,vX,vY,vZ),renderer.getLightSourceManager(),
-                            new Color(ar,ag,ab,aa)));
+                            new Color(ar,ag,ab,aa));
+                    simObj.setRotationParameters(incTilt,axisRightAsc,rotPeriod,offset);
+                    simulationScreen.addObject(simObj);
                 } else if(type[1].equals("black_hole")){
                     name = part[i].substring(part[i].indexOf(':')+2);
                     i++;

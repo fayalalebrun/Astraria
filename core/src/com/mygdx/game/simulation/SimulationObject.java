@@ -50,21 +50,19 @@ public class SimulationObject implements Disposable{
         this.orbitColor = orbitColor;
         orbit = new Orbit(orbitColor,5000000f, orbitShader);
         clickable3DObject = new Clickable3DObject(this);
-
-        setRotationParameters((float)Math.PI/2f,0f,1f,0f);
     }
 
     public void setRotationParameters(float inclinationTilt, float axisRightAscension, float rotationPeriod, float offset){
-        this.inclinationTilt = inclinationTilt;
-        this.axisRightAscension = axisRightAscension;
-        this.rotationPeriod = rotationPeriod;
+        this.inclinationTilt = (float)Math.toRadians(inclinationTilt);
+        this.axisRightAscension = (float)Math.toRadians(axisRightAscension);
+        this.rotationPeriod = (float)Math.toRadians(rotationPeriod);
         rotationSpeed = 1/rotationPeriod;
 
         this.rotationAxis.set(Transformation.WORLD_UP);
-        rotationAccum.identity().rotate(tempAng.set(inclinationTilt,transformation.WORLD_RIGHT)).translate(rotationAxis);
-        rotationAccum.rotate(tempAng.set(axisRightAscension,transformation.WORLD_UP)).translate(rotationAxis);
+        rotationAccum.identity().rotate(tempAng.set(this.inclinationTilt,transformation.WORLD_RIGHT)).translate(rotationAxis);
+        rotationAccum.rotate(tempAng.set(this.axisRightAscension,transformation.WORLD_UP)).translate(rotationAxis);
 
-        rotationAccum.rotate(tempAng.set(offset,rotationAxis));
+        rotationAccum.rotate(tempAng.set((float)Math.toRadians(offset),rotationAxis));
     }
 
     public void updatePosition(){
@@ -75,9 +73,8 @@ public class SimulationObject implements Disposable{
     }
 
     protected void update(Camera cam, float delta){
-        if(rotationSpeed>0){
-            rotationAccum.rotate(tempAng.set(rotationSpeed*delta*SimulationScreen.simSpeed,rotationAxis));
-        }
+        rotationAccum.rotate(tempAng.set(rotationSpeed*delta*SimulationScreen.simSpeed,rotationAxis));
+
 
         orbit.prepare(position.x, position.y, position.z,cam);
         model.setScale(radius);
