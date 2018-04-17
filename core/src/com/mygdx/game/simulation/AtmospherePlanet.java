@@ -33,12 +33,6 @@ public class AtmospherePlanet extends SimulationObject{
         this.atmosphereColor = new Color().set(atmosphereColor);
     }
 
-    @Override
-    protected void update(Camera cam) {
-        super.update(cam);
-
-    }
-
 
     private void setUniforms(Camera cam){
 
@@ -57,10 +51,10 @@ public class AtmospherePlanet extends SimulationObject{
     }
 
     @Override
-    public void render(Camera cam) {
+    public void render(Camera cam, float delta) {
         setUniforms(cam);
 
-        super.render(cam);
+        super.render(cam, delta);
 
     }
 

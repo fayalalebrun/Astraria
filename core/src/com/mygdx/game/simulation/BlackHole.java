@@ -18,7 +18,7 @@ public class BlackHole extends SimulationObject{
     }
 
     @Override
-    public void render(Camera cam) {
+    public void render(Camera cam, float delta) {
         shader.use();
         Gdx.gl.glActiveTexture(Gdx.gl.GL_TEXTURE0);
         shader.setInt("skybox", 0);
@@ -26,6 +26,6 @@ public class BlackHole extends SimulationObject{
         Gdx.gl.glActiveTexture(Gdx.gl.GL_TEXTURE0);
         shader.setVec3f("holePos", getPositionRelativeToCamera(cam));
 
-        super.render(cam);
+        super.render(cam,delta);
     }
 }
