@@ -1,5 +1,6 @@
 package com.mygdx.game.simulation.renderer;
 
+import org.joml.Matrix4d;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -15,6 +16,8 @@ public class Transformation {
 
     private final Matrix4f modelViewMatrix;
 
+    private final Matrix4f viewCurr;
+
     public Transformation(){
         projectionMatrix = new Matrix4f();
 
@@ -23,6 +26,8 @@ public class Transformation {
         viewMatrix = new Matrix4f();
 
         modelViewMatrix = new Matrix4f();
+
+        viewCurr = new Matrix4f();
     }
 
     public final Matrix4f getProjectionMatrix(float fov, float width, float height, float zNear, float zFar){
