@@ -23,7 +23,8 @@ public class SaveFileManager {
         double mass;
         double vX, vY, vZ;
         double x, y, z;
-        String texturePath;
+        String texturePath, ambientTexturePath = "";
+        boolean useAmbient = false;
         float r, g, b, a;
         float ar, ag, ab, aa;
         float temperature;
@@ -185,8 +186,20 @@ public class SaveFileManager {
                     aa = Float.parseFloat(atmoCol[4]);
                     i++;
 
-                    Sphere s = new Sphere(renderer.getTransformation(),
-                            Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal(texturePath).path()));
+                    if(part[i].contains("ambient")){
+                        ambientTexturePath = part[i].substring(part[i].indexOf(':')+2);
+                        useAmbient = true;
+                        i++;
+                    }
+                    Sphere s = null;
+                    if(!useAmbient) {
+                        s = new Sphere(renderer.getTransformation(),
+                                Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal(texturePath).path()));
+                    } else {
+                        s = new Sphere(renderer.getTransformation(),
+                                Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal(texturePath).path()),
+                                Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal(ambientTexturePath).path()));
+                    }
                     SimulationObject simObj = new AtmospherePlanet(s, renderer.getPlanetAtmoShader(), renderer.getLineShader(),
                             radius, name,
                             new Color(r,g,b,a),
