@@ -119,7 +119,7 @@ public class Star extends SimulationObject implements LightEmitter{
 
     @Override
     public Vector3f getAmbient() {
-        return temp3.set(0.05f,0.05f,0.05f);
+        return temp3.set(0.0f,0.0f,0.0f);
     }
 
     @Override
