@@ -9,7 +9,7 @@ import java.util.Vector;
  */
 public abstract class NBodyAlgorithm implements Runnable{
 
-    private static final boolean PRINT_CALC_PER_SEC = true;
+    private static final boolean PRINT_CALC_PER_SEC = false;
 
     protected final Vector<Body> bodies;
 
