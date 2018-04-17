@@ -52,7 +52,15 @@ public class Transformation {
                 rotateY((float)Math.toRadians(-rotation.y)).
                 rotateZ((float)Math.toRadians(-rotation.z)).
                 scale(scale);
-        Matrix4f viewCurr = new Matrix4f(viewMatrix);
+
+        viewCurr.set(viewMatrix);
+        return viewCurr.mul(modelViewMatrix);
+    }
+
+    public Matrix4f getModelViewMatrix(Matrix4f viewMatrix, Vector3f offset, Matrix4f rotation, float scale ){
+        modelViewMatrix.identity().translate(offset).mul(rotation).scale(scale);
+
+        viewCurr.set(viewMatrix);
         return viewCurr.mul(modelViewMatrix);
     }
 

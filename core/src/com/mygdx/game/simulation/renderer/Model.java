@@ -27,12 +27,17 @@ public class Model implements Disposable{
     private final Transformation transformation;
     private float scale;
 
+    private final Matrix4f rotationMat;
 
+    private boolean useEulerRot = false;
+
+    private float z;
 
     public Model(ArrayList<Mesh> meshes, Transformation transformation){
         position = new Vector3f();
         scale = 1f;
         rotation = new Vector3f();
+        rotationMat = new Matrix4f().identity();
         this.meshes = meshes;
         this.transformation = transformation;
     }
@@ -52,11 +57,16 @@ public class Model implements Disposable{
 
     public void setRotation(float x, float y, float z){
         rotation.set(x, y, z);
+        useEulerRot = true;
     }
 
     public void render(Camera cam, Shader shader){
         shader.use();
-        shader.setMat4("modelView", transformation.getModelViewMatrix(transformation.getViewMatrix(cam),position,rotation, scale));
+        if(useEulerRot) {
+            shader.setMat4("modelView", transformation.getModelViewMatrix(transformation.getViewMatrix(cam), position, rotation, scale));
+        } else {
+            shader.setMat4("modelView", transformation.getModelViewMatrix(transformation.getViewMatrix(cam), position, rotationMat, scale));
+        }
         for (Mesh mesh : this.meshes){
             mesh.render(shader);
         }
@@ -71,6 +81,11 @@ public class Model implements Disposable{
 
     public void setScale(float scale) {
         this.scale = scale;
+    }
+
+    public void setRotation(Matrix4f rotationMat){
+        this.rotationMat.set(rotationMat);
+        useEulerRot = false;
     }
 
     public ArrayList<Mesh> getMeshes() {
