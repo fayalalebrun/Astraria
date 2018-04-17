@@ -56,7 +56,7 @@ public class SimulationObject implements Disposable{
         this.inclinationTilt = (float)Math.toRadians(inclinationTilt);
         this.axisRightAscension = (float)Math.toRadians(axisRightAscension);
         this.rotationPeriod = (float)Math.toRadians(rotationPeriod);
-        rotationSpeed = 1/rotationPeriod;
+        rotationSpeed = rotationPeriod/86400f;
 
         this.rotationAxis.set(Transformation.WORLD_UP);
         rotationAccum.identity().rotate(tempAng.set(this.inclinationTilt,transformation.WORLD_RIGHT)).translate(rotationAxis);
