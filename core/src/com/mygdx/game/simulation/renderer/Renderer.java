@@ -222,12 +222,14 @@ public class Renderer implements Disposable{
         }
 
 
+        Gdx.gl.glEnable(Gdx.gl.GL_BLEND);
+        Gdx.gl.glBlendFunc(Gdx.gl.GL_SRC_ALPHA, Gdx.gl.GL_ONE);
+
         for(SimulationObject object : toDraw){
             object.getOrbit().render();
         }
 
-        Gdx.gl.glEnable(Gdx.gl.GL_BLEND);
-        Gdx.gl.glBlendFunc(Gdx.gl.GL_SRC_ALPHA, Gdx.gl.GL_ONE);
+
 
         while(!lensGlows.isEmpty()){
             try {
