@@ -8,6 +8,11 @@ import org.joml.Vector3f;
  * Created by Fran on 3/14/2018.
  */
 public class Transformation {
+    public static final Vector3f WORLD_UP = new Vector3f(0f,1f,0f);
+    public static final Vector3f WORLD_RIGHT = new Vector3f(1f,0f,0f);
+    public static final Vector3f WORLD_FORWARD = new Vector3f(0f,0f,1f);
+
+
     private final Matrix4f projectionMatrix;
 
     private final Matrix4f worldMatrix;

@@ -60,7 +60,7 @@ public class Star extends SimulationObject implements LightEmitter{
     }
 
     @Override
-    public void render(Camera cam) {
+    public void render(Camera cam, float delta) {
         shader.use();
         temp2.set(getPositionRelativeToCamera(cam));
         shader.setVec3f("sunPos", temp2);
@@ -70,7 +70,7 @@ public class Star extends SimulationObject implements LightEmitter{
         Gdx.gl.glBindTexture(Gdx.gl.GL_TEXTURE_2D, colorSpectrum);
 
 
-        super.render(cam);
+        super.render(cam, delta);
 
 
 
