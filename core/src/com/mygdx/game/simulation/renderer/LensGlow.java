@@ -138,8 +138,8 @@ public class LensGlow implements Disposable {
 
         shader.use();
         shader.setMat4("modelView", transformation.getModelViewMatrix(transformation.getViewMatrix(cam),getPositionRelativeToCamera(cam),rotation, 1));
-        shader.setFloat("width", size*distanceModifier);
-        shader.setFloat("height", (size * (screenWidth/screenHeight))*distanceModifier);
+        shader.setFloat("width", (size / (screenWidth/screenHeight))*distanceModifier);
+        shader.setFloat("height", (size / (screenWidth/screenHeight))*distanceModifier);
         shader.setFloat("screenWidth", screenWidth);
         shader.setFloat("screenHeight", screenHeight);
         shader.setVec3f("uPos", getPositionRelativeToCamera(cam));
