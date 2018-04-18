@@ -1,7 +1,11 @@
 package com.mygdx.game.simulation.ui;
 
 import com.badlogic.gdx.InputMultiplexer;
+import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.kotcrab.vis.ui.widget.Menu;
 import com.kotcrab.vis.ui.widget.MenuBar;
@@ -27,6 +31,18 @@ public class SimulationScreenInterface {
 
         uiStage = new Stage(new ScreenViewport());
 
+        uiStage.getRoot().addCaptureListener(new InputListener() {
+            public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
+
+                if (uiStage.hit(x,y,true) == null) {
+                    uiStage.setKeyboardFocus(null);
+                    uiStage.setScrollFocus(null);
+                }
+                return false;
+            }
+        });
+
+
         menuBarTable = new VisTable();
         menuBar = new MenuBar();
 
@@ -46,33 +62,33 @@ public class SimulationScreenInterface {
         positionWindows();
     }
 
-    private void addWindows(){
+    private void addWindows() {
         objectListWindow = new ObjectListWindow(simulationScreen);
         uiStage.addActor(objectListWindow);
     }
 
-    private void positionWindows(){
-        objectListWindow.setPosition(0,0);
+    private void positionWindows() {
+        objectListWindow.setPosition(0, 0);
     }
 
-    public void addObject(SimulationObject simulationObject){
+    public void addObject(SimulationObject simulationObject) {
         objectListWindow.addObject(simulationObject);
     }
 
-    public void removeObject(SimulationObject simulationObject){
+    public void removeObject(SimulationObject simulationObject) {
         objectListWindow.removeobject(simulationObject);
     }
 
-    public void update(){
+    public void update() {
         uiStage.act();
     }
 
-    public void render(){
+    public void render() {
         uiStage.draw();
     }
 
-    public void resize(int width, int height){
-        uiStage.getViewport().update(width,height, true);
+    public void resize(int width, int height) {
+        uiStage.getViewport().update(width, height, true);
 
         menuBarTable.clearChildren();
         menuBarTable.add(menuBar.getTable()).fillX().expandX().row();
