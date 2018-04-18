@@ -9,7 +9,7 @@ import org.joml.Vector3d;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
-public class Star extends SimulationObject implements LightEmitter{
+public class Star extends SphericObject implements LightEmitter{
     private float temperature;
     private final LensGlow lensGlow;
     private final Renderer renderer;
@@ -25,8 +25,8 @@ public class Star extends SimulationObject implements LightEmitter{
 
     private GLTexture colorSpectrum;
 
-    public Star(Model model, Renderer renderer, Shader orbitShader, float radius, String name, Transformation transformation, Body body, Color orbitColor, float temperature) {
-        super(model, renderer.getStarShader(), orbitShader,radius, name, transformation, body,orbitColor);
+    public Star(Renderer renderer, GLTexture texture, float radius, String name, Transformation transformation, Body body, Color orbitColor, float temperature) {
+        super(renderer,texture,renderer.getStarShader(),radius, name, transformation, body,orbitColor);
         this.temperature = temperature;
 
         this.temp3 = new Vector3f();
