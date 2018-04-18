@@ -31,8 +31,6 @@ public class Model implements Disposable{
 
     private boolean useEulerRot = false;
 
-    private float z;
-
     public Model(ArrayList<Mesh> meshes, Transformation transformation){
         position = new Vector3f();
         scale = 1f;

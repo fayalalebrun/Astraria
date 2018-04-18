@@ -10,8 +10,6 @@ import java.util.ArrayList;
  */
 public class Sphere extends Model implements Disposable {
     int diffuseTexture;
-    int ambientTexture;
-    boolean useAmbientTexture = false;
 
     public Sphere(Transformation transformation, int diffuseTexture){
         super(new ArrayList<Mesh>(),transformation);
@@ -20,14 +18,8 @@ public class Sphere extends Model implements Disposable {
         mesh.setDiffuseTexture(diffuseTexture);
 
         meshes.add(mesh);
-
     }
 
-    public Sphere(Transformation transformation, int diffuseTexture, int ambientTexture){
-        this(transformation, diffuseTexture);
-        this.ambientTexture = ambientTexture;
-        useAmbientTexture = true;
-    }
 
     public Sphere(Transformation transformation, int diffuseTexture, boolean textured){
         this(transformation,diffuseTexture);
@@ -37,12 +29,6 @@ public class Sphere extends Model implements Disposable {
 
     @Override
     public void render(Camera cam, Shader shader) {
-        if(useAmbientTexture){
-            meshes.get(0).setAmbientTexture(ambientTexture,true);
-        } else {
-            meshes.get(0).setAmbientTexture(-1,false);
-        }
-
         meshes.get(0).setDiffuseTexture(diffuseTexture);
         super.render(cam, shader);
     }
