@@ -21,7 +21,6 @@ public class Mesh implements Disposable{
     protected float[] texCoords;
     protected float[] normals;
     protected int diffuseTexture;
-    protected int ambientTexture;
 
     private int VAO;
     private int EBO;
@@ -29,7 +28,6 @@ public class Mesh implements Disposable{
     private List<Integer> vboList;
 
     private boolean useTexture = true;
-    private boolean useAmbientTexture = false;
 
     public Mesh(int[] indices, float[] vertices, float[] texCoords, float[] normals, int diffuseTexture) {
         this.indices = indices;
@@ -43,10 +41,6 @@ public class Mesh implements Disposable{
         setupMesh();
     }
 
-    public void setAmbientTexture(int ambientTexture, boolean useAmbientTexture){
-        this.ambientTexture = ambientTexture;
-        this.useAmbientTexture = useAmbientTexture;
-    }
 
     protected Mesh copy(){
         return new Mesh(indices,vertices,texCoords, normals,diffuseTexture);
@@ -104,13 +98,7 @@ public class Mesh implements Disposable{
             Gdx.gl.glActiveTexture(Gdx.gl.GL_TEXTURE0);
         }
 
-        if (useAmbientTexture) {
-            shader.setInt("useAmbTex",1);
-            Gdx.gl.glActiveTexture(Gdx.gl.GL_TEXTURE5);
-            shader.setInt("ambTex", 5);
-            Gdx.gl.glBindTexture(Gdx.gl.GL_TEXTURE_2D, ambientTexture);
-            Gdx.gl.glActiveTexture(Gdx.gl.GL_TEXTURE0);
-        }
+
 
         Gdx.gl30.glBindVertexArray(VAO);
 

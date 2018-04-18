@@ -20,9 +20,13 @@ public class AtmospherePlanet extends SimulationObject{
     private final Vector4f temp4f;
     private Color atmosphereColor;
 
+    private boolean useAmbientTexture;
+
+    private int ambientTexture;
+
     public AtmospherePlanet( Model model, Shader shader, Shader orbitShader, float radius, String name, Color orbitColor,
                              Transformation transformation, Body body,
-                             LightSourceManager lightSourceManager, Color atmosphereColor) {
+                             LightSourceManager lightSourceManager, Color atmosphereColor, int ambientTexture) {
         super(model, shader, orbitShader, radius, name, transformation, body, orbitColor);
         this.atmosphereMapTexture = Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal("atmoGradient.png").path());
         this.lightSourceManager = lightSourceManager;
@@ -31,6 +35,12 @@ public class AtmospherePlanet extends SimulationObject{
         temp = new Vector3f();
         temp4f = new Vector4f();
         this.atmosphereColor = new Color().set(atmosphereColor);
+
+        this.ambientTexture = ambientTexture;
+
+        if(ambientTexture!=-1){
+            useAmbientTexture = true;
+        }
     }
 
 
@@ -42,6 +52,15 @@ public class AtmospherePlanet extends SimulationObject{
         shader.setVec3f("planet_pos",getPositionRelativeToCamera(cam));
         shader.setVec4f("atmoColorMod", temp4f.set(atmosphereColor.r,atmosphereColor.g,atmosphereColor.b,atmosphereColor.a));
 
+        if (useAmbientTexture) {
+            shader.setInt("useAmbTex", 1);
+            Gdx.gl.glActiveTexture(Gdx.gl.GL_TEXTURE5);
+            shader.setInt("ambTex", 5);
+            Gdx.gl.glBindTexture(Gdx.gl.GL_TEXTURE_2D, ambientTexture);
+            Gdx.gl.glActiveTexture(Gdx.gl.GL_TEXTURE0);
+        } else {
+            shader.setInt("useAmbTex", 0);
+        }
 
         Gdx.gl.glActiveTexture(Gdx.gl.GL_TEXTURE1);
         shader.setInt("txratm",1);

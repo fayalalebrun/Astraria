@@ -190,21 +190,22 @@ public class SaveFileManager {
                         ambientTexturePath = part[i].substring(part[i].indexOf(':')+2);
                         useAmbient = true;
                         i++;
-                    }
-                    Sphere s = null;
-                    if(!useAmbient) {
-                        s = new Sphere(renderer.getTransformation(),
-                                Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal(texturePath).path()));
                     } else {
-                        s = new Sphere(renderer.getTransformation(),
-                                Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal(texturePath).path()),
-                                Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal(ambientTexturePath).path()));
+                        useAmbient = false;
+                    }
+                    Sphere s = new Sphere(renderer.getTransformation(),
+                            Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal(texturePath).path()));;
+                    int ambTex;
+                    if(!useAmbient) {
+                        ambTex = -1;
+                    } else {
+                        ambTex = Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal(ambientTexturePath).path());
                     }
                     SimulationObject simObj = new AtmospherePlanet(s, renderer.getPlanetAtmoShader(), renderer.getLineShader(),
                             radius, name,
                             new Color(r,g,b,a),
                             renderer.getTransformation(), new Body(mass,x,y,z,vX,vY,vZ),renderer.getLightSourceManager(),
-                            new Color(ar,ag,ab,aa));
+                            new Color(ar,ag,ab,aa),ambTex);
                     simObj.setRotationParameters(incTilt,axisRightAsc,rotPeriod,offset);
                     simulationScreen.addObject(simObj);
                 } else if(type[1].equals("black_hole")){
