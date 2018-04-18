@@ -10,7 +10,7 @@ import org.joml.Vector4f;
 /**
  * Created by Fran on 4/10/2018.
  */
-public class AtmospherePlanet extends SimulationObject{
+public class AtmospherePlanet extends SphericObject{
 
     private GLTexture atmosphereMapTexture;
 
@@ -24,10 +24,10 @@ public class AtmospherePlanet extends SimulationObject{
 
     private GLTexture ambientTexture;
 
-    public AtmospherePlanet( Model model, Shader shader, Shader orbitShader, float radius, String name, Color orbitColor,
+    public AtmospherePlanet( Renderer renderer, GLTexture texture, float radius, String name, Color orbitColor,
                              Transformation transformation, Body body,
                              LightSourceManager lightSourceManager, Color atmosphereColor, GLTexture ambientTexture) {
-        super(model, shader, orbitShader, radius, name, transformation, body, orbitColor);
+        super(renderer, texture,renderer.getPlanetAtmoShader(), radius, name, transformation, body, orbitColor);
         this.atmosphereMapTexture = Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal("atmoGradient.png"));
         this.lightSourceManager = lightSourceManager;
 

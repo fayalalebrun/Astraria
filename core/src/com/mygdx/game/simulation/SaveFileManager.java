@@ -82,9 +82,7 @@ public class SaveFileManager {
                     offset = Float.parseFloat(rot[4]);
                     i++;
 
-                    Sphere s = new Sphere(renderer.getTransformation(),
-                            Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal(texturePath)));
-                    SimulationObject simObj = new SimulationObject(s, renderer.getPlanetShader(), renderer.getLineShader(),
+                    SimulationObject simObj = new Planet(renderer,Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal(texturePath)),
                             radius,name,renderer.getTransformation(),new Body(mass,x,y,z,vX,vY,vZ), new Color(r,g,b,a));
                     simObj.setRotationParameters(incTilt,axisRightAsc,rotPeriod,offset);
 
@@ -133,10 +131,9 @@ public class SaveFileManager {
                     temperature = Float.parseFloat(part[i].split(" ")[1]);
                     i++;
 
-                    Sphere s = new Sphere(renderer.getTransformation(),
-                            Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal(texturePath)));
 
-                    SimulationObject simObj = new Star(s, renderer, renderer.getLineShader(), radius, name, renderer.getTransformation(),
+                    SimulationObject simObj = new Star(renderer,Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal(texturePath)),
+                            radius, name, renderer.getTransformation(),
                             new Body(mass, x, y, z, vX, vY, vZ),new Color(r,g,b,a), temperature);
                     simObj.setRotationParameters(incTilt,axisRightAsc,rotPeriod,offset);
                     simulationScreen.addObject(simObj);
@@ -194,15 +191,14 @@ public class SaveFileManager {
                     } else {
                         useAmbient = false;
                     }
-                    Sphere s = new Sphere(renderer.getTransformation(),
-                            Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal(texturePath)));;
                     GLTexture ambTex;
                     if(!useAmbient) {
                         ambTex = null;
                     } else {
                         ambTex = Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal(ambientTexturePath));
                     }
-                    SimulationObject simObj = new AtmospherePlanet(s, renderer.getPlanetAtmoShader(), renderer.getLineShader(),
+                    SimulationObject simObj = new AtmospherePlanet(renderer,
+                            Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal(texturePath)),
                             radius, name,
                             new Color(r,g,b,a),
                             renderer.getTransformation(), new Body(mass,x,y,z,vX,vY,vZ),renderer.getLightSourceManager(),
