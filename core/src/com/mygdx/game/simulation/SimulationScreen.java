@@ -1,16 +1,24 @@
 package com.mygdx.game.simulation;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.kotcrab.vis.ui.widget.Menu;
+import com.kotcrab.vis.ui.widget.MenuBar;
+import com.kotcrab.vis.ui.widget.VisTable;
+import com.kotcrab.vis.ui.widget.VisWindow;
 import com.mygdx.game.BaseScreen;
 import com.mygdx.game.Boot;
 import com.mygdx.game.simulation.logic.Body;
 import com.mygdx.game.simulation.logic.algorithms.NBodyAlgorithm;
 import com.mygdx.game.simulation.logic.algorithms.VelocityVerlet;
 import com.mygdx.game.simulation.renderer.*;
+import com.mygdx.game.simulation.ui.SimulationScreenInterface;
 import org.joml.Vector2f;
 
 import java.util.ArrayList;
@@ -33,10 +41,16 @@ public class SimulationScreen extends BaseScreen {
     private SpriteBatch fontBatch;
     private final ArrayList<Clickable3DObject> clickable3DObjects;
 
+    private InputMultiplexer multiplexer;
+
+    private final SimulationScreenInterface simulationScreenInterface;
+
 
     public SimulationScreen(Boot boot, String loadPath) {
         super(boot);
         Warehouse.init();
+
+        multiplexer = new InputMultiplexer();
 
         algorithm = new VelocityVerlet();
         algorithmThread = new Thread(algorithm);
@@ -45,35 +59,23 @@ public class SimulationScreen extends BaseScreen {
         renderer = new Renderer(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
         processor = new SimCamInputProcessor(renderer.getCamera());
+        multiplexer.addProcessor(processor);
 
         labelFont = Boot.manager.get("Euclid10.fnt", BitmapFont.class);
         fontBatch = new SpriteBatch();
 
-        Gdx.input.setInputProcessor(processor);
+        Gdx.input.setInputProcessor(multiplexer);
 
         simulationObjects = new ArrayList<SimulationObject>();
 
-        /*addObject(new Star(new Sphere(renderer.getTransformation(),
-                        Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal("models/earth.jpg").path())),
-                renderer,695700,"Sun2",renderer.getTransformation(),new Body(1.9891e30, 149598000000.0, 0, 0, 0, 0, 0),5500));
-
-
-
-       addObject(new AtmospherePlanet(new Sphere(renderer.getTransformation(),
-                Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal("models/earth.jpg").path())),renderer.getPlanetAtmoShader(), 1,
-                "atmo",renderer.getTransformation(), new Body(5.97219e24, 0, 0, 0, 0, 0,0),
-                renderer.getLightSourceManager(), Color.WHITE));
-
-        addObject(new Star(new Sphere(renderer.getTransformation(),
-                Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal("models/earth.jpg").path())),
-                renderer,695700,"Sun",renderer.getTransformation(),new Body(1.9891e30, -149598000000.0, 0, 0, 0, 0, 0),5500));*/
 
         if(!loadPath.equals("")){
             SaveFileManager.loadGame(this,renderer,new FileHandle(loadPath));
         }
         clickable3DObjects = new ArrayList<Clickable3DObject>();
-    }
 
+        this.simulationScreenInterface = new SimulationScreenInterface(this,multiplexer);
+    }
 
 
     @Override
@@ -88,7 +90,7 @@ public class SimulationScreen extends BaseScreen {
         for (SimulationObject simObj : simulationObjects){
             simObj.updatePosition();
         }
-
+        simulationScreenInterface.update();
 
         Gdx.gl.glClearColor(1f,1f,1f,1.0f);
         Gdx.gl.glClear(Gdx.gl.GL_COLOR_BUFFER_BIT|Gdx.gl.GL_DEPTH_BUFFER_BIT);
@@ -114,6 +116,9 @@ public class SimulationScreen extends BaseScreen {
             }
         }
         fontBatch.end();
+
+
+        simulationScreenInterface.render();
     }
 
     public void addObject(SimulationObject simulationObject){
@@ -149,6 +154,7 @@ public class SimulationScreen extends BaseScreen {
     public void resize(int width, int height) {
         renderer.updateScreenSize(width, height);
         fontBatch = new SpriteBatch();
+        simulationScreenInterface.resize(width,height);
     }
 
 
