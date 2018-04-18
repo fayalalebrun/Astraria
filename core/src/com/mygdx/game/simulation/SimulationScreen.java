@@ -68,13 +68,13 @@ public class SimulationScreen extends BaseScreen {
 
         simulationObjects = new ArrayList<SimulationObject>();
 
+        this.simulationScreenInterface = new SimulationScreenInterface(this,multiplexer);
+
+        clickable3DObjects = new ArrayList<Clickable3DObject>();
 
         if(!loadPath.equals("")){
             SaveFileManager.loadGame(this,renderer,new FileHandle(loadPath));
         }
-        clickable3DObjects = new ArrayList<Clickable3DObject>();
-
-        this.simulationScreenInterface = new SimulationScreenInterface(this,multiplexer);
     }
 
 
@@ -124,6 +124,7 @@ public class SimulationScreen extends BaseScreen {
     public void addObject(SimulationObject simulationObject){
         simulationObjects.add(simulationObject);
         algorithm.addBody(simulationObject.getBody());
+        simulationScreenInterface.addObject(simulationObject);
     }
 
     public void clearObjects(){
@@ -157,7 +158,9 @@ public class SimulationScreen extends BaseScreen {
         simulationScreenInterface.resize(width,height);
     }
 
-
+    public Renderer getRenderer() {
+        return renderer;
+    }
 
     @Override
     public void dispose() {
