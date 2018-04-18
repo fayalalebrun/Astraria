@@ -20,7 +20,7 @@ public class Mesh implements Disposable{
     protected float[] vertices;
     protected float[] texCoords;
     protected float[] normals;
-    protected int diffuseTexture;
+    protected GLTexture diffuseTexture;
 
     private int VAO;
     private int EBO;
@@ -29,7 +29,7 @@ public class Mesh implements Disposable{
 
     private boolean useTexture = true;
 
-    public Mesh(int[] indices, float[] vertices, float[] texCoords, float[] normals, int diffuseTexture) {
+    public Mesh(int[] indices, float[] vertices, float[] texCoords, float[] normals, GLTexture diffuseTexture) {
         this.indices = indices;
         this.vertices = vertices;
         this.texCoords = texCoords;
@@ -94,7 +94,7 @@ public class Mesh implements Disposable{
         if(useTexture) {
             Gdx.gl.glActiveTexture(Gdx.gl.GL_TEXTURE0);
             shader.setInt("diffuseTex", 0);
-            Gdx.gl.glBindTexture(Gdx.gl.GL_TEXTURE_2D, diffuseTexture);
+            Gdx.gl.glBindTexture(Gdx.gl.GL_TEXTURE_2D, diffuseTexture.ID);
             Gdx.gl.glActiveTexture(Gdx.gl.GL_TEXTURE0);
         }
 
@@ -140,7 +140,7 @@ public class Mesh implements Disposable{
         return buff;
     }
 
-    public void setDiffuseTexture(int diffuseTexture) {
+    public void setDiffuseTexture(GLTexture diffuseTexture) {
         this.diffuseTexture = diffuseTexture;
     }
 

@@ -9,9 +9,9 @@ import java.util.ArrayList;
  * Created by Fran on 4/10/2018.
  */
 public class Sphere extends Model implements Disposable {
-    int diffuseTexture;
+    GLTexture diffuseTexture;
 
-    public Sphere(Transformation transformation, int diffuseTexture){
+    public Sphere(Transformation transformation, GLTexture diffuseTexture){
         super(new ArrayList<Mesh>(),transformation);
         this.diffuseTexture = diffuseTexture;
         Mesh mesh = Warehouse.getModelManager().loadModel("sphere.obj", transformation).getMeshes().get(0);
@@ -21,7 +21,7 @@ public class Sphere extends Model implements Disposable {
     }
 
 
-    public Sphere(Transformation transformation, int diffuseTexture, boolean textured){
+    public Sphere(Transformation transformation, GLTexture diffuseTexture, boolean textured){
         this(transformation,diffuseTexture);
         meshes.get(0).setUseTexture(textured);
 
