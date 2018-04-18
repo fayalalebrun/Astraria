@@ -23,7 +23,7 @@ public class Star extends SimulationObject implements LightEmitter{
 
     private final Query query;
 
-    private int colorSpectrum;
+    private GLTexture colorSpectrum;
 
     public Star(Model model, Renderer renderer, Shader orbitShader, float radius, String name, Transformation transformation, Body body, Color orbitColor, float temperature) {
         super(model, renderer.getStarShader(), orbitShader,radius, name, transformation, body,orbitColor);
@@ -40,10 +40,10 @@ public class Star extends SimulationObject implements LightEmitter{
 
         renderer.addLight(this);
 
-        this.lensGlow = new LensGlow(position.x,position.y,position.z,Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal("star_glow.png").path()),
-                Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal("starspectrum.png").path()),this,renderer.getTransformation());
+        this.lensGlow = new LensGlow(position.x,position.y,position.z,Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal("star_glow.png")),
+                Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal("starspectrum.png")),this,renderer.getTransformation());
 
-        colorSpectrum = Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal("star_spectrum_1D.png").path());
+        colorSpectrum = Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal("star_spectrum_1D.png"));
 
         occlusionTestPoint = new Point(new Vector4f(1,0,0,1),renderer.getTransformation());
 
@@ -67,7 +67,7 @@ public class Star extends SimulationObject implements LightEmitter{
         shader.setFloat("temperature", temperature);
         Gdx.gl.glActiveTexture(Gdx.gl.GL_TEXTURE1);
         shader.setInt("sunGradient",1);
-        Gdx.gl.glBindTexture(Gdx.gl.GL_TEXTURE_2D, colorSpectrum);
+        Gdx.gl.glBindTexture(Gdx.gl.GL_TEXTURE_2D, colorSpectrum.ID);
 
 
         super.render(cam, delta);

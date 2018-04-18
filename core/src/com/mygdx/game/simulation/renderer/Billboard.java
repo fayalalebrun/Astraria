@@ -12,13 +12,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.badlogic.gdx.graphics.GL20.GL_ARRAY_BUFFER;
-import static com.badlogic.gdx.graphics.GL20.GL_TEXTURE0;
 
 /**
  * Created by Fran on 3/28/2018.
  */
 public class Billboard implements Disposable{
-    private int textureID, billboardWidth, billboardHeight;
+    private int billboardWidth, billboardHeight;
+
+    private GLTexture texture;
 
     private int VAO, EBO;
 
@@ -34,8 +35,8 @@ public class Billboard implements Disposable{
 
     private final Vector3f temp2, rotation;
 
-    public Billboard(double x, double y, double z, int textureID, int billboardWidth, int billboardHeight, Transformation transformation) {
-        this.textureID = textureID;
+    public Billboard(double x, double y, double z, GLTexture texture, int billboardWidth, int billboardHeight, Transformation transformation) {
+        this.texture = texture;
         this.billboardWidth = billboardWidth;
         this.billboardHeight = billboardHeight;
 
@@ -111,7 +112,7 @@ public class Billboard implements Disposable{
 
         Gdx.gl.glActiveTexture(Gdx.gl.GL_TEXTURE0);
         shader.setInt("tex", 0);
-        Gdx.gl.glBindTexture(Gdx.gl.GL_TEXTURE_2D, textureID);
+        Gdx.gl.glBindTexture(Gdx.gl.GL_TEXTURE_2D, texture.ID);
         Gdx.gl.glActiveTexture(Gdx.gl.GL_TEXTURE0);
 
 

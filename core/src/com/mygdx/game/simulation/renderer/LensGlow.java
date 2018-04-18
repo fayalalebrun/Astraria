@@ -17,7 +17,7 @@ import java.util.List;
 import static com.badlogic.gdx.graphics.GL20.GL_ARRAY_BUFFER;
 
 public class LensGlow implements Disposable {
-    private int textureID, spectrumTexID;
+    private GLTexture textureID, spectrumTexID;
 
     private int VAO, EBO;
 
@@ -49,7 +49,7 @@ public class LensGlow implements Disposable {
 
     private float distanceModifier = 1f;
 
-    public LensGlow(double x, double y, double z, int textureID, int spectrumTexID, Star star, Transformation transformation) {
+    public LensGlow(double x, double y, double z, GLTexture textureID, GLTexture spectrumTexID, Star star, Transformation transformation) {
         this.textureID = textureID;
         this.spectrumTexID = spectrumTexID;
         this.star = star;
@@ -156,11 +156,11 @@ public class LensGlow implements Disposable {
 
         Gdx.gl.glActiveTexture(Gdx.gl.GL_TEXTURE0);
         shader.setInt("tex", 0);
-        Gdx.gl.glBindTexture(Gdx.gl.GL_TEXTURE_2D, textureID);
+        Gdx.gl.glBindTexture(Gdx.gl.GL_TEXTURE_2D, textureID.ID);
 
         Gdx.gl.glActiveTexture(Gdx.gl.GL_TEXTURE1);
         shader.setInt("spectrumTex",1);
-        Gdx.gl.glBindTexture(Gdx.gl.GL_TEXTURE_2D, spectrumTexID);
+        Gdx.gl.glBindTexture(Gdx.gl.GL_TEXTURE_2D, spectrumTexID.ID);
 
         Gdx.gl.glActiveTexture(Gdx.gl.GL_TEXTURE0);
 

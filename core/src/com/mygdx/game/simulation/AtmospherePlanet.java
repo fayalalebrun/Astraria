@@ -12,7 +12,7 @@ import org.joml.Vector4f;
  */
 public class AtmospherePlanet extends SimulationObject{
 
-    private int atmosphereMapTexture;
+    private GLTexture atmosphereMapTexture;
 
     private LightSourceManager lightSourceManager;
 
@@ -22,13 +22,13 @@ public class AtmospherePlanet extends SimulationObject{
 
     private boolean useAmbientTexture;
 
-    private int ambientTexture;
+    private GLTexture ambientTexture;
 
     public AtmospherePlanet( Model model, Shader shader, Shader orbitShader, float radius, String name, Color orbitColor,
                              Transformation transformation, Body body,
-                             LightSourceManager lightSourceManager, Color atmosphereColor, int ambientTexture) {
+                             LightSourceManager lightSourceManager, Color atmosphereColor, GLTexture ambientTexture) {
         super(model, shader, orbitShader, radius, name, transformation, body, orbitColor);
-        this.atmosphereMapTexture = Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal("atmoGradient.png").path());
+        this.atmosphereMapTexture = Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal("atmoGradient.png"));
         this.lightSourceManager = lightSourceManager;
 
         starPos = new Vector3f();
@@ -38,7 +38,7 @@ public class AtmospherePlanet extends SimulationObject{
 
         this.ambientTexture = ambientTexture;
 
-        if(ambientTexture!=-1){
+        if(ambientTexture!=null){
             useAmbientTexture = true;
         }
     }
@@ -56,7 +56,7 @@ public class AtmospherePlanet extends SimulationObject{
             shader.setInt("useAmbTex", 1);
             Gdx.gl.glActiveTexture(Gdx.gl.GL_TEXTURE5);
             shader.setInt("ambTex", 5);
-            Gdx.gl.glBindTexture(Gdx.gl.GL_TEXTURE_2D, ambientTexture);
+            Gdx.gl.glBindTexture(Gdx.gl.GL_TEXTURE_2D, ambientTexture.ID);
             Gdx.gl.glActiveTexture(Gdx.gl.GL_TEXTURE0);
         } else {
             shader.setInt("useAmbTex", 0);
@@ -64,7 +64,7 @@ public class AtmospherePlanet extends SimulationObject{
 
         Gdx.gl.glActiveTexture(Gdx.gl.GL_TEXTURE1);
         shader.setInt("txratm",1);
-        Gdx.gl.glBindTexture(Gdx.gl.GL_TEXTURE_2D, atmosphereMapTexture);
+        Gdx.gl.glBindTexture(Gdx.gl.GL_TEXTURE_2D, atmosphereMapTexture.ID);
 
         Gdx.gl.glActiveTexture(Gdx.gl.GL_TEXTURE0);
     }

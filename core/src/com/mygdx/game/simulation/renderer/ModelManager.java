@@ -56,7 +56,7 @@ public class ModelManager implements Disposable{
                     List<Float> texCoords = new ArrayList<Float>();
                     List<Float> normals = new ArrayList<Float>();
                     int indiceNo = 0;
-                    int diffuseTexture = -1;
+                    GLTexture diffuseTexture = null;
 
                     for(OBJFace face : mesh.getFaces()){
                         if(face.getReferences().size()!=3){
@@ -88,11 +88,11 @@ public class ModelManager implements Disposable{
                         }
                     }
 
-                    diffuseTexture = -1;
+                    diffuseTexture = null;
 
                     if (materials.containsKey(mesh.getMaterialName())) {
                         MTLMaterial mat = materials.get(mesh.getMaterialName());
-                        diffuseTexture = textures.addTexture(getPath(mat.getDiffuseTexture()));
+                        diffuseTexture = textures.addTexture(Gdx.files.absolute(getPath(mat.getDiffuseTexture())));
                     }
 
                     meshes.add(new Mesh(convertIntegers(indices), convertFloats(vertices), convertFloats(texCoords),convertFloats(normals), diffuseTexture));

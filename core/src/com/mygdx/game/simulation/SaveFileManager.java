@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
 import com.mygdx.game.simulation.logic.Body;
+import com.mygdx.game.simulation.renderer.GLTexture;
 import com.mygdx.game.simulation.renderer.Renderer;
 import com.mygdx.game.simulation.renderer.Sphere;
 import com.mygdx.game.simulation.renderer.Warehouse;
@@ -82,7 +83,7 @@ public class SaveFileManager {
                     i++;
 
                     Sphere s = new Sphere(renderer.getTransformation(),
-                            Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal(texturePath).path()));
+                            Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal(texturePath)));
                     SimulationObject simObj = new SimulationObject(s, renderer.getPlanetShader(), renderer.getLineShader(),
                             radius,name,renderer.getTransformation(),new Body(mass,x,y,z,vX,vY,vZ), new Color(r,g,b,a));
                     simObj.setRotationParameters(incTilt,axisRightAsc,rotPeriod,offset);
@@ -133,7 +134,7 @@ public class SaveFileManager {
                     i++;
 
                     Sphere s = new Sphere(renderer.getTransformation(),
-                            Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal(texturePath).path()));
+                            Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal(texturePath)));
 
                     SimulationObject simObj = new Star(s, renderer, renderer.getLineShader(), radius, name, renderer.getTransformation(),
                             new Body(mass, x, y, z, vX, vY, vZ),new Color(r,g,b,a), temperature);
@@ -194,12 +195,12 @@ public class SaveFileManager {
                         useAmbient = false;
                     }
                     Sphere s = new Sphere(renderer.getTransformation(),
-                            Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal(texturePath).path()));;
-                    int ambTex;
+                            Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal(texturePath)));;
+                    GLTexture ambTex;
                     if(!useAmbient) {
-                        ambTex = -1;
+                        ambTex = null;
                     } else {
-                        ambTex = Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal(ambientTexturePath).path());
+                        ambTex = Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal(ambientTexturePath));
                     }
                     SimulationObject simObj = new AtmospherePlanet(s, renderer.getPlanetAtmoShader(), renderer.getLineShader(),
                             radius, name,
@@ -238,7 +239,7 @@ public class SaveFileManager {
                     i++;
 
                     Sphere s = new Sphere(renderer.getTransformation(),
-                            -1,false);
+                            null,false);
                     simulationScreen.addObject(new BlackHole(s, renderer.getBlackHoleShader(),renderer.getLineShader(),radius,name,
                             renderer.getTransformation(), new Body(mass,x,y,z,vX,vY,vZ), new Color(r,g,b,a),renderer.getSkybox()));
                 }
