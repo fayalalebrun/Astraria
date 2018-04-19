@@ -145,4 +145,14 @@ public class SimulationObject implements Disposable{
     public SimObjectTracker getTracker() {
         return tracker;
     }
+
+    public void setMass(double mass){
+        synchronized (body){
+            body.setMass(mass);
+        }
+    }
+
+    public double getMass(){
+        return body.getMass();
+    }
 }
