@@ -14,6 +14,7 @@ import com.kotcrab.vis.ui.widget.VisWindow;
 import com.mygdx.game.simulation.SimulationObject;
 import com.mygdx.game.simulation.SimulationScreen;
 import com.mygdx.game.simulation.ui.windows.ObjectListWindow;
+import com.mygdx.game.simulation.ui.windows.StatsWindow;
 
 /**
  * Created by fraayala19 on 4/18/18.
@@ -25,6 +26,7 @@ public class SimulationScreenInterface {
     private VisTable menuBarTable;
 
     private ObjectListWindow objectListWindow;
+    private StatsWindow statsWindow;
 
     public SimulationScreenInterface(SimulationScreen simulationScreen, InputMultiplexer multiplexer) {
         this.simulationScreen = simulationScreen;
@@ -61,8 +63,10 @@ public class SimulationScreenInterface {
     }
 
     private void addWindows() {
-        objectListWindow = new ObjectListWindow(simulationScreen);
+        statsWindow = new StatsWindow();
+        objectListWindow = new ObjectListWindow(simulationScreen, statsWindow);
         uiStage.addActor(objectListWindow);
+        uiStage.addActor(statsWindow);
     }
 
     private void positionWindows() {
@@ -79,6 +83,7 @@ public class SimulationScreenInterface {
 
     public void update() {
         uiStage.act();
+        statsWindow.update();
     }
 
     public void render() {
