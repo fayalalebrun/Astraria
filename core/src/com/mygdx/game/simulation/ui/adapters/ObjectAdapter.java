@@ -8,6 +8,7 @@ import com.kotcrab.vis.ui.widget.VisTable;
 import com.mygdx.game.simulation.SimulationObject;
 import com.mygdx.game.simulation.SimulationScreen;
 import com.mygdx.game.simulation.ui.windows.StatsWindow;
+import net.dermetfan.utils.Pair;
 
 import java.util.ArrayList;
 
@@ -32,17 +33,26 @@ public class ObjectAdapter extends ArrayListAdapter<SimulationObject, VisTable>{
     @Override
     protected VisTable createView(SimulationObject item) {
         VisTable table = new VisTable();
-        table.setUserObject(item);
-        table.add(new VisLabel(item.getName()));
+        VisLabel label = new VisLabel(item.getName());
+        table.setUserObject(new Pair<SimulationObject,VisLabel>(item,label));
+        table.add(label);
 
         return table;
     }
 
     @Override
     protected void selectView(VisTable view) {
-        simulationScreen.getRenderer().getCamera().setLock((SimulationObject)view.getUserObject());
-        statsWindow.setSimObjectTracker(((SimulationObject)view.getUserObject()).getTracker());
+        Pair<SimulationObject,VisLabel> pair = (Pair<SimulationObject,VisLabel>)view.getUserObject();
+        simulationScreen.getRenderer().getCamera().setLock(pair.getKey());
+        statsWindow.setSimObjectTracker(pair.getKey().getTracker());
         view.setBackground(selection);
+    }
+
+    public void update(){
+        for(VisTable view : this.getViews().values()){
+            Pair<SimulationObject,VisLabel> pair = (Pair<SimulationObject,VisLabel>)view.getUserObject();
+            pair.getValue().setText(pair.getKey().getName());
+        }
     }
 
     @Override

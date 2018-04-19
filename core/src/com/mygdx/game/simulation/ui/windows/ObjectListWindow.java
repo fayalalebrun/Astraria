@@ -3,6 +3,7 @@ package com.mygdx.game.simulation.ui.windows;
 import com.kotcrab.vis.ui.util.TableUtils;
 import com.kotcrab.vis.ui.widget.ListView;
 import com.kotcrab.vis.ui.widget.VisScrollPane;
+import com.kotcrab.vis.ui.widget.VisTable;
 import com.kotcrab.vis.ui.widget.VisWindow;
 import com.mygdx.game.simulation.SimulationObject;
 import com.mygdx.game.simulation.SimulationScreen;
@@ -44,5 +45,11 @@ public class ObjectListWindow extends VisWindow{
 
     public void removeobject(SimulationObject simulationObject){
         objectAdapter.remove(simulationObject);
+    }
+
+    @Override
+    public void act(float delta) {
+        super.act(delta);
+        objectAdapter.update();
     }
 }
