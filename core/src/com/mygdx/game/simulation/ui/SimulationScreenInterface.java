@@ -54,9 +54,7 @@ public class SimulationScreenInterface {
 
 
         multiplexer.addProcessor(uiStage);
-        uiStage.addActor(new VisWindow("test"));
 
-        menuBar.addMenu(new Menu("Test"));
 
         addWindows();
         positionWindows();
