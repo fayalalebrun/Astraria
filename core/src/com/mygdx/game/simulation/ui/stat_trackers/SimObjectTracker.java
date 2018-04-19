@@ -8,6 +8,7 @@ import com.kotcrab.vis.ui.widget.VisTable;
 import com.kotcrab.vis.ui.widget.VisTextButton;
 import com.kotcrab.vis.ui.widget.VisValidatableTextField;
 import com.mygdx.game.simulation.SimulationObject;
+import com.mygdx.game.simulation.ui.SimulationScreenInterface;
 import com.mygdx.game.simulation.ui.windows.StatsWindow;
 
 /**
