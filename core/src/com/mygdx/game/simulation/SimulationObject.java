@@ -134,7 +134,9 @@ public class SimulationObject implements Disposable{
         return body;
     }
 
-
+    public void setRadius(float radius) {
+        this.radius = radius;
+    }
 
     public Clickable3DObject getClickable3DObject() {
         return clickable3DObject;
