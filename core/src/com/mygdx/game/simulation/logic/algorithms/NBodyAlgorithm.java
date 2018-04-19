@@ -47,10 +47,14 @@ public abstract class NBodyAlgorithm implements Runnable{
                 }
             }
 
-            bodies.removeAll(toRemove);
-            toRemove.clear();
-            bodies.addAll(toAdd);
-            toAdd.clear();
+            synchronized (toRemove) {
+                bodies.removeAll(toRemove);
+                toRemove.clear();
+            }
+            synchronized (toAdd) {
+                bodies.addAll(toAdd);
+                toAdd.clear();
+            }
 
         }
     }
@@ -77,10 +81,14 @@ public abstract class NBodyAlgorithm implements Runnable{
     }
 
     public void addBody(Body body){
-        toAdd.add(body);
+        synchronized (toAdd) {
+            toAdd.add(body);
+        }
     }
 
     public void removeBody(Body body){
-        toRemove.add(body);
+        synchronized (toRemove) {
+            toRemove.add(body);
+        }
     }
 }
