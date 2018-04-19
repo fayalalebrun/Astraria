@@ -17,17 +17,20 @@ public class ObjectListWindow extends VisWindow{
 
     private SimulationScreen simulationScreen;
     private ObjectAdapter objectAdapter;
+    private final StatsWindow statsWindow;
 
-    public ObjectListWindow(SimulationScreen simulationScreen) {
+    public ObjectListWindow(SimulationScreen simulationScreen, StatsWindow statsWindow) {
         super("Object List");
         this.simulationScreen = simulationScreen;
+        this.statsWindow = statsWindow;
         TableUtils.setSpacingDefaults(this);
         addWidgets();
         setSize(200,270);
+
     }
 
     private void addWidgets(){
-        objectAdapter = new ObjectAdapter(new ArrayList<SimulationObject>(),simulationScreen);
+        objectAdapter = new ObjectAdapter(new ArrayList<SimulationObject>(),simulationScreen, statsWindow);
         ListView<SimulationObject> view = new ListView<SimulationObject>(objectAdapter);
         VisScrollPane scrollPane = new VisScrollPane(view.getMainTable());
         scrollPane.setFlickScroll(false);

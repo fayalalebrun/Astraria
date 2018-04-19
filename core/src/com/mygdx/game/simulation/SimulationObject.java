@@ -7,6 +7,7 @@ import com.mygdx.game.simulation.renderer.Camera;
 import com.mygdx.game.simulation.renderer.Model;
 import com.mygdx.game.simulation.renderer.Shader;
 import com.mygdx.game.simulation.renderer.Transformation;
+import com.mygdx.game.simulation.ui.stat_trackers.SimObjectTracker;
 import org.joml.AxisAngle4f;
 import org.joml.Matrix4f;
 import org.joml.Vector3d;
@@ -20,13 +21,15 @@ public class SimulationObject implements Disposable{
     private final Vector3f temp2;
     private final Model model;
     private float radius;
-    private final String name;
+    private String name;
     protected final Shader shader;
     protected final Transformation transformation;
     protected final Body body;
     protected final Color orbitColor;
     protected final Orbit orbit;
     protected final Clickable3DObject clickable3DObject;
+
+    protected SimObjectTracker tracker;
 
     private float inclinationTilt, axisRightAscension, rotationPeriod, rotationSpeed;
     private final Vector3f rotationAxis;
@@ -50,6 +53,12 @@ public class SimulationObject implements Disposable{
         this.orbitColor = orbitColor;
         orbit = new Orbit(orbitColor,5000000f, orbitShader);
         clickable3DObject = new Clickable3DObject(this);
+
+        createTracker();
+    }
+
+    protected void createTracker(){
+        tracker = new SimObjectTracker(this);
     }
 
     public void setRotationParameters(float inclinationTilt, float axisRightAscension, float rotationPeriod, float offset){
@@ -96,6 +105,10 @@ public class SimulationObject implements Disposable{
         return name;
     }
 
+    public void setName(String name){
+        this.name = name;
+    }
+
     public float getRadius() {
         return radius;
     }
@@ -121,7 +134,13 @@ public class SimulationObject implements Disposable{
         return body;
     }
 
+
+
     public Clickable3DObject getClickable3DObject() {
         return clickable3DObject;
+    }
+
+    public SimObjectTracker getTracker() {
+        return tracker;
     }
 }

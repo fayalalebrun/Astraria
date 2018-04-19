@@ -155,6 +155,10 @@ public class Camera {
         this.lock = lock;
     }
 
+    public SimulationObject getLock() {
+        return lock;
+    }
+
     public Vector3f getFront() {
         return front;
     }
