@@ -9,11 +9,15 @@ import com.mygdx.game.simulation.SimulationObject;
 import com.mygdx.game.simulation.ui.SimulationScreenInterface;
 import com.mygdx.game.simulation.ui.windows.StatsWindow;
 
+import java.text.DecimalFormat;
+
 /**
  * Created by fraayala19 on 4/19/18.
  */
 public class SimObjectTracker {
     private final SimulationObject simulationObject;
+
+    protected DecimalFormat formatter;
 
     private final VisLabel nameLabel;
     private VisValidatableTextField nameField;
@@ -25,11 +29,16 @@ public class SimObjectTracker {
     private VisTextButton radiusSetButton;
     private SimpleFormValidator radiusValidator;
 
+    private final VisLabel massLabel;
+    private VisValidatableTextField massField;
+    private VisTextButton massSetButton;
+    private SimpleFormValidator massValidator;
+
 
 
     public SimObjectTracker(final SimulationObject simulationObject) {
         this.simulationObject = simulationObject;
-
+        formatter = new DecimalFormat("##E0");
 
         nameLabel = new VisLabel();
         nameField = new VisValidatableTextField();
@@ -56,6 +65,18 @@ public class SimObjectTracker {
             }
         });
 
+        massLabel = new VisLabel();
+        massField = new VisValidatableTextField();
+        massSetButton = new VisTextButton("Set");
+        massValidator = new SimpleFormValidator(massSetButton);
+        massValidator.notEmpty(massField,"");
+        massValidator.floatNumber(massField,"");
+        massSetButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                simulationObject.setMass(Double.parseDouble(massField.getText()));
+            }
+        });
     }
 
 
@@ -65,6 +86,9 @@ public class SimObjectTracker {
         table.row();
 
         addField(table, radiusLabel, radiusField, radiusSetButton);
+        table.row();
+
+        addField(table, massLabel, massField, massSetButton);
         table.row();
     }
 
@@ -86,5 +110,6 @@ public class SimObjectTracker {
     public void update(){
         nameLabel.setText("Name: "+simulationObject.getName());
         radiusLabel.setText("Radius(km): "+simulationObject.getRadius());
+        massLabel.setText("Mass(kg): "+formatter.format(simulationObject.getMass()));
     }
 }
