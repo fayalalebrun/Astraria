@@ -1,12 +1,10 @@
 package com.mygdx.game.simulation.ui.stat_trackers;
 
 import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.kotcrab.vis.ui.util.form.SimpleFormValidator;
-import com.kotcrab.vis.ui.widget.VisLabel;
-import com.kotcrab.vis.ui.widget.VisTable;
-import com.kotcrab.vis.ui.widget.VisTextButton;
-import com.kotcrab.vis.ui.widget.VisValidatableTextField;
+import com.kotcrab.vis.ui.widget.*;
 import com.mygdx.game.simulation.SimulationObject;
 import com.mygdx.game.simulation.ui.SimulationScreenInterface;
 import com.mygdx.game.simulation.ui.windows.StatsWindow;
@@ -27,7 +25,6 @@ public class SimObjectTracker {
         this.simulationObject = simulationObject;
 
 
-
         nameLabel = new VisLabel("Name: "+simulationObject.getName());
         nameField = new VisValidatableTextField();
         nameSetButton = new VisTextButton("Set");
@@ -43,9 +40,12 @@ public class SimObjectTracker {
 
 
     public void addToTable(VisTable table){
-        table.add(nameLabel).padRight(3f);
-        table.add(nameField).expand().fill().padRight(3f);
-        table.add(nameSetButton).expand().fill();
+        VisScrollPane nameScrollPane = new VisScrollPane(nameLabel);
+        nameScrollPane.setStyle(new ScrollPane.ScrollPaneStyle(null, null, null, null, null));
+        table.padLeft(10f);
+        table.add(nameScrollPane).growX().width(120f);
+        table.add(nameField).expandX().fill().padRight(3f);
+        table.add(nameSetButton).expandX().fill().padRight(8f);
         table.row();
     }
 
