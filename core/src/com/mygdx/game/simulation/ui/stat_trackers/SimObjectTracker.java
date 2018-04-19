@@ -42,10 +42,10 @@ public class SimObjectTracker {
     public void addToTable(VisTable table){
         VisScrollPane nameScrollPane = new VisScrollPane(nameLabel);
         nameScrollPane.setStyle(new ScrollPane.ScrollPaneStyle(null, null, null, null, null));
-        table.padLeft(10f);
-        table.add(nameScrollPane).growX().width(120f);
-        table.add(nameField).expandX().fill().padRight(3f);
-        table.add(nameSetButton).expandX().fill().padRight(8f);
+        table.padLeft(3f);
+        table.add(nameScrollPane).width(110f);
+        table.add(nameField).width(80f).padRight(3f);
+        table.add(nameSetButton).fill().padRight(8f);
         table.row();
     }
 

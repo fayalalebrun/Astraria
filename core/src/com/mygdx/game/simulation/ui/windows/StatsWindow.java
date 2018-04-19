@@ -22,7 +22,7 @@ public class StatsWindow extends VisWindow{
         mainTable = new VisTable();
         TableUtils.setSpacingDefaults(mainTable);
         addWidgets();
-        setSize(300,270);
+        setSize(250,270);
     }
 
     private void addWidgets(){
@@ -30,7 +30,7 @@ public class StatsWindow extends VisWindow{
         scrollPane.setFadeScrollBars(false);
         scrollPane.setFlickScroll(false);
 
-        add(scrollPane).spaceTop(30).growX().width(295).height(220f);
+        add(scrollPane).spaceTop(30).growX().width(245).height(220f);
     }
 
     public void setSimObjectTracker(SimObjectTracker simObjectTracker){
