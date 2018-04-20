@@ -40,6 +40,11 @@ public class SimObjectTracker {
     private VisTextButton xPosButton;
     private SimpleFormValidator xPosValidator;
 
+    private final VisLabel yPosLabel;
+    private VisValidatableTextField yPosField;
+    private VisTextButton yPosButton;
+    private SimpleFormValidator yPosValidator;
+
 
     public SimObjectTracker(final SimulationObject simulationObject) {
         this.simulationObject = simulationObject;
@@ -92,7 +97,20 @@ public class SimObjectTracker {
         xPosButton.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                simulationObject.setXPos(Units.mToAU(Double.parseDouble(xPosField.getText())));
+                simulationObject.setXPos(Units.AUToM(Double.parseDouble(xPosField.getText())));
+            }
+        });
+
+        yPosLabel = new VisLabel();
+        yPosField = new VisValidatableTextField();
+        yPosButton = new VisTextButton("set");
+        yPosValidator = new SimpleFormValidator(yPosButton);
+        yPosValidator.notEmpty(yPosField, "");
+        yPosValidator.floatNumber(yPosField,"");
+        yPosButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                simulationObject.setYPos(Units.AUToM(Double.parseDouble(yPosField.getText())));
             }
         });
     }
@@ -110,6 +128,9 @@ public class SimObjectTracker {
         table.row();
 
         addField(table,xPosLabel, xPosField, xPosButton);
+        table.row();
+
+        addField(table,yPosLabel,yPosField,yPosButton);
         table.row();
     }
 
@@ -133,5 +154,6 @@ public class SimObjectTracker {
         radiusLabel.setText("Radius(km): "+simulationObject.getRadius());
         massLabel.setText("Mass(kg): "+formatter.format(simulationObject.getMass()));
         xPosLabel.setText("x-pos(au): "+formatter.format(Units.mToAU(simulationObject.getXPos())));
+        yPosLabel.setText("y-pos(au): "+formatter.format(Units.mToAU(simulationObject.getYPos())));
     }
 }
