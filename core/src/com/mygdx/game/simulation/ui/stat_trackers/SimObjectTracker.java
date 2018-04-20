@@ -42,6 +42,9 @@ public class SimObjectTracker {
     private final VisValidatableTextField xVelField;
     private final VisTextButton xVelButton;
 
+    private final VisValidatableTextField yVelField;
+    private final VisTextButton yVelButton;
+
     public SimObjectTracker(final SimulationObject simulationObject) {
         this.simulationObject = simulationObject;
         formatter = new DecimalFormat("#.##E0");
@@ -151,6 +154,20 @@ public class SimObjectTracker {
         });
 
         initializeNum(xVelField, xVelButton);
+
+        yVelField = new VisValidatableTextField();
+        yVelButton = new VisTextButton("Change");
+
+        yVelButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                if(!yVelField.isDisabled()){
+                    simulationObject.setYVel(Units.kmToM(Double.parseDouble(yVelField.getText())));
+                }
+            }
+        });
+
+        initializeNum(yVelField, yVelButton);
     }
 
     protected SimpleFormValidator initialize(final VisValidatableTextField textField, final VisTextButton textButton){
@@ -197,7 +214,8 @@ public class SimObjectTracker {
         addField(table, "x-vel(au): ", xVelField, xVelButton);
         table.row();
 
-
+        addField(table, "y-vel(au): ", yVelField, yVelButton);
+        table.row();
     }
 
     protected void addField(VisTable table, String tag,VisValidatableTextField field, VisTextButton button){
@@ -242,6 +260,10 @@ public class SimObjectTracker {
 
         if(xVelField.isDisabled()){
             xVelField.setText(formatter.format(Units.mToKM(simulationObject.getXVel())));
+        }
+        
+        if(yVelField.isDisabled()){
+            yVelField.setText(formatter.format(Units.mToKM(simulationObject.getYVel())));
         }
     }
 }
