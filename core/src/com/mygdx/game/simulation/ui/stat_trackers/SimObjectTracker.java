@@ -56,6 +56,16 @@ public class SimObjectTracker {
     private VisTextButton xVelButton;
     private SimpleFormValidator xVelValidator;
 
+    private final VisLabel yVelLabel;
+    private VisValidatableTextField yVelField;
+    private VisTextButton yVelButton;
+    private SimpleFormValidator yVelValidator;
+
+    private final VisLabel zVelLabel;
+    private VisValidatableTextField zVelField;
+    private VisTextButton zVelButton;
+    private SimpleFormValidator zVelValidator;
+
 
     public SimObjectTracker(final SimulationObject simulationObject) {
         this.simulationObject = simulationObject;
@@ -150,6 +160,32 @@ public class SimObjectTracker {
                 simulationObject.setXVel(Units.kmToM(Double.parseDouble(xVelField.getText())));
             }
         });
+
+        yVelLabel = new VisLabel();
+        yVelField = new VisValidatableTextField();
+        yVelButton = new VisTextButton("Set");
+        yVelValidator = new SimpleFormValidator(yVelButton);
+        yVelValidator.notEmpty(yVelField,"");
+        yVelValidator.floatNumber(yVelField,"");
+        yVelButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                simulationObject.setYVel(Units.kmToM(Double.parseDouble(yVelField.getText())));
+            }
+        });
+
+        zVelLabel = new VisLabel();
+        zVelField = new VisValidatableTextField();
+        zVelButton = new VisTextButton("Set");
+        zVelValidator = new SimpleFormValidator(zVelButton);
+        zVelValidator.notEmpty(zVelField,"");
+        zVelValidator.floatNumber(zVelField,"");
+        zVelButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                simulationObject.setZVel(Units.kmToM(Double.parseDouble(zVelField.getText())));
+            }
+        });
     }
 
 
@@ -174,6 +210,12 @@ public class SimObjectTracker {
         table.row();
 
         addField(table, xVelLabel, xVelField, xVelButton);
+        table.row();
+
+        addField(table,yVelLabel,yVelField,yVelButton);
+        table.row();
+
+        addField(table,zVelLabel,zVelField,zVelButton);
         table.row();
     }
 
@@ -200,5 +242,7 @@ public class SimObjectTracker {
         yPosLabel.setText("y-pos(au): "+formatter.format(Units.mToAU(simulationObject.getYPos())));
         zPosLabel.setText("z-pos(au): "+formatter.format(Units.mToAU(simulationObject.getZPos())));
         xVelLabel.setText("x-vel(km/s): "+formatter.format(Units.mToKM(simulationObject.getXVel())));
+        yVelLabel.setText("y-vel(km/s): "+formatter.format(Units.mToKM(simulationObject.getYVel())));
+        zVelLabel.setText("z-vel(km/s): "+formatter.format(Units.mToKM(simulationObject.getZVel())));
     }
 }
