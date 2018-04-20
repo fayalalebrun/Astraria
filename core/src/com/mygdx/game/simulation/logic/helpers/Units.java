@@ -13,4 +13,12 @@ public class Units {
     public static double AUToM(double au){
         return au*149597870691.0;
     }
+
+    public static double mToKM(double m){
+        return m/1000;
+    }
+
+    public static double kmToM(double km){
+        return km * 1000;
+    }
 }
