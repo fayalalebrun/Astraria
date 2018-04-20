@@ -66,6 +66,11 @@ public class SimObjectTracker {
     private VisTextButton zVelButton;
     private SimpleFormValidator zVelValidator;
 
+    private final VisLabel incLabel;
+    private VisValidatableTextField incField;
+    private VisTextButton incButton;
+    private SimpleFormValidator incValidator;
+
 
     public SimObjectTracker(final SimulationObject simulationObject) {
         this.simulationObject = simulationObject;
@@ -186,6 +191,19 @@ public class SimObjectTracker {
                 simulationObject.setZVel(Units.kmToM(Double.parseDouble(zVelField.getText())));
             }
         });
+
+        incLabel = new VisLabel();
+        incField = new VisValidatableTextField();
+        incButton = new VisTextButton("Set");
+        incValidator = new SimpleFormValidator(incButton);
+        incValidator.notEmpty(incField,"");
+        incValidator.floatNumber(incField,"");
+        incButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                simulationObject.setInclination((float)Math.toRadians(Float.parseFloat(incField.getText())));
+            }
+        });
     }
 
 
@@ -217,6 +235,9 @@ public class SimObjectTracker {
 
         addField(table,zVelLabel,zVelField,zVelButton);
         table.row();
+
+        addField(table,incLabel, incField, incButton);
+        table.row();
     }
 
     protected void addField(VisTable table, VisLabel label, VisValidatableTextField field, VisTextButton button){
@@ -244,5 +265,6 @@ public class SimObjectTracker {
         xVelLabel.setText("x-vel(km/s): "+formatter.format(Units.mToKM(simulationObject.getXVel())));
         yVelLabel.setText("y-vel(km/s): "+formatter.format(Units.mToKM(simulationObject.getYVel())));
         zVelLabel.setText("z-vel(km/s): "+formatter.format(Units.mToKM(simulationObject.getZVel())));
+        incLabel.setText("Inclination(deg): "+Math.toDegrees(simulationObject.getInclination()));
     }
 }
