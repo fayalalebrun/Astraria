@@ -300,8 +300,8 @@ public class SimObjectTracker {
 
     protected void addField(VisTable table, String tag,VisValidatableTextField field, VisTextButton button){
         table.padLeft(3f);
-        table.add(new VisLabel(tag)).width(50);
-        table.add(field).width(100);
+        table.add(new VisLabel(tag)).width(120);
+        table.add(field).width(60);
         table.add(button).width(60f).padRight(8f);
     }
 
