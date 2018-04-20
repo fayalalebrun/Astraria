@@ -9,6 +9,7 @@ import com.mygdx.game.simulation.SimulationObject;
 import com.mygdx.game.simulation.logic.helpers.Units;
 import com.mygdx.game.simulation.ui.SimulationScreenInterface;
 import com.mygdx.game.simulation.ui.windows.StatsWindow;
+import sun.java2d.pipe.SpanShapeRenderer;
 
 import java.text.DecimalFormat;
 
@@ -44,6 +45,11 @@ public class SimObjectTracker {
     private VisValidatableTextField yPosField;
     private VisTextButton yPosButton;
     private SimpleFormValidator yPosValidator;
+
+    private final VisLabel zPosLabel;
+    private VisValidatableTextField zPosField;
+    private VisTextButton zPosButton;
+    private SimpleFormValidator zPosValidator;
 
 
     public SimObjectTracker(final SimulationObject simulationObject) {
@@ -103,7 +109,7 @@ public class SimObjectTracker {
 
         yPosLabel = new VisLabel();
         yPosField = new VisValidatableTextField();
-        yPosButton = new VisTextButton("set");
+        yPosButton = new VisTextButton("Set");
         yPosValidator = new SimpleFormValidator(yPosButton);
         yPosValidator.notEmpty(yPosField, "");
         yPosValidator.floatNumber(yPosField,"");
@@ -111,6 +117,19 @@ public class SimObjectTracker {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 simulationObject.setYPos(Units.AUToM(Double.parseDouble(yPosField.getText())));
+            }
+        });
+
+        zPosLabel = new VisLabel();
+        zPosField = new VisValidatableTextField();
+        zPosButton = new VisTextButton("Set");
+        zPosValidator = new SimpleFormValidator(zPosButton);
+        zPosValidator.notEmpty(zPosField,"");
+        zPosValidator.floatNumber(zPosField,"");
+        zPosButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                simulationObject.setZPos(Units.AUToM(Double.parseDouble(zPosField.getText())));
             }
         });
     }
@@ -131,6 +150,9 @@ public class SimObjectTracker {
         table.row();
 
         addField(table,yPosLabel,yPosField,yPosButton);
+        table.row();
+
+        addField(table, zPosLabel, zPosField, zPosButton);
         table.row();
     }
 
@@ -155,5 +177,6 @@ public class SimObjectTracker {
         massLabel.setText("Mass(kg): "+formatter.format(simulationObject.getMass()));
         xPosLabel.setText("x-pos(au): "+formatter.format(Units.mToAU(simulationObject.getXPos())));
         yPosLabel.setText("y-pos(au): "+formatter.format(Units.mToAU(simulationObject.getYPos())));
+        zPosLabel.setText("z-pos(au): "+formatter.format(Units.mToAU(simulationObject.getZPos())));
     }
 }
