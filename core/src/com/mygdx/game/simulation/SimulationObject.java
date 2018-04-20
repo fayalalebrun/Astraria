@@ -192,7 +192,7 @@ public class SimulationObject implements Disposable{
 
     public void setXVel(double xVel){
         synchronized (body){
-            body.setX(xVel);
+            body.setvX(xVel);
         }
     }
 
