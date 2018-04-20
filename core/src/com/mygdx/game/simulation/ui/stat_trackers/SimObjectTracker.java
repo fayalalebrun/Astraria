@@ -71,6 +71,11 @@ public class SimObjectTracker {
     private VisTextButton incButton;
     private SimpleFormValidator incValidator;
 
+    private final VisLabel ascLabel;
+    private VisValidatableTextField ascField;
+    private VisTextButton ascButton;
+    private SimpleFormValidator ascValidator;
+
 
     public SimObjectTracker(final SimulationObject simulationObject) {
         this.simulationObject = simulationObject;
@@ -204,6 +209,19 @@ public class SimObjectTracker {
                 simulationObject.setInclination((float)Math.toRadians(Float.parseFloat(incField.getText())));
             }
         });
+
+        ascLabel = new VisLabel();
+        ascField = new VisValidatableTextField();
+        ascButton = new VisTextButton("Set");
+        ascValidator = new SimpleFormValidator(ascButton);
+        ascValidator.notEmpty(ascField,"");
+        ascValidator.floatNumber(ascField,"");
+        ascButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                simulationObject.setAxisRightAscension((float)Math.toRadians(Float.parseFloat(ascField.getText())));
+            }
+        });
     }
 
 
@@ -238,6 +256,9 @@ public class SimObjectTracker {
 
         addField(table,incLabel, incField, incButton);
         table.row();
+
+        addField(table, ascLabel, ascField, ascButton);
+        table.row();
     }
 
     protected void addField(VisTable table, VisLabel label, VisValidatableTextField field, VisTextButton button){
@@ -266,5 +287,6 @@ public class SimObjectTracker {
         yVelLabel.setText("y-vel(km/s): "+formatter.format(Units.mToKM(simulationObject.getYVel())));
         zVelLabel.setText("z-vel(km/s): "+formatter.format(Units.mToKM(simulationObject.getZVel())));
         incLabel.setText("Inclination(deg): "+Math.toDegrees(simulationObject.getInclination()));
+        ascLabel.setText("Ascension(deg): "+Math.toDegrees(simulationObject.getAxisRightAscension()));
     }
 }
