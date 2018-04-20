@@ -62,16 +62,16 @@ public class SimulationObject implements Disposable{
     }
 
     public void setRotationParameters(float inclinationTilt, float axisRightAscension, float rotationPeriod, float offset){
-        this.inclinationTilt = (float)Math.toRadians(inclinationTilt);
-        this.axisRightAscension = (float)Math.toRadians(axisRightAscension);
-        this.rotationPeriod = (float)Math.toRadians(rotationPeriod);
+        this.inclinationTilt = inclinationTilt;
+        this.axisRightAscension = axisRightAscension;
+        this.rotationPeriod = rotationPeriod;
         rotationSpeed = rotationPeriod/86400f;
 
         this.rotationAxis.set(Transformation.WORLD_UP);
         rotationAccum.identity().rotate(tempAng.set(this.inclinationTilt,transformation.WORLD_RIGHT)).translate(rotationAxis);
         rotationAccum.rotate(tempAng.set(this.axisRightAscension,transformation.WORLD_UP)).translate(rotationAxis);
 
-        rotationAccum.rotate(tempAng.set((float)Math.toRadians(offset),rotationAxis));
+        rotationAccum.rotate(tempAng.set(offset,rotationAxis));
     }
 
     public void updatePosition(){
