@@ -175,4 +175,14 @@ public class SimulationObject implements Disposable{
     public double getYPos(){
         return body.getY();
     }
+
+    public void setZPos(double zPos){
+        synchronized (body){
+            body.setZ(zPos);
+        }
+    }
+
+    public double getZPos(){
+        return body.getZ();
+    }
 }
