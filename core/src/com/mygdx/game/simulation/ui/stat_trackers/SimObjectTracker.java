@@ -51,6 +51,11 @@ public class SimObjectTracker {
     private VisTextButton zPosButton;
     private SimpleFormValidator zPosValidator;
 
+    private final VisLabel xVelLabel;
+    private VisValidatableTextField xVelField;
+    private VisTextButton xVelButton;
+    private SimpleFormValidator xVelValidator;
+
 
     public SimObjectTracker(final SimulationObject simulationObject) {
         this.simulationObject = simulationObject;
@@ -132,6 +137,19 @@ public class SimObjectTracker {
                 simulationObject.setZPos(Units.AUToM(Double.parseDouble(zPosField.getText())));
             }
         });
+
+        xVelLabel = new VisLabel();
+        xVelField = new VisValidatableTextField();
+        xVelButton = new VisTextButton("Set");
+        xVelValidator = new SimpleFormValidator(xVelButton);
+        xVelValidator.notEmpty(xVelField,"");
+        xVelValidator.floatNumber(xVelField,"");
+        xVelButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                simulationObject.setXVel(Units.kmToM(Double.parseDouble(xVelField.getText())));
+            }
+        });
     }
 
 
@@ -153,6 +171,9 @@ public class SimObjectTracker {
         table.row();
 
         addField(table, zPosLabel, zPosField, zPosButton);
+        table.row();
+
+        addField(table, xVelLabel, xVelField, xVelButton);
         table.row();
     }
 
@@ -178,5 +199,6 @@ public class SimObjectTracker {
         xPosLabel.setText("x-pos(au): "+formatter.format(Units.mToAU(simulationObject.getXPos())));
         yPosLabel.setText("y-pos(au): "+formatter.format(Units.mToAU(simulationObject.getYPos())));
         zPosLabel.setText("z-pos(au): "+formatter.format(Units.mToAU(simulationObject.getZPos())));
+        xVelLabel.setText("x-vel(km/s): "+formatter.format(Units.mToKM(simulationObject.getXVel())));
     }
 }
