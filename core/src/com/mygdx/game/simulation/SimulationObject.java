@@ -155,4 +155,14 @@ public class SimulationObject implements Disposable{
     public double getMass(){
         return body.getMass();
     }
+
+    public void setXPos(double xPos){
+        synchronized (body){
+            body.setX(xPos);
+        }
+    }
+
+    public double getXPos(){
+        return body.getX();
+    }
 }

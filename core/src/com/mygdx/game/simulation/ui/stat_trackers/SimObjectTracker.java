@@ -6,6 +6,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.kotcrab.vis.ui.util.form.SimpleFormValidator;
 import com.kotcrab.vis.ui.widget.*;
 import com.mygdx.game.simulation.SimulationObject;
+import com.mygdx.game.simulation.logic.helpers.Units;
 import com.mygdx.game.simulation.ui.SimulationScreenInterface;
 import com.mygdx.game.simulation.ui.windows.StatsWindow;
 
@@ -34,6 +35,10 @@ public class SimObjectTracker {
     private VisTextButton massSetButton;
     private SimpleFormValidator massValidator;
 
+    private final VisLabel xPosLabel;
+    private VisValidatableTextField xPosField;
+    private VisTextButton xPosButton;
+    private SimpleFormValidator xPosValidator;
 
 
     public SimObjectTracker(final SimulationObject simulationObject) {
@@ -77,6 +82,19 @@ public class SimObjectTracker {
                 simulationObject.setMass(Double.parseDouble(massField.getText()));
             }
         });
+
+        xPosLabel = new VisLabel();
+        xPosField = new VisValidatableTextField();
+        xPosButton = new VisTextButton("Set");
+        xPosValidator = new SimpleFormValidator(xPosButton);
+        xPosValidator.notEmpty(xPosField, "");
+        xPosValidator.floatNumber(xPosField, "");
+        xPosButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                simulationObject.setXPos(Units.mToAU(Double.parseDouble(xPosField.getText())));
+            }
+        });
     }
 
 
@@ -89,6 +107,9 @@ public class SimObjectTracker {
         table.row();
 
         addField(table, massLabel, massField, massSetButton);
+        table.row();
+
+        addField(table,xPosLabel, xPosField, xPosButton);
         table.row();
     }
 
@@ -111,5 +132,6 @@ public class SimObjectTracker {
         nameLabel.setText("Name: "+simulationObject.getName());
         radiusLabel.setText("Radius(km): "+simulationObject.getRadius());
         massLabel.setText("Mass(kg): "+formatter.format(simulationObject.getMass()));
+        xPosLabel.setText("x-pos(au): "+formatter.format(Units.mToAU(simulationObject.getXPos())));
     }
 }
