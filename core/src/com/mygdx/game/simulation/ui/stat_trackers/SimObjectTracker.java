@@ -54,6 +54,9 @@ public class SimObjectTracker {
     private final VisValidatableTextField ascField;
     private final VisTextButton ascButton;
 
+    private final VisValidatableTextField periodField;
+    private final VisTextButton periodButton;
+
     public SimObjectTracker(final SimulationObject simulationObject) {
         this.simulationObject = simulationObject;
         formatter = new DecimalFormat("#.##E0");
@@ -219,6 +222,20 @@ public class SimObjectTracker {
         });
 
         initializeNum(ascField, ascButton);
+
+        periodField = new VisValidatableTextField();
+        periodButton = new VisTextButton("Change");
+
+        periodButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                if(!periodField.isDisabled()){
+                    simulationObject.setRotationPeriod((float)Math.toRadians(Float.parseFloat(periodField.getText())));
+                }
+            }
+        });
+
+        initializeNum(periodField, periodButton);
     }
 
     protected SimpleFormValidator initialize(final VisValidatableTextField textField, final VisTextButton textButton){
@@ -275,6 +292,9 @@ public class SimObjectTracker {
         table.row();
 
         addField(table, "Ascension(deg): ", ascField, ascButton);
+        table.row();
+
+        addField(table, "Period(deg/day): ", periodField, periodButton);
         table.row();
     }
 
@@ -336,6 +356,10 @@ public class SimObjectTracker {
 
         if(ascField.isDisabled()){
             ascField.setText(Math.toDegrees(simulationObject.getAxisRightAscension())+"");
+        }
+
+        if(periodField.isDisabled()){
+            periodField.setText(Math.toDegrees(simulationObject.getRotationPeriod())+"");
         }
     }
 }
