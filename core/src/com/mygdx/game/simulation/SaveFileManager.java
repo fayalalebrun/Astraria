@@ -84,7 +84,8 @@ public class SaveFileManager {
 
                     SimulationObject simObj = new Planet(renderer,Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal(texturePath)),
                             radius,name,renderer.getTransformation(),new Body(mass,x,y,z,vX,vY,vZ), new Color(r,g,b,a));
-                    simObj.setRotationParameters(incTilt,axisRightAsc,rotPeriod,offset);
+                    simObj.setRotationParameters((float)Math.toRadians(incTilt),(float)Math.toRadians(axisRightAsc),
+                            (float)Math.toRadians(rotPeriod),(float)Math.toRadians(offset));
 
                     simulationScreen.addObject(simObj);
                 } else if (type[1].equals("star")){
@@ -135,7 +136,8 @@ public class SaveFileManager {
                     SimulationObject simObj = new Star(renderer,Warehouse.getOpenGLTextureManager().addTexture(Gdx.files.internal(texturePath)),
                             radius, name, renderer.getTransformation(),
                             new Body(mass, x, y, z, vX, vY, vZ),new Color(r,g,b,a), temperature);
-                    simObj.setRotationParameters(incTilt,axisRightAsc,rotPeriod,offset);
+                    simObj.setRotationParameters((float)Math.toRadians(incTilt),(float)Math.toRadians(axisRightAsc),
+                            (float)Math.toRadians(rotPeriod),(float)Math.toRadians(offset));
                     simulationScreen.addObject(simObj);
                 } else if (type[1].equals("planet_atmo")){
 
@@ -203,7 +205,8 @@ public class SaveFileManager {
                             new Color(r,g,b,a),
                             renderer.getTransformation(), new Body(mass,x,y,z,vX,vY,vZ),renderer.getLightSourceManager(),
                             new Color(ar,ag,ab,aa),ambTex);
-                    simObj.setRotationParameters(incTilt,axisRightAsc,rotPeriod,offset);
+                    simObj.setRotationParameters((float)Math.toRadians(incTilt),(float)Math.toRadians(axisRightAsc),
+                            (float)Math.toRadians(rotPeriod),(float)Math.toRadians(offset));
                     simulationScreen.addObject(simObj);
                 } else if(type[1].equals("black_hole")){
                     name = part[i].substring(part[i].indexOf(':')+2);

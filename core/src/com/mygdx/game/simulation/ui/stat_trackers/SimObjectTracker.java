@@ -51,6 +51,9 @@ public class SimObjectTracker {
     private final VisValidatableTextField incField;
     private final VisTextButton incButton;
 
+    private final VisValidatableTextField ascField;
+    private final VisTextButton ascButton;
+
     public SimObjectTracker(final SimulationObject simulationObject) {
         this.simulationObject = simulationObject;
         formatter = new DecimalFormat("#.##E0");
@@ -202,6 +205,20 @@ public class SimObjectTracker {
         });
 
         initializeNum(incField, incButton);
+
+        ascField = new VisValidatableTextField();
+        ascButton = new VisTextButton("Change");
+
+        ascButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                if(!ascField.isDisabled()){
+                    simulationObject.setAxisRightAscension((float)Math.toRadians(Float.parseFloat(ascField.getText())));
+                }
+            }
+        });
+
+        initializeNum(ascField, ascButton);
     }
 
     protected SimpleFormValidator initialize(final VisValidatableTextField textField, final VisTextButton textButton){
@@ -255,6 +272,9 @@ public class SimObjectTracker {
         table.row();
 
         addField(table, "Inclination(deg): ", incField, incButton);
+        table.row();
+
+        addField(table, "Ascension(deg): ", ascField, ascButton);
         table.row();
     }
 
@@ -312,6 +332,10 @@ public class SimObjectTracker {
 
         if(incField.isDisabled()){
             incField.setText(Math.toDegrees(simulationObject.getInclination())+"");
+        }
+
+        if(ascField.isDisabled()){
+            ascField.setText(Math.toDegrees(simulationObject.getAxisRightAscension())+"");
         }
     }
 }
