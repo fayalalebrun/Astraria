@@ -30,6 +30,9 @@ public class SimObjectTracker {
     private final VisValidatableTextField massField;
     private final VisTextButton massButton;
 
+    private final VisValidatableTextField xPosField;
+    private final VisTextButton xPosButton;
+
     public SimObjectTracker(final SimulationObject simulationObject) {
         this.simulationObject = simulationObject;
         formatter = new DecimalFormat("##E0");
@@ -84,7 +87,19 @@ public class SimObjectTracker {
 
         initializeNum(massField,massButton);
 
-        
+        xPosField = new VisValidatableTextField();
+        xPosButton = new VisTextButton("Change");
+
+        xPosButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                if(!xPosField.isDisabled()){
+                    simulationObject.setXPos(Units.AUToM(Float.parseFloat(xPosField.getText())));
+                }
+            }
+        });
+
+        initializeNum(xPosField, xPosButton);
     }
 
     protected SimpleFormValidator initialize(final VisValidatableTextField textField, final VisTextButton textButton){
@@ -118,6 +133,11 @@ public class SimObjectTracker {
 
         addField(table, "Mass(kg): ", massField, massButton);
         table.row();
+
+        addField(table, "x-pos(au): ", xPosField, xPosButton);
+        table.row();
+
+        
     }
 
     protected void addField(VisTable table, String tag,VisValidatableTextField field, VisTextButton button){
@@ -146,6 +166,10 @@ public class SimObjectTracker {
 
         if(massField.isDisabled()){
             massField.setText(simulationObject.getMass()+"");
+        }
+
+        if(xPosField.isDisabled()){
+            xPosField.setText(Units.mToAU(simulationObject.getXPos())+"");
         }
     }
 }
