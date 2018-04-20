@@ -48,6 +48,9 @@ public class SimObjectTracker {
     private final VisValidatableTextField zVelField;
     private final VisTextButton zVelButton;
 
+    private final VisValidatableTextField incField;
+    private final VisTextButton incButton;
+
     public SimObjectTracker(final SimulationObject simulationObject) {
         this.simulationObject = simulationObject;
         formatter = new DecimalFormat("#.##E0");
@@ -185,6 +188,20 @@ public class SimObjectTracker {
         });
 
         initializeNum(zVelField, zVelButton);
+
+        incField = new VisValidatableTextField();
+        incButton = new VisTextButton("Change");
+
+        incButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                if(!incField.isDisabled()){
+                    simulationObject.setInclination((float)Math.toRadians(Float.parseFloat(incField.getText())));
+                }
+            }
+        });
+
+        initializeNum(incField, incButton);
     }
 
     protected SimpleFormValidator initialize(final VisValidatableTextField textField, final VisTextButton textButton){
@@ -235,6 +252,10 @@ public class SimObjectTracker {
         table.row();
 
         addField(table, "z-vel(km/s): ", zVelField, zVelButton);
+        table.row();
+
+        addField(table, "Inclination(deg): ", incField, incButton);
+        table.row();
     }
 
     protected void addField(VisTable table, String tag,VisValidatableTextField field, VisTextButton button){
@@ -287,6 +308,10 @@ public class SimObjectTracker {
 
         if(zVelField.isDisabled()){
             zVelField.setText(formatter.format(Units.mToKM(simulationObject.getZVel())));
+        }
+
+        if(incField.isDisabled()){
+            incField.setText(Math.toDegrees(simulationObject.getInclination())+"");
         }
     }
 }
