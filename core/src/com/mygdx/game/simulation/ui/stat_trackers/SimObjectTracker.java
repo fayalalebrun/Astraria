@@ -45,6 +45,9 @@ public class SimObjectTracker {
     private final VisValidatableTextField yVelField;
     private final VisTextButton yVelButton;
 
+    private final VisValidatableTextField zVelField;
+    private final VisTextButton zVelButton;
+
     public SimObjectTracker(final SimulationObject simulationObject) {
         this.simulationObject = simulationObject;
         formatter = new DecimalFormat("#.##E0");
@@ -168,6 +171,20 @@ public class SimObjectTracker {
         });
 
         initializeNum(yVelField, yVelButton);
+
+        zVelField = new VisValidatableTextField();
+        zVelButton = new VisTextButton("Change");
+
+        zVelButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                if(!zVelField.isDisabled()){
+                    simulationObject.setZVel(Units.kmToM(Double.parseDouble(zVelField.getText())));
+                }
+            }
+        });
+
+        initializeNum(zVelField, zVelButton);
     }
 
     protected SimpleFormValidator initialize(final VisValidatableTextField textField, final VisTextButton textButton){
@@ -211,11 +228,13 @@ public class SimObjectTracker {
         addField(table, "z-pos(au): ", zPosField, zPosButton);
         table.row();
 
-        addField(table, "x-vel(au): ", xVelField, xVelButton);
+        addField(table, "x-vel(km/s): ", xVelField, xVelButton);
         table.row();
 
-        addField(table, "y-vel(au): ", yVelField, yVelButton);
+        addField(table, "y-vel(km/s): ", yVelField, yVelButton);
         table.row();
+
+        addField(table, "z-vel(km/s): ", zVelField, zVelButton);
     }
 
     protected void addField(VisTable table, String tag,VisValidatableTextField field, VisTextButton button){
@@ -261,9 +280,13 @@ public class SimObjectTracker {
         if(xVelField.isDisabled()){
             xVelField.setText(formatter.format(Units.mToKM(simulationObject.getXVel())));
         }
-        
+
         if(yVelField.isDisabled()){
             yVelField.setText(formatter.format(Units.mToKM(simulationObject.getYVel())));
+        }
+
+        if(zVelField.isDisabled()){
+            zVelField.setText(formatter.format(Units.mToKM(simulationObject.getZVel())));
         }
     }
 }
