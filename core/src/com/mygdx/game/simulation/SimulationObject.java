@@ -185,4 +185,34 @@ public class SimulationObject implements Disposable{
     public double getZPos(){
         return body.getZ();
     }
+
+    public double getXVel(){
+        return body.getvX();
+    }
+
+    public void setXVel(double xVel){
+        synchronized (body){
+            body.setX(xVel);
+        }
+    }
+
+    public double getYVel(){
+        return body.getvY();
+    }
+
+    public void setYVel(double yVel){
+        synchronized (body){
+            body.setvY(yVel);
+        }
+    }
+
+    public double getZVel(){
+        return body.getvZ();
+    }
+
+    public void setZVel(double zVel){
+        synchronized (body){
+            body.setvZ(zVel);
+        }
+    }
 }
