@@ -36,9 +36,12 @@ public class SimObjectTracker {
     private final VisValidatableTextField yPosField;
     private final VisTextButton yPosButton;
 
+    private final VisValidatableTextField zPosField;
+    private final VisTextButton zPosButton;
+
     public SimObjectTracker(final SimulationObject simulationObject) {
         this.simulationObject = simulationObject;
-        formatter = new DecimalFormat("##.##E0");
+        formatter = new DecimalFormat("#.##E0");
 
         nameField = new VisValidatableTextField();
         nameSetButton = new VisTextButton("Change");
@@ -117,6 +120,20 @@ public class SimObjectTracker {
         });
 
         initializeNum(yPosField, yPosButton);
+
+        zPosField = new VisValidatableTextField();
+        zPosButton = new VisTextButton("Change");
+
+        zPosButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                if(!zPosField.isDisabled()){
+                    simulationObject.setZPos(Units.AUToM(Float.parseFloat(zPosField.getText())));
+                }
+            }
+        });
+
+        initializeNum(zPosField, zPosButton);
     }
 
     protected SimpleFormValidator initialize(final VisValidatableTextField textField, final VisTextButton textButton){
@@ -156,6 +173,9 @@ public class SimObjectTracker {
 
         addField(table, "y-pos(au): ", yPosField, yPosButton);
         table.row();
+
+        addField(table, "z-pos(au): ", zPosField, zPosButton);
+        table.row();
     }
 
     protected void addField(VisTable table, String tag,VisValidatableTextField field, VisTextButton button){
@@ -183,7 +203,7 @@ public class SimObjectTracker {
         }
 
         if(massField.isDisabled()){
-            massField.setText(simulationObject.getMass()+"");
+            massField.setText(formatter.format(simulationObject.getMass()));
         }
 
         if(xPosField.isDisabled()){
@@ -192,6 +212,10 @@ public class SimObjectTracker {
 
         if(yPosField.isDisabled()){
             yPosField.setText(formatter.format(Units.mToAU(simulationObject.getYPos())));
+        }
+
+        if(zPosField.isDisabled()){
+            zPosField.setText(formatter.format(Units.mToAU(simulationObject.getZPos())));
         }
     }
 }
