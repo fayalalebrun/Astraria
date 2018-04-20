@@ -33,9 +33,12 @@ public class SimObjectTracker {
     private final VisValidatableTextField xPosField;
     private final VisTextButton xPosButton;
 
+    private final VisValidatableTextField yPosField;
+    private final VisTextButton yPosButton;
+
     public SimObjectTracker(final SimulationObject simulationObject) {
         this.simulationObject = simulationObject;
-        formatter = new DecimalFormat("##E0");
+        formatter = new DecimalFormat("##.##E0");
 
         nameField = new VisValidatableTextField();
         nameSetButton = new VisTextButton("Change");
@@ -100,6 +103,20 @@ public class SimObjectTracker {
         });
 
         initializeNum(xPosField, xPosButton);
+
+        yPosField = new VisValidatableTextField();
+        yPosButton = new VisTextButton("Change");
+
+        yPosButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                if(!yPosField.isDisabled()){
+                    simulationObject.setYPos(Units.AUToM(Float.parseFloat(yPosField.getText())));
+                }
+            }
+        });
+
+        initializeNum(yPosField, yPosButton);
     }
 
     protected SimpleFormValidator initialize(final VisValidatableTextField textField, final VisTextButton textButton){
@@ -137,7 +154,8 @@ public class SimObjectTracker {
         addField(table, "x-pos(au): ", xPosField, xPosButton);
         table.row();
 
-        
+        addField(table, "y-pos(au): ", yPosField, yPosButton);
+        table.row();
     }
 
     protected void addField(VisTable table, String tag,VisValidatableTextField field, VisTextButton button){
@@ -169,7 +187,11 @@ public class SimObjectTracker {
         }
 
         if(xPosField.isDisabled()){
-            xPosField.setText(Units.mToAU(simulationObject.getXPos())+"");
+            xPosField.setText(formatter.format(Units.mToAU(simulationObject.getXPos())));
+        }
+
+        if(yPosField.isDisabled()){
+            yPosField.setText(formatter.format(Units.mToAU(simulationObject.getYPos())));
         }
     }
 }
