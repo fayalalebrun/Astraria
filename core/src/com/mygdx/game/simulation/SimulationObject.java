@@ -215,4 +215,28 @@ public class SimulationObject implements Disposable{
             body.setvZ(zVel);
         }
     }
+
+    public float getInclination(){
+        return inclinationTilt;
+    }
+
+    public void setInclination(float inclination){
+        setRotationParameters(inclination,axisRightAscension,rotationPeriod,0);
+    }
+
+    public float getAxisRightAscension(){
+        return axisRightAscension;
+    }
+
+    public void setAxisRightAscension(float axisRightAscension){
+        setRotationParameters(inclinationTilt,axisRightAscension,rotationPeriod,0);
+    }
+
+    public float getRotationPeriod(){
+        return rotationPeriod;
+    }
+
+    public void setRotationPeriod(float rotationPeriod){
+        setRotationParameters(inclinationTilt,axisRightAscension,rotationPeriod,0);
+    }
 }
