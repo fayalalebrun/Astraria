@@ -17,7 +17,7 @@ public class StatsWindow extends VisWindow{
     VisTable mainTable;
 
     public StatsWindow() {
-        super("Planet Statistics");
+        super("Object Statistics");
         TableUtils.setSpacingDefaults(this);
         mainTable = new VisTable();
         TableUtils.setSpacingDefaults(mainTable);
