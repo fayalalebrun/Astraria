@@ -10,7 +10,9 @@ import com.kotcrab.vis.ui.widget.VisTable;
 import com.kotcrab.vis.ui.widget.VisWindow;
 import com.mygdx.game.simulation.SimulationObject;
 import com.mygdx.game.simulation.SimulationScreen;
+import com.mygdx.game.simulation.logic.algorithms.NBodyAlgorithm;
 import com.mygdx.game.simulation.ui.windows.ObjectListWindow;
+import com.mygdx.game.simulation.ui.windows.SimInfoWindow;
 import com.mygdx.game.simulation.ui.windows.StatsWindow;
 import com.mygdx.game.simulation.ui.windows.ToolbarWindow;
 import javafx.scene.control.ToolBar;
@@ -27,11 +29,12 @@ public class SimulationScreenInterface {
     private ObjectListWindow objectListWindow;
     private StatsWindow statsWindow;
     private ToolbarWindow toolbar;
+    private SimInfoWindow simInfoWindow;
 
     private Group listGroup;
     private Group infoGroup;
 
-    public SimulationScreenInterface(SimulationScreen simulationScreen, InputMultiplexer multiplexer) {
+    public SimulationScreenInterface(SimulationScreen simulationScreen, InputMultiplexer multiplexer, NBodyAlgorithm nBodyAlgorithm) {
         this.simulationScreen = simulationScreen;
 
         uiStage = new Stage(new ScreenViewport());
@@ -47,6 +50,7 @@ public class SimulationScreenInterface {
             }
         });
 
+        this.simInfoWindow = new SimInfoWindow(nBodyAlgorithm);
 
         menuBarTable = new VisTable();
         menuBar = new MenuBar();
@@ -73,9 +77,12 @@ public class SimulationScreenInterface {
         objectListWindow = new ObjectListWindow(simulationScreen, statsWindow);
         listGroup.addActor(objectListWindow);
 
+        infoGroup.addActor(simInfoWindow);
+
         toolbar = new ToolbarWindow(listGroup, infoGroup);
 
         uiStage.addActor(listGroup);
+        uiStage.addActor(infoGroup);
         uiStage.addActor(toolbar);
     }
 

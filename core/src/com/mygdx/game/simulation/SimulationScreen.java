@@ -68,7 +68,7 @@ public class SimulationScreen extends BaseScreen {
 
         simulationObjects = new ArrayList<SimulationObject>();
 
-        this.simulationScreenInterface = new SimulationScreenInterface(this,multiplexer);
+        this.simulationScreenInterface = new SimulationScreenInterface(this,multiplexer,algorithm);
 
         clickable3DObjects = new ArrayList<Clickable3DObject>();
 
