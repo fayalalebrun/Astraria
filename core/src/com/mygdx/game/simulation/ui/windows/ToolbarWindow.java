@@ -40,7 +40,11 @@ public class ToolbarWindow extends VisWindow{
         VisImageButton listButton = new VisImageButton(convertToDrawable(Boot.manager.get("icons/list.png", Texture.class)),"Object List");
         setButtonAction(listButton, listGroup);
 
-        add(listButton);
+        VisImageButton infoButton = new VisImageButton(convertToDrawable(Boot.manager.get("icons/info.png", Texture.class)),"Simulation Info");
+        setButtonAction(infoButton, infoGroup);
+
+        add(listButton).padRight(1f);
+        add(infoButton);
     }
 
     private void setButtonAction(VisImageButton button, final Group windowGroup){
