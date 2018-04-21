@@ -11,10 +11,7 @@ import com.kotcrab.vis.ui.widget.VisWindow;
 import com.mygdx.game.simulation.SimulationObject;
 import com.mygdx.game.simulation.SimulationScreen;
 import com.mygdx.game.simulation.logic.algorithms.NBodyAlgorithm;
-import com.mygdx.game.simulation.ui.windows.ObjectListWindow;
-import com.mygdx.game.simulation.ui.windows.SimInfoWindow;
-import com.mygdx.game.simulation.ui.windows.StatsWindow;
-import com.mygdx.game.simulation.ui.windows.ToolbarWindow;
+import com.mygdx.game.simulation.ui.windows.*;
 import javafx.scene.control.ToolBar;
 
 /**
@@ -30,9 +27,11 @@ public class SimulationScreenInterface {
     private StatsWindow statsWindow;
     private ToolbarWindow toolbar;
     private SimInfoWindow simInfoWindow;
+    private SimSpeedWindow simSpeedWindow;
 
     private Group listGroup;
     private Group infoGroup;
+    private Group simSpeedGroup;
 
     public SimulationScreenInterface(SimulationScreen simulationScreen, InputMultiplexer multiplexer, NBodyAlgorithm nBodyAlgorithm) {
         this.simulationScreen = simulationScreen;
@@ -63,6 +62,7 @@ public class SimulationScreenInterface {
 
         listGroup = new Group();
         infoGroup = new Group();
+        simSpeedGroup = new Group();
 
         multiplexer.addProcessor(uiStage);
 
@@ -79,10 +79,14 @@ public class SimulationScreenInterface {
 
         infoGroup.addActor(simInfoWindow);
 
-        toolbar = new ToolbarWindow(listGroup, infoGroup);
+        simSpeedWindow = new SimSpeedWindow();
+        simSpeedGroup.addActor(simSpeedWindow);
+
+        toolbar = new ToolbarWindow(listGroup, infoGroup, simSpeedGroup);
 
         uiStage.addActor(listGroup);
         uiStage.addActor(infoGroup);
+        uiStage.addActor(simSpeedGroup);
         uiStage.addActor(toolbar);
     }
 
