@@ -1,10 +1,7 @@
 package com.mygdx.game.simulation.ui;
 
 import com.badlogic.gdx.InputMultiplexer;
-import com.badlogic.gdx.scenes.scene2d.Actor;
-import com.badlogic.gdx.scenes.scene2d.InputEvent;
-import com.badlogic.gdx.scenes.scene2d.InputListener;
-import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.*;
 import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.kotcrab.vis.ui.widget.Menu;
@@ -15,6 +12,8 @@ import com.mygdx.game.simulation.SimulationObject;
 import com.mygdx.game.simulation.SimulationScreen;
 import com.mygdx.game.simulation.ui.windows.ObjectListWindow;
 import com.mygdx.game.simulation.ui.windows.StatsWindow;
+import com.mygdx.game.simulation.ui.windows.ToolbarWindow;
+import javafx.scene.control.ToolBar;
 
 /**
  * Created by fraayala19 on 4/18/18.
@@ -27,6 +26,10 @@ public class SimulationScreenInterface {
 
     private ObjectListWindow objectListWindow;
     private StatsWindow statsWindow;
+    private ToolbarWindow toolbar;
+
+    private Group listGroup;
+    private Group infoGroup;
 
     public SimulationScreenInterface(SimulationScreen simulationScreen, InputMultiplexer multiplexer) {
         this.simulationScreen = simulationScreen;
@@ -54,6 +57,8 @@ public class SimulationScreenInterface {
         menuBarTable.left().top();
         menuBarTable.add(menuBar.getTable()).fillX().expandX().row();
 
+        listGroup = new Group();
+        infoGroup = new Group();
 
         multiplexer.addProcessor(uiStage);
 
@@ -64,9 +69,14 @@ public class SimulationScreenInterface {
 
     private void addWindows() {
         statsWindow = new StatsWindow();
+        listGroup.addActor(statsWindow);
         objectListWindow = new ObjectListWindow(simulationScreen, statsWindow);
-        uiStage.addActor(objectListWindow);
-        uiStage.addActor(statsWindow);
+        listGroup.addActor(objectListWindow);
+
+        toolbar = new ToolbarWindow(listGroup, infoGroup);
+
+        uiStage.addActor(listGroup);
+        uiStage.addActor(toolbar);
     }
 
     private void positionWindows() {
