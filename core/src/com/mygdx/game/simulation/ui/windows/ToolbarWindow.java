@@ -25,12 +25,14 @@ import java.util.ArrayList;
 public class ToolbarWindow extends VisWindow{
     private Group listGroup;
     private Group infoGroup;
+    private Group simSpeedGroup;
 
 
-    public ToolbarWindow(Group listGroup, Group infoGroup) {
+    public ToolbarWindow(Group listGroup, Group infoGroup, Group simSpeedGroup) {
         super("Tools");
         this.listGroup = listGroup;
         this.infoGroup = infoGroup;
+        this.simSpeedGroup = simSpeedGroup;
         TableUtils.setSpacingDefaults(this);
         addWidgets();
         pack();
@@ -40,11 +42,16 @@ public class ToolbarWindow extends VisWindow{
         VisImageButton listButton = new VisImageButton(convertToDrawable(Boot.manager.get("icons/list.png", Texture.class)),"Object List");
         setButtonAction(listButton, listGroup);
 
+        VisImageButton speedButton = new VisImageButton(convertToDrawable(Boot.manager.get("icons/timer.png",Texture.class)),"Simulation Speed");
+        setButtonAction(speedButton, simSpeedGroup);
+
         VisImageButton infoButton = new VisImageButton(convertToDrawable(Boot.manager.get("icons/info.png", Texture.class)),"Simulation Info");
         setButtonAction(infoButton, infoGroup);
 
+
         add(listButton).padRight(1f);
-        add(infoButton);
+        add(infoButton).padRight(1f);
+        add(speedButton);
     }
 
     private void setButtonAction(VisImageButton button, final Group windowGroup){
