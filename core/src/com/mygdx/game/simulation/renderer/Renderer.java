@@ -75,6 +75,8 @@ public class Renderer implements Disposable{
 
     private Skybox skybox;
 
+    private MousePicker picker;
+
 
     public Renderer(int screenWidth, int screenHeight) {
         this.screenWidth = screenWidth;
@@ -122,6 +124,8 @@ public class Renderer implements Disposable{
         temp4f = new Vector4f();
 
         skybox = loadSkybox();
+
+        picker = new MousePicker();
     }
 
     private Skybox loadSkybox(){
@@ -159,6 +163,8 @@ public class Renderer implements Disposable{
         Matrix4f projection = transformation.getProjectionMatrix(FOV, screenWidth,screenHeight,1f,MAXVIEWDISTANCE);
         combined.set(projection).mul(transformation.getViewMatrix(camera));
         Matrix4f view = transformation.getViewMatrix(camera);
+
+        picker.update(view, projection, screenWidth, screenHeight);
 
         planetShader.use();
         planetShader.setFloat("og_farPlaneDistance", MAXVIEWDISTANCE);
