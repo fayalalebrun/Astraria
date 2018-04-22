@@ -50,6 +50,13 @@ public class SimulationScreen extends BaseScreen {
         super(boot);
         Warehouse.init();
 
+        FileHandle dirHandle = Gdx.files.internal("./Planet Textures/");
+        for(FileHandle f : dirHandle.list()){
+            if(f.extension().equals("jpg")||f.extension().equals("png")){
+                Warehouse.getOpenGLTextureManager().addTexture(f);
+            }
+        }
+
         multiplexer = new InputMultiplexer();
 
         algorithm = new VelocityVerlet();
