@@ -10,6 +10,7 @@ import com.badlogic.gdx.graphics.g3d.Renderable;
 import com.badlogic.gdx.graphics.profiling.GLProfiler;
 import com.badlogic.gdx.utils.BufferUtils;
 import com.badlogic.gdx.utils.Disposable;
+import com.mygdx.game.simulation.PlacementManager;
 import com.mygdx.game.simulation.SimulationObject;
 import com.sun.media.jfxmediaimpl.MediaDisposer;
 import org.joml.*;
@@ -77,6 +78,8 @@ public class Renderer implements Disposable{
 
     private MousePicker picker;
 
+    private PlacementManager placementManager;
+
 
     public Renderer(int screenWidth, int screenHeight) {
         this.screenWidth = screenWidth;
@@ -126,6 +129,8 @@ public class Renderer implements Disposable{
         skybox = loadSkybox();
 
         picker = new MousePicker();
+
+        placementManager = new PlacementManager(picker);
     }
 
     private Skybox loadSkybox(){
@@ -219,6 +224,8 @@ public class Renderer implements Disposable{
         for(SimulationObject object : toDraw){
             object.render(camera,delta);
         }
+
+        placementManager.render(camera,delta);
 
         skybox.render();
 
@@ -359,6 +366,10 @@ public class Renderer implements Disposable{
 
     public Shader getLineShader() {
         return lineShader;
+    }
+
+    public PlacementManager getPlacementManager() {
+        return placementManager;
     }
 
     @Override

@@ -85,9 +85,12 @@ public class PlacementWindow extends VisWindow{
 
     private Renderer renderer;
 
-    public PlacementWindow(LaunchToolWindow launchToolWindow, Renderer renderer) {
+    private PlacementManager placementManager;
+
+    public PlacementWindow(LaunchToolWindow launchToolWindow, Renderer renderer, PlacementManager placementManager) {
         super("New Object Placement");
         this.launchToolWindow = launchToolWindow;
+        this.placementManager = placementManager;
         launchToolWindow.setPlacementWindow(this);
         this.renderer = renderer;
 

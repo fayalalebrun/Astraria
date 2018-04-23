@@ -37,6 +37,8 @@ public class SimulationObject implements Disposable{
 
     private final AxisAngle4f tempAng;
 
+    private boolean orbitActive = false;
+
     public SimulationObject(Model model, Shader shader, Shader orbitShader, float radius, String name, Transformation transformation, Body body, Color orbitColor) {
         position = new Vector3d();
         this.model = model;
@@ -74,18 +76,23 @@ public class SimulationObject implements Disposable{
         rotationAccum.rotate(tempAng.set(offset,rotationAxis));
     }
 
+    public void setAbsPosition(double x, double y, double z){
+        this.position.set(x,y,z);
+    }
+
     public void updatePosition(){
         synchronized (body){
             this.position.set(body.getX()/1000, body.getZ()/1000, body.getY()/1000);
-
         }
+        orbitActive = true;
     }
 
     protected void update(Camera cam, float delta){
         rotationAccum.rotate(tempAng.set(rotationSpeed*delta*SimulationScreen.simSpeed,rotationAxis));
 
-
-        orbit.prepare(position.x, position.y, position.z,cam);
+        if(orbitActive) {
+            orbit.prepare(position.x, position.y, position.z, cam);
+        }
         model.setScale(radius);
         model.setPosition(getPositionRelativeToCamera(cam));
         model.setRotation(rotationAccum);
