@@ -9,10 +9,40 @@ import com.mygdx.game.simulation.renderer.Renderer;
 import com.mygdx.game.simulation.renderer.Sphere;
 import com.mygdx.game.simulation.renderer.Warehouse;
 
+import java.io.IOException;
+import java.io.Writer;
+
 /**
  * Created by Fran on 4/12/2018.
  */
 public class SaveFileManager {
+    public static void saveGame(SimulationScreen simulationScreen, FileHandle file){
+        file.delete();
+
+        Writer writer = file.writer(false);
+
+        try {
+            writer.write("v3\n\n");
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+
+        for(SimulationObject simObj : simulationScreen.getSimulationObjects()){
+            try {
+                writer.write(simObj.toSaveFile());
+                writer.write("\n");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        try {
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public static void loadGame(SimulationScreen simulationScreen, Renderer renderer, FileHandle file){
         simulationScreen.clearObjects();
 

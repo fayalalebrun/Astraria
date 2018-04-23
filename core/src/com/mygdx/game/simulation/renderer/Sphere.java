@@ -29,6 +29,10 @@ public class Sphere extends Model implements Disposable {
 
     }
 
+    public GLTexture getDiffuseTexture() {
+        return diffuseTexture;
+    }
+
     @Override
     public void render(Camera cam, Shader shader) {
         meshes.get(0).setDiffuseTexture(diffuseTexture);

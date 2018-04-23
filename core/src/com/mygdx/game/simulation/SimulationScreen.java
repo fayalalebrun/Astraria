@@ -47,6 +47,7 @@ public class SimulationScreen extends BaseScreen {
     private final SimulationScreenInterface simulationScreenInterface;
 
 
+
     public SimulationScreen(Boot boot, String loadPath) {
         super(boot);
         Warehouse.init();
@@ -180,4 +181,7 @@ public class SimulationScreen extends BaseScreen {
         algorithmThread.interrupt();
     }
 
+    public ArrayList<SimulationObject> getSimulationObjects() {
+        return simulationObjects;
+    }
 }

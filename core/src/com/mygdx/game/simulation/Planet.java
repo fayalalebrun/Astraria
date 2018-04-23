@@ -11,4 +11,11 @@ public class Planet extends SphericObject{
     public Planet(Renderer renderer, GLTexture texture, float radius, String name, Transformation transformation, Body body, Color orbitColor) {
         super(renderer, texture, renderer.getPlanetShader(), radius, name, transformation, body, orbitColor);
     }
+
+    @Override
+    public String toSaveFile() {
+        String s = "type: planet\n";
+        s+= super.toSaveFile();
+        return s;
+    }
 }

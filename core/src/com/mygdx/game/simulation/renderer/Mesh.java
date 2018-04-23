@@ -147,4 +147,8 @@ public class Mesh implements Disposable{
     public void setUseTexture(boolean useTexture) {
         this.useTexture = useTexture;
     }
+
+    public GLTexture getDiffuseTexture() {
+        return diffuseTexture;
+    }
 }
