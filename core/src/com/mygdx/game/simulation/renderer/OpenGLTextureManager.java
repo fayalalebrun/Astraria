@@ -8,6 +8,7 @@ import com.badlogic.gdx.utils.BufferUtils;
 import com.badlogic.gdx.utils.Disposable;
 
 import java.nio.IntBuffer;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -58,6 +59,10 @@ public class OpenGLTextureManager implements Disposable{
 
         return texture;
 
+    }
+
+    public Collection<GLTexture> getLoadedTextures(){
+        return textures.values();
     }
 
 

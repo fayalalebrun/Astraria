@@ -45,12 +45,15 @@ public class GLTexture implements Disposable {
 
     @Override
     public String toString() {
-        return fileHandle.path();
+        return fileHandle.name();
     }
 
     @Override
     public boolean equals(Object obj) {
-        return fileHandle.toString().equals(obj.toString());
+        if(obj instanceof GLTexture){
+            return fileHandle.path().equals(((GLTexture)obj).fileHandle.path());
+        }
+        return false;
     }
 
     @Override
