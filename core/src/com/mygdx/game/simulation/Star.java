@@ -112,6 +112,14 @@ public class Star extends SphericObject implements LightEmitter{
     }
 
     @Override
+    public String toSaveFile() {
+        String s = "type: star\n";
+        s+= super.toSaveFile();
+        s+="temperature: "+temperature+"\n";
+        return s;
+    }
+
+    @Override
     public void dispose() {
         super.dispose();
         query.dispose();

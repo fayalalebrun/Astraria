@@ -10,7 +10,7 @@ import com.badlogic.gdx.utils.Disposable;
  */
 public class GLTexture implements Disposable {
     public final int ID;
-    private final FileHandle fileHandle;
+    public final FileHandle fileHandle;
 
     public GLTexture(FileHandle fileHandle) {
         this.fileHandle = fileHandle;

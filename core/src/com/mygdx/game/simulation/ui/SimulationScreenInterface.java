@@ -164,7 +164,7 @@ public class SimulationScreenInterface {
                 if(fileChooser.getMode()== FileChooser.Mode.OPEN){
                     SaveFileManager.loadGame(simulationScreen, simulationScreen.getRenderer(),file);
                 } else if(fileChooser.getMode()== FileChooser.Mode.SAVE){
-                    //SaveFileManager.saveGame(returnSelf(), file);
+                    SaveFileManager.saveGame(simulationScreen, file);
                 }
             }
         });

@@ -19,7 +19,7 @@ import org.joml.Vector3f;
 public class SimulationObject implements Disposable{
     protected final Vector3d position, temp;
     private final Vector3f temp2;
-    private final Model model;
+    protected final Model model;
     private float radius;
     private String name;
     protected final Shader shader;
@@ -245,5 +245,9 @@ public class SimulationObject implements Disposable{
 
     public void setRotationPeriod(float rotationPeriod){
         setRotationParameters(inclinationTilt,axisRightAscension,rotationPeriod,0);
+    }
+
+    public String toSaveFile(){
+        return "";
     }
 }

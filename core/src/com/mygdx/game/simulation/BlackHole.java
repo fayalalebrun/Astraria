@@ -28,4 +28,16 @@ public class BlackHole extends SimulationObject{
 
         super.render(cam,delta);
     }
+
+    @Override
+    public String toSaveFile() {
+        String s = "type: black_hole";
+        s+="name: "+getName()+"\n";
+        s+="radius: "+getRadius()+"\n";
+        s+="mass: "+getMass()+"\n";
+        s+="velocity: "+getXVel() + " " + getYVel() + " " + getZVel()+"\n";
+        s+="position: "+getXPos()+" "+getYPos()+" "+getZPos()+"\n";
+        s+="orbit_color: "+orbitColor.r + " " + orbitColor.g + " " + orbitColor.b + " " + orbitColor.a + "\n";
+        return s;
+    }
 }

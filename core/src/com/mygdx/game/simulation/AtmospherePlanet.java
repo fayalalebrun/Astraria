@@ -81,4 +81,15 @@ public class AtmospherePlanet extends SphericObject{
     public void dispose() {
         super.dispose();
     }
+
+    @Override
+    public String toSaveFile() {
+        String s = "type: planet_atmo\n";
+        s+= super.toSaveFile();
+        s+="atmo_color: "+atmosphereColor.r+" "+atmosphereColor.g+" "+atmosphereColor.b+" "+atmosphereColor.a+"\n";
+        if(useAmbientTexture){
+            s+="ambientTexture: "+ambientTexture.fileHandle.path()+"\n";
+        }
+        return s;
+    }
 }
