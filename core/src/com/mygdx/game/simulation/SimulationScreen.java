@@ -66,7 +66,7 @@ public class SimulationScreen extends BaseScreen {
         renderer = new Renderer(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
         processor = new SimCamInputProcessor(renderer.getCamera());
-        multiplexer.addProcessor(processor);
+
 
         labelFont = Boot.manager.get("Euclid10.fnt", BitmapFont.class);
         fontBatch = new SpriteBatch();
@@ -76,6 +76,8 @@ public class SimulationScreen extends BaseScreen {
         simulationObjects = new ArrayList<SimulationObject>();
 
         this.simulationScreenInterface = new SimulationScreenInterface(this,multiplexer,algorithm);
+        multiplexer.addProcessor(processor);
+
 
         clickable3DObjects = new ArrayList<Clickable3DObject>();
 

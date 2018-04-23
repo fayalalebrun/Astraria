@@ -45,8 +45,9 @@ public class SimulationScreenInterface {
                 if (uiStage.hit(x,y,true) == null) {
                     uiStage.setKeyboardFocus(null);
                     uiStage.setScrollFocus(null);
+                    return false;
                 }
-                return false;
+                return true;
             }
         });
 
@@ -120,5 +121,9 @@ public class SimulationScreenInterface {
 
         menuBarTable.clearChildren();
         menuBarTable.add(menuBar.getTable()).fillX().expandX().row();
+    }
+
+    public Stage getUiStage() {
+        return uiStage;
     }
 }
