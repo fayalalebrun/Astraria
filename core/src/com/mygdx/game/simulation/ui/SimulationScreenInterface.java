@@ -34,6 +34,7 @@ public class SimulationScreenInterface {
     private Group listGroup;
     private Group infoGroup;
     private Group simSpeedGroup;
+    private Group creationGroup;
 
     public SimulationScreenInterface(SimulationScreen simulationScreen, InputMultiplexer multiplexer, NBodyAlgorithm nBodyAlgorithm) {
         this.simulationScreen = simulationScreen;
@@ -66,6 +67,7 @@ public class SimulationScreenInterface {
         listGroup = new Group();
         infoGroup = new Group();
         simSpeedGroup = new Group();
+        creationGroup = new Group();
 
         multiplexer.addProcessor(uiStage);
 
@@ -88,14 +90,15 @@ public class SimulationScreenInterface {
         launchToolWindow = new LaunchToolWindow(simulationScreen.getRenderer().getPlacementManager());
         placementWindow = new PlacementWindow(launchToolWindow,simulationScreen.getRenderer(),
                 simulationScreen.getRenderer().getPlacementManager());
+        creationGroup.addActor(launchToolWindow);
+        creationGroup.addActor(placementWindow);
 
-        toolbar = new ToolbarWindow(listGroup, infoGroup, simSpeedGroup);
+        toolbar = new ToolbarWindow(listGroup, infoGroup, simSpeedGroup,creationGroup);
 
         uiStage.addActor(listGroup);
         uiStage.addActor(infoGroup);
         uiStage.addActor(simSpeedGroup);
-        uiStage.addActor(placementWindow);
-        uiStage.addActor(launchToolWindow);
+        uiStage.addActor(creationGroup);
         uiStage.addActor(toolbar);
     }
 
