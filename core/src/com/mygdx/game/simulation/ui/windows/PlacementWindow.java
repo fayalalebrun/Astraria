@@ -8,6 +8,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.utils.Array;
 import com.kotcrab.vis.ui.VisUI;
+import com.kotcrab.vis.ui.util.form.SimpleFormValidator;
 import com.kotcrab.vis.ui.widget.*;
 import com.kotcrab.vis.ui.widget.color.ColorPicker;
 import com.kotcrab.vis.ui.widget.color.ColorPickerAdapter;
@@ -38,7 +39,6 @@ public class PlacementWindow extends VisWindow{
     private final VisLabel temperatureLabel = new VisLabel("Temperature: ");
     private final VisLabel atmoColorLabel = new VisLabel("Atmosphere color: ");
 
-    private final VisLabel errorLabel = new VisLabel("Please enter parameters");
 
     private final VisValidatableTextField nameField = new VisValidatableTextField();
     private final VisValidatableTextField radiusField = new VisValidatableTextField();
@@ -54,6 +54,10 @@ public class PlacementWindow extends VisWindow{
     private final Image orbitColImage = new Image(white);
     private final Image atmoColImage = new Image(white);
     private String colSelect = "";
+
+    private final VisTextButton baseTracker = new VisTextButton("");
+    private final VisTextButton rotTracker = new VisTextButton("");
+    private final VisTextButton tempTracker = new VisTextButton("");
 
     private final VisTable fieldsTable = new VisTable(true);
 
@@ -73,8 +77,7 @@ public class PlacementWindow extends VisWindow{
         add(fieldsTable);
         createWidgets();
         addPlanetFields(fieldsTable);
-        row();
-        add(errorLabel);
+        createValidators();
         pack();
     }
 
@@ -128,8 +131,6 @@ public class PlacementWindow extends VisWindow{
                 getStage().addActor(picker.fadeIn());
             }
         });
-
-        errorLabel.setColor(Color.RED);
     }
 
     private void addGeneral(VisTable table){
@@ -194,9 +195,41 @@ public class PlacementWindow extends VisWindow{
         addGeneral(table);
     }
 
+    private void createValidators(){
+        SimpleFormValidator baseValidator = new SimpleFormValidator(baseTracker);
+        baseValidator.notEmpty(nameField,"");
+
+        baseValidator.notEmpty(radiusField,"");
+        baseValidator.floatNumber(radiusField,"");
+
+        baseValidator.notEmpty(massField,"");
+        baseValidator.floatNumber(massField,"");
+
+        SimpleFormValidator rotValidator = new SimpleFormValidator(rotTracker);
+
+        rotValidator.notEmpty(inclinationField, "");
+        rotValidator.floatNumber(inclinationField, "");
+
+        rotValidator.notEmpty(axisRightField, "");
+        rotValidator.floatNumber(axisRightField, "");
+
+        rotValidator.notEmpty(rotPeriodField, "");
+        rotValidator.floatNumber(rotPeriodField, "");
+
+        SimpleFormValidator tempValidator = new SimpleFormValidator(tempTracker);
+
+        tempValidator.notEmpty(temperatureField, "");
+        tempValidator.floatNumber(temperatureField, "");
+    }
+
     private void addField(VisTable table, VisLabel label, VisValidatableTextField field){
         table.add(label).width(150f);
         table.add(field).width(150f);
+    }
+
+    @Override
+    public void act(float delta) {
+        super.act(delta);
     }
 
     public String getColSelect() {
