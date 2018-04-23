@@ -172,7 +172,8 @@ public class SimCamInputProcessor implements InputProcessor{
 
     @Override
     public boolean scrolled(int amount) {
+
         camera.changeSpeed(-amount);
-        return false;
+        return true;
     }
 }
