@@ -31,7 +31,7 @@ public class Renderer implements Disposable{
 
     private static final float MAXVIEWDISTANCE = 100000000000f;
 
-    private static final float LOGDEPTHCONSTANT = 0.00000000001f;
+    private static final float LOGDEPTHCONSTANT = 1f;
 
     private int screenWidth, screenHeight;
 
