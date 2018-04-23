@@ -26,13 +26,15 @@ public class ToolbarWindow extends VisWindow{
     private Group listGroup;
     private Group infoGroup;
     private Group simSpeedGroup;
+    private Group creationGroup;
 
 
-    public ToolbarWindow(Group listGroup, Group infoGroup, Group simSpeedGroup) {
+    public ToolbarWindow(Group listGroup, Group infoGroup, Group simSpeedGroup, Group creationGroup) {
         super("Tools");
         this.listGroup = listGroup;
         this.infoGroup = infoGroup;
         this.simSpeedGroup = simSpeedGroup;
+        this.creationGroup = creationGroup;
         TableUtils.setSpacingDefaults(this);
         addWidgets();
         pack();
@@ -48,10 +50,13 @@ public class ToolbarWindow extends VisWindow{
         VisImageButton infoButton = new VisImageButton(convertToDrawable(Boot.manager.get("icons/info.png", Texture.class)),"Simulation Info");
         setButtonAction(infoButton, infoGroup);
 
+        VisImageButton creationButton = new VisImageButton(convertToDrawable(Boot.manager.get("icons/add.png", Texture.class)),"Simulation Info");
+        setButtonAction(creationButton, creationGroup);
 
         add(listButton).padRight(1f);
         add(infoButton).padRight(1f);
-        add(speedButton);
+        add(speedButton).padRight(1f);
+        add(creationButton);
     }
 
     private void setButtonAction(VisImageButton button, final Group windowGroup){
