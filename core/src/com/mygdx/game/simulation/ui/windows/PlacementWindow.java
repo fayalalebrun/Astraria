@@ -178,6 +178,8 @@ public class PlacementWindow extends VisWindow{
                         simObj = new Star(renderer,textureSelect.getSelected(),Float.parseFloat(radiusField.getText()),
                                 nameField.getText(), renderer.getTransformation(), body,orbitColImage.getColor(),
                                 Float.parseFloat(temperatureField.getText()));
+                        simObj.setRotationParameters(getRadParam(inclinationField.getText()),getRadParam(axisRightField.getText()),
+                                getRadParam(rotPeriodField.getText()),0f);
                     }
 
                     launchToolWindow.setSimulationObject(simObj);
