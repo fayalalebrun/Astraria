@@ -70,6 +70,14 @@ public class LaunchToolWindow extends VisWindow{
     }
 
     @Override
+    public void act(float delta) {
+        super.act(delta);
+        if(!tracker.isDisabled()) {
+            placementManager.setObjectSpeed(Double.parseDouble(speedField.getText()));
+        }
+    }
+
+    @Override
     public void setVisible(boolean visible) {
         super.setVisible(visible);
         if (!visible){
