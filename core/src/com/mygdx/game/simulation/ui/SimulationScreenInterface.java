@@ -29,6 +29,7 @@ public class SimulationScreenInterface {
     private SimInfoWindow simInfoWindow;
     private SimSpeedWindow simSpeedWindow;
     private PlacementWindow placementWindow;
+    private LaunchToolWindow launchToolWindow;
 
     private Group listGroup;
     private Group infoGroup;
@@ -84,7 +85,8 @@ public class SimulationScreenInterface {
         simSpeedWindow = new SimSpeedWindow();
         simSpeedGroup.addActor(simSpeedWindow);
 
-        placementWindow = new PlacementWindow();
+        launchToolWindow = new LaunchToolWindow();
+        placementWindow = new PlacementWindow(launchToolWindow,simulationScreen.getRenderer());
 
         toolbar = new ToolbarWindow(listGroup, infoGroup, simSpeedGroup);
 
@@ -92,6 +94,7 @@ public class SimulationScreenInterface {
         uiStage.addActor(infoGroup);
         uiStage.addActor(simSpeedGroup);
         uiStage.addActor(placementWindow);
+        uiStage.addActor(launchToolWindow);
         uiStage.addActor(toolbar);
     }
 

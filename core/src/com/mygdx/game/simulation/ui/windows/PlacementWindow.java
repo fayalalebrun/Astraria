@@ -10,13 +10,15 @@ import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Array;
 import com.kotcrab.vis.ui.VisUI;
+import com.kotcrab.vis.ui.util.dialog.Dialogs;
 import com.kotcrab.vis.ui.util.form.SimpleFormValidator;
 import com.kotcrab.vis.ui.widget.*;
 import com.kotcrab.vis.ui.widget.color.ColorPicker;
 import com.kotcrab.vis.ui.widget.color.ColorPickerAdapter;
 import com.mygdx.game.Boot;
-import com.mygdx.game.simulation.renderer.GLTexture;
-import com.mygdx.game.simulation.renderer.Warehouse;
+import com.mygdx.game.simulation.*;
+import com.mygdx.game.simulation.logic.Body;
+import com.mygdx.game.simulation.renderer.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -67,6 +69,8 @@ public class PlacementWindow extends VisWindow{
     private final VisImageButton launchButton = new VisImageButton(
             convertToDrawable(Boot.manager.get("icons/target.png", Texture.class)), "Launch Tool");
 
+    private final LaunchToolWindow launchToolWindow;
+
 
     private final ColorPicker picker = new ColorPicker("", new ColorPickerAdapter(){
         @Override
@@ -79,8 +83,13 @@ public class PlacementWindow extends VisWindow{
         }
     });
 
-    public PlacementWindow() {
+    private Renderer renderer;
+
+    public PlacementWindow(LaunchToolWindow launchToolWindow, Renderer renderer) {
         super("New Object Placement");
+        this.launchToolWindow = launchToolWindow;
+        this.renderer = renderer;
+
         add(fieldsTable);
         createWidgets();
         addPlanetFields(fieldsTable);
@@ -140,6 +149,49 @@ public class PlacementWindow extends VisWindow{
                 getStage().addActor(picker.fadeIn());
             }
         });
+
+        launchButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                if(checkIfInputValid()){
+                    SimulationObject simObj = null;
+                    Body body = new Body(Double.parseDouble(massField.getText()),0,0,0,0,0,0);
+                    if(typeSelect.getSelected().equals("Planet")){
+                        simObj = new Planet(renderer,textureSelect.getSelected(),Float.parseFloat(radiusField.getText()),nameField.getText(),
+                                renderer.getTransformation(), body,orbitColImage.getColor());
+                        simObj.setRotationParameters(getRadParam(inclinationField.getText()),getRadParam(axisRightField.getText()),
+                                getRadParam(rotPeriodField.getText()),0f);
+                    } else if (typeSelect.getSelected().equals("Atmosphere Planet")){
+                        simObj = new AtmospherePlanet(renderer, textureSelect.getSelected(),Float.parseFloat(radiusField.getText()),
+                                nameField.getText(), orbitColImage.getColor(),renderer.getTransformation(), body,
+                                renderer.getLightSourceManager(), atmoColImage.getColor(),null);
+                        simObj.setRotationParameters(getRadParam(inclinationField.getText()),getRadParam(axisRightField.getText()),
+                                getRadParam(rotPeriodField.getText()),0f);
+                    } else if(typeSelect.getSelected().equals("Black Hole")){
+                        Sphere s = new Sphere(renderer.getTransformation(),
+                                null,false);
+                        simObj = new BlackHole(s,renderer.getBlackHoleShader(),renderer.getLineShader(),
+                                Float.parseFloat(radiusField.getText()),nameField.getText(),renderer.getTransformation(),
+                                body, orbitColImage.getColor(),renderer.getSkybox());
+                    } else if(typeSelect.getSelected().equals("Star")){
+                        simObj = new Star(renderer,textureSelect.getSelected(),Float.parseFloat(radiusField.getText()),
+                                nameField.getText(), renderer.getTransformation(), body,orbitColImage.getColor(),
+                                Float.parseFloat(temperatureField.getText()));
+                    }
+
+                    launchToolWindow.setSimulationObject(simObj);
+                    launchToolWindow.setVisible(true);
+                    setVisible(false);
+
+                } else {
+                    Dialogs.showErrorDialog(getStage(), "Parameters incorrect");
+                }
+            }
+        });
+    }
+
+    private float getRadParam(String param){
+        return (float)Math.toRadians(Float.parseFloat(param));
     }
 
     private void addGeneral(VisTable table){
@@ -234,6 +286,19 @@ public class PlacementWindow extends VisWindow{
     private void addField(VisTable table, VisLabel label, VisValidatableTextField field){
         table.add(label).width(150f);
         table.add(field).width(150f);
+    }
+
+    private boolean checkIfInputValid(){
+        if(typeSelect.getSelected().equals("Planet")){
+            return !baseTracker.isDisabled()&&!rotTracker.isDisabled();
+        } else if(typeSelect.getSelected().equals("Atmosphere Planet")){
+            return !baseTracker.isDisabled()&&!rotTracker.isDisabled();
+        } else if(typeSelect.getSelected().equals("Star")){
+            return !baseTracker.isDisabled()&&!rotTracker.isDisabled()&&!tempTracker.isDisabled();
+        } else if(typeSelect.getSelected().equals("Black Hole")){
+            return !baseTracker.isDisabled();
+        }
+        return false;
     }
 
     @Override
