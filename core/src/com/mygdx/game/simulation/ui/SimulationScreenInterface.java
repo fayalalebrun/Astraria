@@ -1,18 +1,23 @@
 package com.mygdx.game.simulation.ui;
 
 import com.badlogic.gdx.InputMultiplexer;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.scenes.scene2d.*;
 import com.badlogic.gdx.scenes.scene2d.ui.TextField;
+import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
-import com.kotcrab.vis.ui.widget.Menu;
-import com.kotcrab.vis.ui.widget.MenuBar;
-import com.kotcrab.vis.ui.widget.VisTable;
-import com.kotcrab.vis.ui.widget.VisWindow;
+import com.kotcrab.vis.ui.widget.*;
+import com.kotcrab.vis.ui.widget.file.FileChooser;
+import com.kotcrab.vis.ui.widget.file.FileTypeFilter;
+import com.kotcrab.vis.ui.widget.file.SingleFileChooserListener;
+import com.mygdx.game.simulation.SaveFileManager;
 import com.mygdx.game.simulation.SimulationObject;
 import com.mygdx.game.simulation.SimulationScreen;
 import com.mygdx.game.simulation.logic.algorithms.NBodyAlgorithm;
 import com.mygdx.game.simulation.ui.windows.*;
 import javafx.scene.control.ToolBar;
+
+import java.io.File;
 
 /**
  * Created by fraayala19 on 4/18/18.
@@ -36,10 +41,16 @@ public class SimulationScreenInterface {
     private Group simSpeedGroup;
     private Group creationGroup;
 
+    private FileChooser fileChooser;
+
     public SimulationScreenInterface(SimulationScreen simulationScreen, InputMultiplexer multiplexer, NBodyAlgorithm nBodyAlgorithm) {
         this.simulationScreen = simulationScreen;
 
         uiStage = new Stage(new ScreenViewport());
+
+        FileChooser.setDefaultPrefsName("com.mygdx.game.simulation.filechooser");
+        fileChooser = new FileChooser(FileChooser.Mode.OPEN);
+        setupFileChooser();
 
         uiStage.getRoot().addCaptureListener(new InputListener() {
             public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
@@ -74,6 +85,8 @@ public class SimulationScreenInterface {
 
         addWindows();
         positionWindows();
+
+        createMenus();
     }
 
     private void addWindows() {
@@ -128,6 +141,58 @@ public class SimulationScreenInterface {
 
         menuBarTable.clearChildren();
         menuBarTable.add(menuBar.getTable()).fillX().expandX().row();
+    }
+
+    private void createMenus(){
+        Menu fileMenu = new Menu("File");
+
+        createFileMenuItems(fileMenu);
+
+        menuBar.addMenu(fileMenu);
+    }
+
+    private void setupFileChooser(){
+        fileChooser.setSelectionMode(FileChooser.SelectionMode.FILES);
+        final FileTypeFilter fileTypeFilter = new FileTypeFilter(true);
+        fileTypeFilter.addRule("Text files (*.txt)","txt");
+
+        fileChooser.setFileTypeFilter(fileTypeFilter);
+
+        fileChooser.setListener(new SingleFileChooserListener() {
+            @Override
+            protected void selected(FileHandle file) {
+                if(fileChooser.getMode()== FileChooser.Mode.OPEN){
+                    SaveFileManager.loadGame(simulationScreen, simulationScreen.getRenderer(),file);
+                } else if(fileChooser.getMode()== FileChooser.Mode.SAVE){
+                    //SaveFileManager.saveGame(returnSelf(), file);
+                }
+            }
+        });
+    }
+
+    private void createFileMenuItems(Menu fileMenu){
+        MenuItem load = new MenuItem("Load");
+
+        load.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                fileChooser.setMode(FileChooser.Mode.OPEN);
+                uiStage.addActor(fileChooser.fadeIn());
+            }
+        });
+
+        MenuItem save = new MenuItem("Save");
+
+        save.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                fileChooser.setMode(FileChooser.Mode.SAVE);
+                uiStage.addActor(fileChooser.fadeIn());
+            }
+        });
+
+        fileMenu.addItem(load);
+        fileMenu.addItem(save);
     }
 
     public Stage getUiStage() {
