@@ -221,11 +221,13 @@ public class Renderer implements Disposable{
         lineShader.setMat4("view", view);
         lineShader.setFloat("FC",1.0f/(float)Math.log(MAXVIEWDISTANCE*LOGDEPTHCONSTANT + 1));
 
+        placementManager.render(camera,delta);
+
         for(SimulationObject object : toDraw){
             object.render(camera,delta);
         }
 
-        placementManager.render(camera,delta);
+
 
         skybox.render();
 

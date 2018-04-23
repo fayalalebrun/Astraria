@@ -32,7 +32,7 @@ public class PlacementManager {
             temp.add(camera.getPosition());
             simulationObject.setAbsPosition(temp.x, temp.y, temp.z);
 
-            simulationObject.render(camera, delta);
+            simulationObject.render(camera, 0f);
         }
     }
 }
