@@ -2,16 +2,19 @@ package com.mygdx.game.simulation.ui.windows;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
+import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Array;
 import com.kotcrab.vis.ui.VisUI;
 import com.kotcrab.vis.ui.util.form.SimpleFormValidator;
 import com.kotcrab.vis.ui.widget.*;
 import com.kotcrab.vis.ui.widget.color.ColorPicker;
 import com.kotcrab.vis.ui.widget.color.ColorPickerAdapter;
+import com.mygdx.game.Boot;
 import com.mygdx.game.simulation.renderer.GLTexture;
 import com.mygdx.game.simulation.renderer.Warehouse;
 
@@ -61,6 +64,10 @@ public class PlacementWindow extends VisWindow{
 
     private final VisTable fieldsTable = new VisTable(true);
 
+    private final VisImageButton launchButton = new VisImageButton(
+            convertToDrawable(Boot.manager.get("icons/target.png", Texture.class)), "Launch Tool");
+
+
     private final ColorPicker picker = new ColorPicker("", new ColorPickerAdapter(){
         @Override
         public void finished (Color newColor) {
@@ -78,6 +85,8 @@ public class PlacementWindow extends VisWindow{
         createWidgets();
         addPlanetFields(fieldsTable);
         createValidators();
+        row();
+        add(launchButton).padTop(3f).left();
         pack();
     }
 
@@ -239,5 +248,9 @@ public class PlacementWindow extends VisWindow{
 
     public void setColSelect(String colSelect) {
         this.colSelect = colSelect;
+    }
+
+    private TextureRegionDrawable convertToDrawable(Texture texture){
+        return new TextureRegionDrawable(new TextureRegion(texture));
     }
 }
