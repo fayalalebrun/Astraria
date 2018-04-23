@@ -10,6 +10,7 @@ import java.util.ArrayList;
  */
 public class Sphere extends Model implements Disposable {
     GLTexture diffuseTexture;
+    private boolean textured = true;
 
     public Sphere(Transformation transformation, GLTexture diffuseTexture){
         super(new ArrayList<Mesh>(),transformation);
@@ -23,6 +24,7 @@ public class Sphere extends Model implements Disposable {
 
     public Sphere(Transformation transformation, GLTexture diffuseTexture, boolean textured){
         this(transformation,diffuseTexture);
+        this.textured = textured;
         meshes.get(0).setUseTexture(textured);
 
     }
@@ -30,6 +32,7 @@ public class Sphere extends Model implements Disposable {
     @Override
     public void render(Camera cam, Shader shader) {
         meshes.get(0).setDiffuseTexture(diffuseTexture);
+        meshes.get(0).setUseTexture(textured);
         super.render(cam, shader);
     }
 }
