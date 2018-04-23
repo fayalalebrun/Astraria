@@ -7,6 +7,7 @@ import com.kotcrab.vis.ui.widget.VisLabel;
 import com.kotcrab.vis.ui.widget.VisTextButton;
 import com.kotcrab.vis.ui.widget.VisValidatableTextField;
 import com.kotcrab.vis.ui.widget.VisWindow;
+import com.mygdx.game.simulation.PlacementManager;
 import com.mygdx.game.simulation.SimulationObject;
 
 /**
@@ -22,8 +23,11 @@ public class LaunchToolWindow extends VisWindow{
 
     private PlacementWindow placementWindow;
 
-    public LaunchToolWindow() {
+    private PlacementManager placementManager;
+
+    public LaunchToolWindow(PlacementManager placementManager) {
         super("Launch Tool");
+        this.placementManager = placementManager;
         setVisible(false);
         TableUtils.setSpacingDefaults(this);
 
@@ -47,6 +51,7 @@ public class LaunchToolWindow extends VisWindow{
     }
 
     public void setSimulationObject(SimulationObject simulationObject) {
+        placementManager.setActive(true,simulationObject);
         this.simulationObject = simulationObject;
     }
 

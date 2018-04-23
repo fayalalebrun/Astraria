@@ -85,8 +85,9 @@ public class SimulationScreenInterface {
         simSpeedWindow = new SimSpeedWindow();
         simSpeedGroup.addActor(simSpeedWindow);
 
-        launchToolWindow = new LaunchToolWindow();
-        placementWindow = new PlacementWindow(launchToolWindow,simulationScreen.getRenderer());
+        launchToolWindow = new LaunchToolWindow(simulationScreen.getRenderer().getPlacementManager());
+        placementWindow = new PlacementWindow(launchToolWindow,simulationScreen.getRenderer(),
+                simulationScreen.getRenderer().getPlacementManager());
 
         toolbar = new ToolbarWindow(listGroup, infoGroup, simSpeedGroup);
 
