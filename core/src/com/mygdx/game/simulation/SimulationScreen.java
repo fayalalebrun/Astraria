@@ -36,6 +36,7 @@ public class SimulationScreen extends BaseScreen {
 
     private final Renderer renderer;
     private final SimCamInputProcessor processor;
+    private final PlacementInputProcessor placeProcessor;
     private ArrayList<SimulationObject> simulationObjects;
     private final BitmapFont labelFont;
     private SpriteBatch fontBatch;
@@ -66,6 +67,7 @@ public class SimulationScreen extends BaseScreen {
         renderer = new Renderer(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
         processor = new SimCamInputProcessor(renderer.getCamera());
+        placeProcessor = new PlacementInputProcessor(renderer.getCamera(), renderer.getPlacementManager(), this);
 
 
         labelFont = Boot.manager.get("Euclid10.fnt", BitmapFont.class);
@@ -76,6 +78,7 @@ public class SimulationScreen extends BaseScreen {
         simulationObjects = new ArrayList<SimulationObject>();
 
         this.simulationScreenInterface = new SimulationScreenInterface(this,multiplexer,algorithm);
+        multiplexer.addProcessor(placeProcessor);
         multiplexer.addProcessor(processor);
 
 
