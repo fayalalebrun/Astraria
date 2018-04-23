@@ -35,6 +35,7 @@ public class Boot extends Game {
 		manager.load("icons/list.png", Texture.class);
 		manager.load("icons/info.png", Texture.class);
 		manager.load("icons/timer.png", Texture.class);
+		manager.load("icons/target.png", Texture.class);
 		manager.finishLoading();
 
 		VisUI.load();
