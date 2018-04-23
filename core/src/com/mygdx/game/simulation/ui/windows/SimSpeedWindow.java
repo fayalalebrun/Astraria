@@ -2,6 +2,7 @@ package com.mygdx.game.simulation.ui.windows;
 
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
+import com.kotcrab.vis.ui.util.TableUtils;
 import com.kotcrab.vis.ui.util.form.SimpleFormValidator;
 import com.kotcrab.vis.ui.widget.VisLabel;
 import com.kotcrab.vis.ui.widget.VisTextButton;
@@ -17,6 +18,7 @@ public class SimSpeedWindow extends VisWindow{
 
     public SimSpeedWindow() {
         super("Simulation Speed");
+        TableUtils.setSpacingDefaults(this);
         field = new VisValidatableTextField(SimulationScreen.simSpeed+"");
         addWidgets();
         pack();
