@@ -158,34 +158,7 @@ public class PlacementWindow extends VisWindow{
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 if(checkIfInputValid()){
-                    SimulationObject simObj = null;
-                    Body body = new Body(Double.parseDouble(massField.getText()),0,0,0,0,0,0);
-                    if(typeSelect.getSelected().equals("Planet")){
-                        simObj = new Planet(renderer,textureSelect.getSelected(),Float.parseFloat(radiusField.getText()),nameField.getText(),
-                                renderer.getTransformation(), body,orbitColImage.getColor());
-                        simObj.setRotationParameters(getRadParam(inclinationField.getText()),getRadParam(axisRightField.getText()),
-                                getRadParam(rotPeriodField.getText()),0f);
-                    } else if (typeSelect.getSelected().equals("Atmosphere Planet")){
-                        simObj = new AtmospherePlanet(renderer, textureSelect.getSelected(),Float.parseFloat(radiusField.getText()),
-                                nameField.getText(), orbitColImage.getColor(),renderer.getTransformation(), body,
-                                renderer.getLightSourceManager(), atmoColImage.getColor(),null);
-                        simObj.setRotationParameters(getRadParam(inclinationField.getText()),getRadParam(axisRightField.getText()),
-                                getRadParam(rotPeriodField.getText()),0f);
-                    } else if(typeSelect.getSelected().equals("Black Hole")){
-                        Sphere s = new Sphere(renderer.getTransformation(),
-                                null,false);
-                        simObj = new BlackHole(s,renderer.getBlackHoleShader(),renderer.getLineShader(),
-                                Float.parseFloat(radiusField.getText()),nameField.getText(),renderer.getTransformation(),
-                                body, orbitColImage.getColor(),renderer.getSkybox());
-                    } else if(typeSelect.getSelected().equals("Star")){
-                        simObj = new Star(renderer,textureSelect.getSelected(),Float.parseFloat(radiusField.getText()),
-                                nameField.getText(), renderer.getTransformation(), body,orbitColImage.getColor(),
-                                Float.parseFloat(temperatureField.getText()));
-                        simObj.setRotationParameters(getRadParam(inclinationField.getText()),getRadParam(axisRightField.getText()),
-                                getRadParam(rotPeriodField.getText()),0f);
-                    }
-
-                    launchToolWindow.setSimulationObject(simObj);
+                    launchToolWindow.setSimulationObject(createSimulationObjectFromFields());
                     launchToolWindow.setVisible(true);
                     setVisible(false);
 
@@ -194,6 +167,36 @@ public class PlacementWindow extends VisWindow{
                 }
             }
         });
+    }
+
+    public SimulationObject createSimulationObjectFromFields(){
+        SimulationObject simObj = null;
+        Body body = new Body(Double.parseDouble(massField.getText()),0,0,0,0,0,0);
+        if(typeSelect.getSelected().equals("Planet")){
+            simObj = new Planet(renderer,textureSelect.getSelected(),Float.parseFloat(radiusField.getText()),nameField.getText(),
+                    renderer.getTransformation(), body,orbitColImage.getColor());
+            simObj.setRotationParameters(getRadParam(inclinationField.getText()),getRadParam(axisRightField.getText()),
+                    getRadParam(rotPeriodField.getText()),0f);
+        } else if (typeSelect.getSelected().equals("Atmosphere Planet")){
+            simObj = new AtmospherePlanet(renderer, textureSelect.getSelected(),Float.parseFloat(radiusField.getText()),
+                    nameField.getText(), orbitColImage.getColor(),renderer.getTransformation(), body,
+                    renderer.getLightSourceManager(), atmoColImage.getColor(),null);
+            simObj.setRotationParameters(getRadParam(inclinationField.getText()),getRadParam(axisRightField.getText()),
+                    getRadParam(rotPeriodField.getText()),0f);
+        } else if(typeSelect.getSelected().equals("Black Hole")){
+            Sphere s = new Sphere(renderer.getTransformation(),
+                    null,false);
+            simObj = new BlackHole(s,renderer.getBlackHoleShader(),renderer.getLineShader(),
+                    Float.parseFloat(radiusField.getText()),nameField.getText(),renderer.getTransformation(),
+                    body, orbitColImage.getColor(),renderer.getSkybox());
+        } else if(typeSelect.getSelected().equals("Star")){
+            simObj = new Star(renderer,textureSelect.getSelected(),Float.parseFloat(radiusField.getText()),
+                    nameField.getText(), renderer.getTransformation(), body,orbitColImage.getColor(),
+                    Float.parseFloat(temperatureField.getText()));
+            simObj.setRotationParameters(getRadParam(inclinationField.getText()),getRadParam(axisRightField.getText()),
+                    getRadParam(rotPeriodField.getText()),0f);
+        }
+        return simObj;
     }
 
     private float getRadParam(String param){
