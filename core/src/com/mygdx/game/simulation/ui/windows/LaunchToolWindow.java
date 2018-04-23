@@ -75,6 +75,11 @@ public class LaunchToolWindow extends VisWindow{
         if(!tracker.isDisabled()) {
             placementManager.setObjectSpeed(Double.parseDouble(speedField.getText()));
         }
+        if(isVisible()){
+            if(!placementManager.isActive()){
+                placementManager.setActive(true, placementWindow.createSimulationObjectFromFields());
+            }
+        }
     }
 
     @Override
