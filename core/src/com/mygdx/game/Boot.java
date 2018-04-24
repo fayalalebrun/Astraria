@@ -24,7 +24,7 @@ public class Boot extends Game {
 	public void create () {
 		Gdx.graphics.setResizable(true);
 		Gdx.graphics.setWindowedMode(1280,720);
-		Gdx.graphics.setTitle("Orbit Simulator");
+		Gdx.graphics.setTitle("Astraria");
 		Gdx.graphics.setVSync(true);
 
 		manager = new AssetManager();
