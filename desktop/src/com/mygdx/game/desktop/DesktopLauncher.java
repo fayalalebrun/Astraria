@@ -16,6 +16,7 @@ public class DesktopLauncher {
 		config.useGL30 = true;
 		config.samples=7;
 
+		config.addIcon("icons/astraria256.png", Files.FileType.Internal);
 		config.addIcon("icons/astraria128.png", Files.FileType.Internal);
 		config.addIcon("icons/astraria32.png", Files.FileType.Internal);
 		config.addIcon("icons/astraria16.png", Files.FileType.Internal);
