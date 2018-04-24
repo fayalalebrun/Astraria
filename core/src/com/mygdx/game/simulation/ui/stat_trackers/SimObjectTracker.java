@@ -362,4 +362,8 @@ public class SimObjectTracker {
             periodField.setText(Math.toDegrees(simulationObject.getRotationPeriod())+"");
         }
     }
+
+    public SimulationObject getSimulationObject() {
+        return simulationObject;
+    }
 }

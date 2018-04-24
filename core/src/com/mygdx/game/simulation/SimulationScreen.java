@@ -140,6 +140,12 @@ public class SimulationScreen extends BaseScreen {
         simulationScreenInterface.addObject(simulationObject);
     }
 
+    public void removeObject(SimulationObject simulationObject){
+        simulationObjects.remove(simulationObject);
+        algorithm.removeBody(simulationObject.getBody());
+        simulationScreenInterface.removeObject(simulationObject);
+    }
+
     public void clearObjects(){
         for(SimulationObject simulationObject : simulationObjects){
             algorithm.removeBody(simulationObject.getBody());

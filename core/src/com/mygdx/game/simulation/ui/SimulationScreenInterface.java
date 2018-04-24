@@ -87,7 +87,7 @@ public class SimulationScreenInterface {
     }
 
     private void addWindows() {
-        statsWindow = new StatsWindow();
+        statsWindow = new StatsWindow(simulationScreen);
         listGroup.addActor(statsWindow);
         objectListWindow = new ObjectListWindow(simulationScreen, statsWindow);
         listGroup.addActor(objectListWindow);

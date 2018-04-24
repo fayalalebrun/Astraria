@@ -1,9 +1,13 @@
 package com.mygdx.game.simulation.ui.windows;
 
+import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.kotcrab.vis.ui.util.TableUtils;
 import com.kotcrab.vis.ui.widget.VisScrollPane;
 import com.kotcrab.vis.ui.widget.VisTable;
+import com.kotcrab.vis.ui.widget.VisTextButton;
 import com.kotcrab.vis.ui.widget.VisWindow;
+import com.mygdx.game.simulation.SimulationScreen;
 import com.mygdx.game.simulation.renderer.Camera;
 import com.mygdx.game.simulation.ui.stat_trackers.SimObjectTracker;
 
@@ -16,13 +20,18 @@ public class StatsWindow extends VisWindow{
 
     VisTable mainTable;
 
-    public StatsWindow() {
+    VisTextButton deleteButton;
+
+    private SimulationScreen simulationScreen;
+
+    public StatsWindow(SimulationScreen simulationScreen) {
         super("Object Statistics");
+        this.simulationScreen = simulationScreen;
         TableUtils.setSpacingDefaults(this);
         mainTable = new VisTable();
         TableUtils.setSpacingDefaults(mainTable);
         addWidgets();
-        setSize(285,270);
+        setSize(285,285);
     }
 
     private void addWidgets(){
@@ -31,6 +40,21 @@ public class StatsWindow extends VisWindow{
         scrollPane.setFlickScroll(false);
 
         add(scrollPane).spaceTop(30).growX().width(280).height(220f);
+        row();
+
+        deleteButton = new VisTextButton("Delete");
+
+        deleteButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                if(getSimObjectTracker()!=null){
+                    simulationScreen.removeObject(getSimObjectTracker().getSimulationObject());
+                }
+            }
+        });
+
+        add(deleteButton).right();
+        row();
     }
 
     public void setSimObjectTracker(SimObjectTracker simObjectTracker){
@@ -43,5 +67,9 @@ public class StatsWindow extends VisWindow{
         if(simObjectTracker!=null) {
             this.simObjectTracker.update();
         }
+    }
+
+    public SimObjectTracker getSimObjectTracker() {
+        return simObjectTracker;
     }
 }
