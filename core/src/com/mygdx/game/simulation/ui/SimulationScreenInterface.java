@@ -3,7 +3,6 @@ package com.mygdx.game.simulation.ui;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.scenes.scene2d.*;
-import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.kotcrab.vis.ui.widget.*;
@@ -15,9 +14,6 @@ import com.mygdx.game.simulation.SimulationObject;
 import com.mygdx.game.simulation.SimulationScreen;
 import com.mygdx.game.simulation.logic.algorithms.NBodyAlgorithm;
 import com.mygdx.game.simulation.ui.windows.*;
-import javafx.scene.control.ToolBar;
-
-import java.io.File;
 
 /**
  * Created by fraayala19 on 4/18/18.
@@ -35,6 +31,7 @@ public class SimulationScreenInterface {
     private SimSpeedWindow simSpeedWindow;
     private PlacementWindow placementWindow;
     private LaunchToolWindow launchToolWindow;
+    private GraphicalOptionsWindow optionsWindow;
 
     private Group listGroup;
     private Group infoGroup;
@@ -106,6 +103,8 @@ public class SimulationScreenInterface {
         creationGroup.addActor(launchToolWindow);
         creationGroup.addActor(placementWindow);
 
+        this.optionsWindow = new GraphicalOptionsWindow();
+
         toolbar = new ToolbarWindow(listGroup, infoGroup, simSpeedGroup,creationGroup);
 
         uiStage.addActor(listGroup);
@@ -148,7 +147,25 @@ public class SimulationScreenInterface {
 
         createFileMenuItems(fileMenu);
 
+        Menu optionsMenu = new Menu("Options");
+
+        createOptionsMenuItems(optionsMenu);
+
         menuBar.addMenu(fileMenu);
+        menuBar.addMenu(optionsMenu);
+    }
+
+    private void createOptionsMenuItems(Menu optionsMenu){
+        MenuItem graphicsOptions = new MenuItem("Visual Options");
+
+        graphicsOptions.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                uiStage.addActor(optionsWindow.fadeIn());
+            }
+        });
+
+        optionsMenu.addItem(graphicsOptions);
     }
 
     private void setupFileChooser(){
