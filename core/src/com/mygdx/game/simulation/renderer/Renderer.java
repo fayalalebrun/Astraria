@@ -10,6 +10,7 @@ import com.badlogic.gdx.graphics.g3d.Renderable;
 import com.badlogic.gdx.graphics.profiling.GLProfiler;
 import com.badlogic.gdx.utils.BufferUtils;
 import com.badlogic.gdx.utils.Disposable;
+import com.mygdx.game.simulation.Options;
 import com.mygdx.game.simulation.PlacementManager;
 import com.mygdx.game.simulation.SimulationObject;
 import com.sun.media.jfxmediaimpl.MediaDisposer;
@@ -240,19 +241,23 @@ public class Renderer implements Disposable{
         Gdx.gl.glEnable(Gdx.gl.GL_BLEND);
         Gdx.gl.glBlendFunc(Gdx.gl.GL_SRC_ALPHA, Gdx.gl.GL_ONE);
 
-        for(SimulationObject object : toDraw){
-            object.getOrbit().render();
+        if(Options.drawOrbits) {
+            for (SimulationObject object : toDraw) {
+                object.getOrbit().render();
+            }
         }
 
 
 
-        while(!lensGlows.isEmpty()){
+        while(!lensGlows.isEmpty()&&Options.drawLensGlow){
             try {
                 lensGlows.poll().render();
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
+        lensGlows.clear();
 
         Gdx.gl.glDisable(Gdx.gl.GL_BLEND);
 
