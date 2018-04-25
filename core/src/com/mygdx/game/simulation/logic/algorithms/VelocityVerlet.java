@@ -92,7 +92,7 @@ public class VelocityVerlet extends NBodyAlgorithm{
         synchronized (other) {
             oX = other.getX();
             oY = other.getY();
-            oZ = other.getY();
+            oZ = other.getZ();
             temporary = other.getMass() / cb(Math.sqrt(sq(oX - pX) + sq(oY - pY) + sq(oZ - pZ)));
         }
         ax += (oX - pX) * temporary;
