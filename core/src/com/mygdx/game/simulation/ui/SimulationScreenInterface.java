@@ -34,6 +34,7 @@ public class SimulationScreenInterface {
     private PlacementWindow placementWindow;
     private LaunchToolWindow launchToolWindow;
     private GraphicalOptionsWindow optionsWindow;
+    private ControlsWindow controlsWindow;
 
     private Group listGroup;
     private Group infoGroup;
@@ -127,6 +128,7 @@ public class SimulationScreenInterface {
         creationGroup.addActor(placementWindow);
 
         this.optionsWindow = new GraphicalOptionsWindow(simulationScreen,this);
+        controlsWindow = new ControlsWindow();
 
         toolbar = new ToolbarWindow(listGroup, infoGroup, simSpeedGroup,creationGroup);
 
@@ -145,8 +147,9 @@ public class SimulationScreenInterface {
         placementWindow.setPosition(Gdx.graphics.getWidth(),150);
         simInfoWindow.setPosition(Gdx.graphics.getWidth(),0);
         simSpeedWindow.setPosition(Gdx.graphics.getWidth()-700,0);
-        launchToolWindow.setPosition(Gdx.graphics.getWidth()/2,Gdx.graphics.getHeight()/2);
-        optionsWindow.setPosition(Gdx.graphics.getWidth()/2,Gdx.graphics.getHeight()/2);
+        launchToolWindow.centerWindow();
+        optionsWindow.centerWindow();
+        controlsWindow.centerWindow();
     }
 
     public void addObject(SimulationObject simulationObject) {
@@ -184,8 +187,26 @@ public class SimulationScreenInterface {
 
         createOptionsMenuItems(optionsMenu);
 
+        Menu helpMenu = new Menu("Help");
+
+        createHelpMenu(helpMenu);
+
         menuBar.addMenu(fileMenu);
         menuBar.addMenu(optionsMenu);
+        menuBar.addMenu(helpMenu);
+    }
+
+    private void createHelpMenu(Menu helpMenu){
+        final MenuItem controls = new MenuItem("Controls");
+
+        controls.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                uiStage.addActor(controlsWindow.fadeIn());
+            }
+        });
+
+        helpMenu.addItem(controls);
     }
 
     private void createOptionsMenuItems(Menu optionsMenu){
