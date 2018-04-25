@@ -6,4 +6,5 @@ package com.mygdx.game.simulation;
 public class Options {
     public static boolean drawLensGlow = true;
     public static boolean drawOrbits= true;
+    public static boolean drawLabels = true;
 }
