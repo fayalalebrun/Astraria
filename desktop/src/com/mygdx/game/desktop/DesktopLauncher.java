@@ -21,16 +21,6 @@ public class DesktopLauncher {
 		config.addIcon("icons/astraria32.png", Files.FileType.Internal);
 		config.addIcon("icons/astraria16.png", Files.FileType.Internal);
 
-		try {
-			Class<?> cls = Class.forName("com.apple.eawt.Application");
-			Object application = cls.newInstance().getClass().getMethod("getApplication").invoke(null);
-
-			FileHandle icon = Gdx.files.local("icons/astraria128.png");
-			application.getClass().getMethod("setDockIconImage", java.awt.Image.class)
-					.invoke(application, new ImageIcon(icon.file().getAbsolutePath()).getImage());
-		} catch (Exception e) {
-			// nobody cares!
-		}
 		ShaderProgram.prependVertexCode = "#version 140\n#define varying out\n#define attribute in\n";
 		ShaderProgram.prependFragmentCode = "#version 140\n#define varying in\n#define texture2D texture\n#define gl_FragColor fragColor\nout vec4 fragColor;\n";
 		new LwjglApplication(new Boot(arg), config);
