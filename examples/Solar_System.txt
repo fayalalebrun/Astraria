@@ -37,12 +37,22 @@ name: Earth
 radius: 6378.1
 mass: 5.9723E24
 velocity: 21105.314172210237 20398.1878091857 2.087430514166044E-4
-position 1.0482728064552127E11 -1.0927061102891383E11 -1.6817723556683976E7
+position: 1.0482728064552127E11 -1.0927061102891383E11 -1.6817723556683976E7
 texture: ./Planet Textures/8k_earth_with_clouds.jpg
 orbit_color: 0.18039216 0.43137255 0.6392157 0.8
 rotation: 23.440000000000005 90.0 360.98562350000003 -10
 atmo_color: 1 1 1 1
 ambientTexture: ./Planet Textures/8k_earth_nightmap.jpg
+
+type: planet
+name: Moon
+radius: 1737.4
+mass: 7.349135348701E22
+velocity: 21995.3287 20815.2216561 -79.2339529593
+position: 1.0498672006313452E11 -1.096371160915867E11 1886466.7486382024
+texture: ./Planet Textures/8k_moon.jpg
+orbit_color: 1.0 1.0 1.0 1.0
+rotation: 1.54 55.0 13.17635815 0
 
 type: planet_atmo
 name: Mars
