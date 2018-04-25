@@ -78,7 +78,7 @@ public class SimulationScreenInterface {
             }
         });
 
-        this.simInfoWindow = new SimInfoWindow(nBodyAlgorithm);
+        this.simInfoWindow = new SimInfoWindow(nBodyAlgorithm,simulationScreen.getRenderer().getCamera());
 
         menuBarTable = new VisTable();
         menuBar = new MenuBar();

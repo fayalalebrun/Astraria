@@ -126,13 +126,10 @@ public class Camera {
         }
         if(lock!=null){
             distFromLock = lock.getRadius()+ (0.0794f * (float)Math.pow(1.2637,scrolledAmount));
-            System.out.println(distFromLock);
             return;
         }
 
-        System.out.println(scrolledAmount);
         movementSpeed = 0.0794f * (float)Math.pow(1.2637,scrolledAmount);
-        System.out.println(movementSpeed);
     }
 
     public void processMouseMovement(float xOffset, float yOffset){
@@ -157,6 +154,10 @@ public class Camera {
 
     public SimulationObject getLock() {
         return lock;
+    }
+
+    public float getMovementSpeed() {
+        return movementSpeed;
     }
 
     public Vector3f getFront() {
