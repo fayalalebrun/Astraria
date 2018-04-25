@@ -189,6 +189,14 @@ public class SimulationScreen extends BaseScreen {
         algorithmThread.interrupt();
     }
 
+    public void toggleFullscreen(){
+        if(!Gdx.graphics.isFullscreen()){
+            Gdx.graphics.setFullscreenMode(Gdx.graphics.getDisplayMode());
+        } else {
+            Gdx.graphics.setWindowedMode(1280,720);
+        }
+    }
+
     public ArrayList<SimulationObject> getSimulationObjects() {
         return simulationObjects;
     }

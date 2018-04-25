@@ -104,7 +104,7 @@ public class SimulationScreenInterface {
         creationGroup.addActor(launchToolWindow);
         creationGroup.addActor(placementWindow);
 
-        this.optionsWindow = new GraphicalOptionsWindow();
+        this.optionsWindow = new GraphicalOptionsWindow(simulationScreen);
 
         toolbar = new ToolbarWindow(listGroup, infoGroup, simSpeedGroup,creationGroup);
 
