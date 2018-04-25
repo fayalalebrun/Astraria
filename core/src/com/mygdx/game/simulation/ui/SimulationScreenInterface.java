@@ -1,5 +1,6 @@
 package com.mygdx.game.simulation.ui;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.scenes.scene2d.*;
@@ -115,7 +116,12 @@ public class SimulationScreenInterface {
     }
 
     private void positionWindows() {
-        objectListWindow.setPosition(0, 0);
+        objectListWindow.setPosition(0, 100);
+        statsWindow.setPosition(0,375);
+        placementWindow.setPosition(Gdx.graphics.getWidth(),150);
+        simInfoWindow.setPosition(Gdx.graphics.getWidth(),0);
+        simSpeedWindow.setPosition(Gdx.graphics.getWidth()-700,0);
+        launchToolWindow.setPosition(Gdx.graphics.getWidth()/2,Gdx.graphics.getHeight()/2);
     }
 
     public void addObject(SimulationObject simulationObject) {
@@ -140,6 +146,8 @@ public class SimulationScreenInterface {
 
         menuBarTable.clearChildren();
         menuBarTable.add(menuBar.getTable()).fillX().expandX().row();
+
+        positionWindows();
     }
 
     private void createMenus(){
