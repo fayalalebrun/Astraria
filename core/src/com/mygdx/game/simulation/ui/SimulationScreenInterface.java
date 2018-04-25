@@ -1,6 +1,7 @@
 package com.mygdx.game.simulation.ui;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.scenes.scene2d.*;
@@ -39,12 +40,15 @@ public class SimulationScreenInterface {
     private Group simSpeedGroup;
     private Group creationGroup;
 
+    private Group masterGroup;
+
     private FileChooser fileChooser;
 
     public SimulationScreenInterface(SimulationScreen simulationScreen, InputMultiplexer multiplexer, NBodyAlgorithm nBodyAlgorithm) {
         this.simulationScreen = simulationScreen;
 
         uiStage = new Stage(new ScreenViewport());
+        masterGroup = new Group();
 
         FileChooser.setDefaultPrefsName("com.mygdx.game.simulation.filechooser");
         fileChooser = new FileChooser(FileChooser.Mode.OPEN);
@@ -62,6 +66,17 @@ public class SimulationScreenInterface {
             }
         });
 
+        uiStage.getRoot().addCaptureListener(new InputListener(){
+            @Override
+            public boolean keyUp(InputEvent event, int keycode) {
+                if(keycode == Input.Keys.H){
+                    setUIVisible(!masterGroup.isVisible());
+                    return true;
+                }
+                return false;
+            }
+        });
+
         this.simInfoWindow = new SimInfoWindow(nBodyAlgorithm);
 
         menuBarTable = new VisTable();
@@ -73,10 +88,17 @@ public class SimulationScreenInterface {
         menuBarTable.left().top();
         menuBarTable.add(menuBar.getTable()).fillX().expandX().row();
 
+
+
         listGroup = new Group();
+        listGroup.setVisible(false);
         infoGroup = new Group();
+        infoGroup.setVisible(false);
         simSpeedGroup = new Group();
+        simSpeedGroup.setVisible(false);
         creationGroup = new Group();
+        creationGroup.setVisible(false);
+
 
         multiplexer.addProcessor(uiStage);
 
@@ -104,15 +126,17 @@ public class SimulationScreenInterface {
         creationGroup.addActor(launchToolWindow);
         creationGroup.addActor(placementWindow);
 
-        this.optionsWindow = new GraphicalOptionsWindow(simulationScreen);
+        this.optionsWindow = new GraphicalOptionsWindow(simulationScreen,this);
 
         toolbar = new ToolbarWindow(listGroup, infoGroup, simSpeedGroup,creationGroup);
 
-        uiStage.addActor(listGroup);
-        uiStage.addActor(infoGroup);
-        uiStage.addActor(simSpeedGroup);
-        uiStage.addActor(creationGroup);
-        uiStage.addActor(toolbar);
+        masterGroup.addActor(listGroup);
+        masterGroup.addActor(infoGroup);
+        masterGroup.addActor(simSpeedGroup);
+        masterGroup.addActor(creationGroup);
+        masterGroup.addActor(toolbar);
+
+        uiStage.addActor(masterGroup);
     }
 
     private void positionWindows() {
@@ -219,6 +243,11 @@ public class SimulationScreenInterface {
 
         fileMenu.addItem(load);
         fileMenu.addItem(save);
+    }
+
+    public void setUIVisible(boolean visible){
+        masterGroup.setVisible(visible);
+        menuBarTable.setVisible(visible);
     }
 
     public Stage getUiStage() {
