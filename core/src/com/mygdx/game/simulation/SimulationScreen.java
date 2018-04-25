@@ -78,7 +78,7 @@ public class SimulationScreen extends BaseScreen {
 
         simulationObjects = new ArrayList<SimulationObject>();
 
-        this.simulationScreenInterface = new SimulationScreenInterface(this,multiplexer,algorithm);
+        this.simulationScreenInterface = new SimulationScreenInterface(this,multiplexer);
         multiplexer.addProcessor(placeProcessor);
         multiplexer.addProcessor(processor);
 
@@ -195,6 +195,14 @@ public class SimulationScreen extends BaseScreen {
         } else {
             Gdx.graphics.setWindowedMode(1280,720);
         }
+    }
+
+    public int getNumObjects(){
+        return simulationObjects.size();
+    }
+
+    public NBodyAlgorithm getAlgorithm() {
+        return algorithm;
     }
 
     public ArrayList<SimulationObject> getSimulationObjects() {

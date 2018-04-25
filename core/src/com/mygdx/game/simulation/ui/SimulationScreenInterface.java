@@ -45,7 +45,7 @@ public class SimulationScreenInterface {
 
     private FileChooser fileChooser;
 
-    public SimulationScreenInterface(SimulationScreen simulationScreen, InputMultiplexer multiplexer, NBodyAlgorithm nBodyAlgorithm) {
+    public SimulationScreenInterface(SimulationScreen simulationScreen, InputMultiplexer multiplexer) {
         this.simulationScreen = simulationScreen;
 
         uiStage = new Stage(new ScreenViewport());
@@ -78,7 +78,7 @@ public class SimulationScreenInterface {
             }
         });
 
-        this.simInfoWindow = new SimInfoWindow(nBodyAlgorithm,simulationScreen.getRenderer().getCamera());
+        this.simInfoWindow = new SimInfoWindow(simulationScreen,simulationScreen.getRenderer().getCamera());
 
         menuBarTable = new VisTable();
         menuBar = new MenuBar();
