@@ -1,7 +1,10 @@
 package com.mygdx.game.simulation;
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 import com.mygdx.game.simulation.renderer.Camera;
+import javafx.scene.input.MouseButton;
 
 /**
  * Created by fraayala19 on 4/23/18.
@@ -34,7 +37,7 @@ public class PlacementInputProcessor implements InputProcessor{
 
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-        if(placementManager.isActive()){
+        if(placementManager.isActive()&&button == Input.Buttons.RIGHT){
             placementManager.place(camera, simulationScreen);
             return true;
         }

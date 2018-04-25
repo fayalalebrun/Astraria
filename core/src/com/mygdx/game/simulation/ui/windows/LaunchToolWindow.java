@@ -1,6 +1,7 @@
 package com.mygdx.game.simulation.ui.windows;
 
 import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.kotcrab.vis.ui.util.TableUtils;
 import com.kotcrab.vis.ui.util.dialog.Dialogs;
@@ -42,6 +43,9 @@ public class LaunchToolWindow extends VisWindow{
                 setVisible(false);
             }
         });
+
+        add(new VisLabel("RIGHT-CLICK to place"));
+        row();
 
         add(speedLabel).width(150f);
         add(speedField).width(100f);
