@@ -7,13 +7,17 @@ import com.kotcrab.vis.ui.widget.VisCheckBox;
 import com.kotcrab.vis.ui.widget.VisTextButton;
 import com.kotcrab.vis.ui.widget.VisWindow;
 import com.mygdx.game.simulation.Options;
+import com.mygdx.game.simulation.SimulationScreen;
 
 /**
  * Created by Fran on 4/23/2018.
  */
 public class GraphicalOptionsWindow extends VisWindow{
-    public GraphicalOptionsWindow() {
+    private SimulationScreen simulationScreen;
+
+    public GraphicalOptionsWindow(SimulationScreen simulationScreen) {
         super("Visual Options");
+        this.simulationScreen = simulationScreen;
         TableUtils.setSpacingDefaults(this);
         addWidgets();
         pack();
@@ -23,6 +27,7 @@ public class GraphicalOptionsWindow extends VisWindow{
         final VisCheckBox orbitCheckBox = new VisCheckBox("Show orbits", Options.drawOrbits);
         final VisCheckBox lensGlowCheckBox = new VisCheckBox("Show Lens Glow", Options.drawLensGlow);
         final VisCheckBox labelsCheckBox = new VisCheckBox("Show labels", Options.drawLabels);
+        final VisTextButton fullscreenButton = new VisTextButton("Toggle Fullscreen");
         final VisTextButton closeButton = new VisTextButton("Close");
 
         add(orbitCheckBox).left();
@@ -32,6 +37,9 @@ public class GraphicalOptionsWindow extends VisWindow{
         row();
 
         add(labelsCheckBox).left();
+        row();
+
+        add(fullscreenButton).left();
         row();
 
         add(closeButton).right();
@@ -55,6 +63,13 @@ public class GraphicalOptionsWindow extends VisWindow{
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 Options.drawLabels = labelsCheckBox.isChecked();
+            }
+        });
+
+        fullscreenButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                simulationScreen.toggleFullscreen();
             }
         });
 
