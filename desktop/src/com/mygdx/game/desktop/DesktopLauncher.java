@@ -20,7 +20,6 @@ public class DesktopLauncher {
 		config.addIcon("icons/astraria128.png", Files.FileType.Internal);
 		config.addIcon("icons/astraria32.png", Files.FileType.Internal);
 		config.addIcon("icons/astraria16.png", Files.FileType.Internal);
-
 		ShaderProgram.prependVertexCode = "#version 140\n#define varying out\n#define attribute in\n";
 		ShaderProgram.prependFragmentCode = "#version 140\n#define varying in\n#define texture2D texture\n#define gl_FragColor fragColor\nout vec4 fragColor;\n";
 		new LwjglApplication(new Boot(arg), config);
