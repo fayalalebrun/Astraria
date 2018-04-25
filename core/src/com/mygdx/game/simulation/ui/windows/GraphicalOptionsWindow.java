@@ -22,12 +22,16 @@ public class GraphicalOptionsWindow extends VisWindow{
     private void addWidgets(){
         final VisCheckBox orbitCheckBox = new VisCheckBox("Show orbits", Options.drawOrbits);
         final VisCheckBox lensGlowCheckBox = new VisCheckBox("Show Lens Glow", Options.drawLensGlow);
+        final VisCheckBox labelsCheckBox = new VisCheckBox("Show labels", Options.drawLabels);
         final VisTextButton closeButton = new VisTextButton("Close");
 
         add(orbitCheckBox).left();
         row();
 
         add(lensGlowCheckBox).left();
+        row();
+
+        add(labelsCheckBox).left();
         row();
 
         add(closeButton).right();
@@ -44,6 +48,13 @@ public class GraphicalOptionsWindow extends VisWindow{
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 Options.drawLensGlow = lensGlowCheckBox.isChecked();
+            }
+        });
+
+        labelsCheckBox.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                Options.drawLabels = labelsCheckBox.isChecked();
             }
         });
 

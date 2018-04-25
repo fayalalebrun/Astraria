@@ -122,6 +122,7 @@ public class SimulationScreenInterface {
         simInfoWindow.setPosition(Gdx.graphics.getWidth(),0);
         simSpeedWindow.setPosition(Gdx.graphics.getWidth()-700,0);
         launchToolWindow.setPosition(Gdx.graphics.getWidth()/2,Gdx.graphics.getHeight()/2);
+        optionsWindow.setPosition(Gdx.graphics.getWidth()/2,Gdx.graphics.getHeight()/2);
     }
 
     public void addObject(SimulationObject simulationObject) {
