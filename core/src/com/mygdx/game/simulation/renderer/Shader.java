@@ -26,6 +26,8 @@ public class Shader implements Disposable{
 
     private final Map<String, Integer> uniforms;
 
+    FloatBuffer fb = BufferUtils.newFloatBuffer(16);
+
     public Shader(FileHandle vertexPath, FileHandle fragmentPath) {
         uniforms = new HashMap<String, Integer>();
 
@@ -95,8 +97,6 @@ public class Shader implements Disposable{
     }
 
     public void setMat4(String name, Matrix4f value){
-
-        FloatBuffer fb = BufferUtils.newFloatBuffer(16);
         value.get(fb);
         Gdx.gl.glUniformMatrix4fv(getUniformLocation(name),1,false, fb);
     }
