@@ -1,175 +1,180 @@
-package com.mygdx.game.playback.ui;/*
-* =====================================================================
-* ==      Created by davrockenzahn19        ==    Date: 2/8/18   ==
-* =====================================================================
-* ==      Project: orbit-simulator-2    ==
-* =====================================================================
+package com.mygdx.game.playback.ui;
 
-*/
-
-import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
-import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.kotcrab.vis.ui.widget.*;
-import com.kotcrab.vis.ui.widget.color.ColorPicker;
-import com.mygdx.game.playback.PlayBackBody;
+import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener.ChangeEvent;
+import com.kotcrab.vis.ui.widget.Separator;
+import com.kotcrab.vis.ui.widget.VisLabel;
+import com.kotcrab.vis.ui.widget.VisRadioButton;
+import com.kotcrab.vis.ui.widget.VisTextButton;
+import com.kotcrab.vis.ui.widget.VisWindow;
 import com.mygdx.game.playback.PlayBackScreen;
-
-import java.awt.*;
 import java.util.ArrayList;
 
 public class ColorTools extends VisWindow {
-
     private ArrayList<VisRadioButton> buttonList;
     private VisTextButton color1Button;
     private VisTextButton color2Button;
     private VisLabel color1Label;
     private VisLabel color2Label;
 
-    public ColorTools(final PlayBackScreen playBackScreen){
+    public ColorTools(final PlayBackScreen playBackScreen) {
         super("Color tools");
-
-        setPosition(0,201);
-
+        this.setPosition(0.0F, 201.0F);
         Table table = new Table();
         table.setFillParent(true);
-        add(table);
-
-         buttonList = new ArrayList<VisRadioButton>();
-
-        final VisRadioButton preset1 = new VisRadioButton("Blue to white");
-        final VisRadioButton preset2 = new VisRadioButton("Red to white");
-        final VisRadioButton preset3 = new VisRadioButton("Green to white");
+        this.add(table);
+        this.buttonList = new ArrayList();
+        final VisRadioButton preset1 = new VisRadioButton("Galaxy collision (F)");
+        final VisRadioButton preset2 = new VisRadioButton("Galaxy collision (T)");
+        final VisRadioButton preset3 = new VisRadioButton("Spiral galaxy");
+        final VisRadioButton preset4 = new VisRadioButton("Galaxy cluster 1");
+        final VisRadioButton preset5 = new VisRadioButton("Galaxy cluster 2");
+        final VisRadioButton preset6 = new VisRadioButton("Milky way");
         final VisRadioButton custom = new VisRadioButton("Custom colors");
-
-         color1Button = new VisTextButton("Set");
-         color2Button = new VisTextButton("Set");
-         color1Label = new VisLabel("Upper gradient");
-         color2Label = new VisLabel("Lower gradient");
-
-         color1Button.addListener(new ChangeListener() {
-             @Override
-             public void changed(ChangeEvent event, Actor actor) {
-                 playBackScreen.getUiGroup().addActor(playBackScreen.getUpperColorPicker().fadeIn());
-             }
-         });
-
-         color2Button.addListener(new ChangeListener() {
-             @Override
-             public void changed(ChangeEvent event, Actor actor) {
-                 playBackScreen.getUiGroup().addActor(playBackScreen.getLowerColorPicker().fadeIn());
-             }
-         });
-
-        buttonList.add(preset1);
-        buttonList.add(preset2);
-        buttonList.add(preset3);
-        buttonList.add(custom);
-
-        preset1.setChecked(true);
-        disableOthers(0);
-
-        final ColorTools tools = this;
-        preset1.addListener(new ChangeListener() {
-            @Override
+        this.color1Button = new VisTextButton("Set");
+        this.color2Button = new VisTextButton("Set");
+        this.color1Label = new VisLabel("Upper gradient");
+        this.color2Label = new VisLabel("Lower gradient");
+        this.color1Button.addListener(new ChangeListener() {
             public void changed(ChangeEvent event, Actor actor) {
-                if (preset1.isChecked()){
-                    disableOthers(0);
-                    playBackScreen.setUpperColor(Color.ROYAL);
-                    playBackScreen.setLowerColor(Color.CYAN);
+                playBackScreen.getUiGroup().addActor(playBackScreen.getUpperColorPicker().fadeIn());
+            }
+        });
+        this.color2Button.addListener(new ChangeListener() {
+            public void changed(ChangeEvent event, Actor actor) {
+                playBackScreen.getUiGroup().addActor(playBackScreen.getLowerColorPicker().fadeIn());
+            }
+        });
+        this.buttonList.add(preset1);
+        this.buttonList.add(preset2);
+        this.buttonList.add(preset3);
+        this.buttonList.add(preset4);
+        this.buttonList.add(preset5);
+        this.buttonList.add(preset6);
+        this.buttonList.add(custom);
+        preset1.setChecked(true);
+        this.disableOthers(0);
+        preset1.addListener(new ChangeListener() {
+            public void changed(ChangeEvent event, Actor actor) {
+                if(preset1.isChecked()) {
+                    ColorTools.this.disableOthers(0);
+                    playBackScreen.setUpperColor(new Color(0.80784315F, 0.9607843F, 0.30588236F, 1.0F));
+                    playBackScreen.setLowerColor(new Color(0.8666667F, 0.9607843F, 0.49803922F, 1.0F));
                 }
+
             }
         });
         preset2.addListener(new ChangeListener() {
-            @Override
             public void changed(ChangeEvent event, Actor actor) {
-                if (preset2.isChecked()){
-                    disableOthers(1);
-                    playBackScreen.setUpperColor(new Color(0.454f, 0.149f, 0.878f, 1));
-                    playBackScreen.setLowerColor(new Color(0.556f, 0.101f, 0.858f, 1));
+                if(preset2.isChecked()) {
+                    ColorTools.this.disableOthers(1);
+                    playBackScreen.setUpperColor(new Color(Color.ROYAL));
+                    playBackScreen.setLowerColor(new Color(Color.CLEAR));
+                }
 
-                }            }
-        });
-        preset3.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                if (preset3.isChecked()){
-                    disableOthers(2);
-                    playBackScreen.setUpperColor(Color.CLEAR);
-                    playBackScreen.setLowerColor(Color.ROYAL);
-
-                }            }
-        });
-        custom.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                if (custom.isChecked()){
-                    disableOthers(3);
-
-                }            }
-        });
-
-        VisTextButton closeButton = new VisTextButton("Close");
-
-        closeButton.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                    setVisible(false);
             }
         });
+        preset3.addListener(new ChangeListener() {
+            public void changed(ChangeEvent event, Actor actor) {
+                if(preset3.isChecked()) {
+                    ColorTools.this.disableOthers(2);
+                    playBackScreen.setUpperColor(new Color(0.39215687F, 1.0F, 1.0F, 1.0F));
+                    playBackScreen.setLowerColor(new Color(1.0F, 1.0F, 1.0F, 1.0F));
+                }
 
+            }
+        });
+        preset4.addListener(new ChangeListener() {
+            public void changed(ChangeEvent event, Actor actor) {
+                if(preset4.isChecked()) {
+                    ColorTools.this.disableOthers(3);
+                    playBackScreen.setUpperColor(Color.ROYAL);
+                    playBackScreen.setLowerColor(Color.CLEAR);
+                }
+
+            }
+        });
+        preset5.addListener(new ChangeListener() {
+            public void changed(ChangeEvent event, Actor actor) {
+                if(preset5.isChecked()) {
+                    ColorTools.this.disableOthers(4);
+                    playBackScreen.setUpperColor(new Color(1.0F, 0.7058824F, 0.34901962F, 1.0F));
+                    playBackScreen.setLowerColor(new Color(1.0F, 1.0F, 0.36862746F, 1.0F));
+                }
+
+            }
+        });
+        preset6.addListener(new ChangeListener() {
+            public void changed(ChangeEvent event, Actor actor) {
+                if(preset6.isChecked()) {
+                    ColorTools.this.disableOthers(5);
+                    playBackScreen.setUpperColor(new Color(0.26666668F, 0.4862745F, 0.5803922F, 1.0F));
+                    playBackScreen.setLowerColor(new Color(0.41568628F, 0.4509804F, 0.4509804F, 1.0F));
+                }
+
+            }
+        });
+        custom.addListener(new ChangeListener() {
+            public void changed(ChangeEvent event, Actor actor) {
+                if(custom.isChecked()) {
+                    ColorTools.this.disableOthers(6);
+                }
+
+            }
+        });
+        VisTextButton closeButton = new VisTextButton("Close");
+        closeButton.addListener(new ChangeListener() {
+            public void changed(ChangeEvent event, Actor actor) {
+                ColorTools.this.setVisible(false);
+            }
+        });
         table.defaults().left();
-
         table.row();
-        table.add(new VisLabel("Color presets")).padBottom(10).padTop(20).expandX().fillX().row();
+        table.add(new VisLabel("Color presets")).padBottom(10.0F).padTop(20.0F).expandX().fillX().row();
         table.add(preset1);
         table.row();
         table.add(preset2);
         table.row();
         table.add(preset3);
         table.row();
-        table.add(new Separator()).padTop(20).fillX().expandX().row();
+        table.add(preset4).row();
+        table.add(preset5).row();
+        table.add(preset6).row();
+        table.add(new Separator()).padTop(20.0F).fillX().expandX().row();
         table.row();
-        table.add(custom).padTop(10).padBottom(10).expandX().fillX().row();
-
-
-
-        table.add(color1Label);
-        table.add(color1Button).padRight(20);
+        table.add(custom).padTop(10.0F).padBottom(10.0F).expandX().fillX().row();
+        table.add(this.color1Label);
+        table.add(this.color1Button).padRight(20.0F);
         table.row();
-        table.add(color2Label);
-        table.add(color2Button);
+        table.add(this.color2Label);
+        table.add(this.color2Button);
         table.row();
-        table.add(closeButton).padLeft(60).padTop(20);
-        pack();
+        table.add(closeButton).padLeft(60.0F).padTop(20.0F);
+        this.pack();
     }
 
     public void disableOthers(int thisOne) {
-        for (int i = 0; i < 4; i++) {
-            if (i != thisOne) {
-                buttonList.get(i).setChecked(false);
-            }else {
-                buttonList.get(i).setChecked(true);
+        for(int i = 0; i < 7; ++i) {
+            if(i != thisOne) {
+                ((VisRadioButton)this.buttonList.get(i)).setChecked(false);
+            } else {
+                ((VisRadioButton)this.buttonList.get(i)).setChecked(true);
             }
         }
 
-        if (thisOne!=3){
-            color1Button.setDisabled(true);
-            color2Button.setDisabled(true);
-            color1Label.setColor(Color.GRAY);
-            color2Label.setColor(Color.GRAY);
-
-        }else {
-            color1Button.setDisabled(false);
-            color2Button.setDisabled(false);
-            color1Label.setColor(Color.WHITE);
-            color2Label.setColor(Color.WHITE);
+        if(thisOne != 6) {
+            this.color1Button.setDisabled(true);
+            this.color2Button.setDisabled(true);
+            this.color1Label.setColor(Color.GRAY);
+            this.color2Label.setColor(Color.GRAY);
+        } else {
+            this.color1Button.setDisabled(false);
+            this.color2Button.setDisabled(false);
+            this.color1Label.setColor(Color.WHITE);
+            this.color2Label.setColor(Color.WHITE);
         }
     }
-
 }
-
-
