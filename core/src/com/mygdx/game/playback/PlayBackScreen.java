@@ -103,17 +103,21 @@ public class PlayBackScreen extends BaseScreen{
 
     Viewport testViewport;
 
-    PlayBackLoader playBackLoader;
+    PlayBackLoader2 playBackLoader;
 
     Thread loaderThread;
 
-    Vector<Pair<Vector3, Float>> frame;
+    float [] frame;
+
+    private Vector3 frameVector;
 
 
     public PlayBackScreen(Boot boot, String arg) {
         super(boot);
 
-        frame = new Vector<Pair<Vector3, Float>>();
+        frameVector=new Vector3();
+
+        frame = new float[4];
 
         bodyTexture = Boot.manager.get("particle.png");
 
@@ -182,7 +186,8 @@ public class PlayBackScreen extends BaseScreen{
 
         setWindowPosition();
 
-        //start simulation pasued
+        pause();
+
     }
 
     private void setWindowPosition(){
@@ -226,18 +231,22 @@ public class PlayBackScreen extends BaseScreen{
 
         Gdx.gl.glEnable(GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE);
-        Vector<Pair<Vector3, Float>> tempframe = playBackLoader.requestFrame(currFrame);
 
-        if(tempframe == null){
-            System.out.println(currFrame+" frame not available ");
-            currTime=0;
-        } else {
-            frame = tempframe;
+        if (!paused){
+            float [] tempframe = playBackLoader.requestNextFrame();
+
+            if(tempframe == null){
+                System.out.println(currFrame+" frame not available ");
+                currTime=0;
+            } else {
+                frame = tempframe;
+                currFrame++;
+            }
         }
             spriteBatch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE);
             spriteBatch.begin();
-            for(Pair<Vector3,Float> p : frame){
-                drawBody(p.getKey(),p.getValue());
+            for(int i = 0; i < frame.length; i+=4){
+                drawBody(frame[i], frame[i+1], frame[i+2], frame[i+3]);
             }
             spriteBatch.end();
 
@@ -245,14 +254,17 @@ public class PlayBackScreen extends BaseScreen{
 
         uiStage.draw();
 
-        if(currTime>1/60f){
-            if(playBackLoader.getFrameMap().containsKey(currFrame+(int)(currTime*60f))) {
-                currFrame += (int) (currTime * 60f);
-            } else {
-                currFrame++;
-            }
-            currTime=0;
-        }
+        //if(currTime>1/60f){
+           // if(playBackLoader.containsFrame (currFrame+(int)(currTime*60f))) {
+             //   currFrame += (int) (currTime * 60f);
+                //skip currTime*60f frames
+             //   playBackLoader.skipFrames( (int) (currTime*60f));
+                //currFrame++;
+           // } else {
+                //next frame
+            //}
+          //  currTime=0;
+        //}
 
         if(currFrame>totalFrames-1){
             currFrame=totalFrames-1;
@@ -260,10 +272,11 @@ public class PlayBackScreen extends BaseScreen{
 
     }
 
-    private void drawBody(Vector3 pos, float accel){
-        if(cam.frustum.pointInFrustum(pos)){
+    private void drawBody(float x, float y, float z, float accel){
+        frameVector.set(x,y,z);
+        if(cam.frustum.pointInFrustum(frameVector)){
             spriteBatch.setColor(getGradientColor(getPercentage(accel)));
-            Vector2 newPos = projectPos(pos);
+            Vector2 newPos = projectPos(frameVector);
             spriteBatch.draw(bodyTexture,newPos.x,newPos.y,bodyTexture.getWidth()*bodyScale*bodyScaleMod,bodyTexture.getHeight()*bodyScale*bodyScaleMod);
         }
     }
@@ -291,7 +304,7 @@ public class PlayBackScreen extends BaseScreen{
         setWindowPosition();
     }
 
-    @Override
+
     public void pause() {
         setPaused(true);
     }
@@ -322,7 +335,7 @@ public class PlayBackScreen extends BaseScreen{
 
     private void loadRecording(String path){
 
-        playBackLoader = new PlayBackLoader(path);
+        playBackLoader = new PlayBackLoader2(path);
         loaderThread = new Thread(playBackLoader);
         loaderThread.start();
 
@@ -336,6 +349,7 @@ public class PlayBackScreen extends BaseScreen{
 
     public void setCurrFrame(int currFrame) {
         this.currFrame = currFrame;
+        playBackLoader.changeFramePosition(currFrame);
     }
 
     public void setPaused(boolean paused) {
@@ -397,7 +411,7 @@ public class PlayBackScreen extends BaseScreen{
         camControl.setVelocity(value);
     }
 
-    public PlayBackLoader getPlayBackLoader() {
+    public PlayBackLoader2 getPlayBackLoader() {
         return playBackLoader;
     }
 }
