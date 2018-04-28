@@ -67,17 +67,6 @@ public class SimulationScreenInterface {
             }
         });
 
-        uiStage.getRoot().addCaptureListener(new InputListener(){
-            @Override
-            public boolean keyUp(InputEvent event, int keycode) {
-                if(keycode == Input.Keys.H){
-                    setUIVisible(!masterGroup.isVisible());
-                    return true;
-                }
-                return false;
-            }
-        });
-
         this.simInfoWindow = new SimInfoWindow(simulationScreen,simulationScreen.getRenderer().getCamera());
 
         menuBarTable = new VisTable();
@@ -269,6 +258,10 @@ public class SimulationScreenInterface {
     public void setUIVisible(boolean visible){
         masterGroup.setVisible(visible);
         menuBarTable.setVisible(visible);
+    }
+
+    public void toggleVisible(){
+        setUIVisible(!masterGroup.isVisible());
     }
 
     public Stage getUiStage() {

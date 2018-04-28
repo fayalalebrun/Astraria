@@ -67,7 +67,7 @@ public class SimulationScreen extends BaseScreen {
 
         renderer = new Renderer(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
-        processor = new SimCamInputProcessor(renderer.getCamera());
+        processor = new SimCamInputProcessor(renderer.getCamera(),this);
         placeProcessor = new PlacementInputProcessor(renderer.getCamera(), renderer.getPlacementManager(), this);
 
 
@@ -207,5 +207,9 @@ public class SimulationScreen extends BaseScreen {
 
     public ArrayList<SimulationObject> getSimulationObjects() {
         return simulationObjects;
+    }
+
+    public SimulationScreenInterface getSimulationScreenInterface() {
+        return simulationScreenInterface;
     }
 }

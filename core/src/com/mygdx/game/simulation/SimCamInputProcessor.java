@@ -27,10 +27,13 @@ public class SimCamInputProcessor implements InputProcessor{
 
     private ArrayList<Clickable3DObject> clickable3DObjects;
 
-    public SimCamInputProcessor(Camera cam) {
+    private SimulationScreen simulationScreen;
+
+    public SimCamInputProcessor(Camera cam, SimulationScreen simulationScreen) {
         this.camera = cam;
         clickable3DObjects = new ArrayList<Clickable3DObject>();
         temp = new Vector2f();
+        this.simulationScreen = simulationScreen;
     }
 
     public void updateClickableObjects(ArrayList<Clickable3DObject> objects){
@@ -110,6 +113,9 @@ public class SimCamInputProcessor implements InputProcessor{
                 return true;
             case Input.Keys.SHIFT_LEFT:
                 camera.processKeyboard(Camera_Movement.DOWN,true);
+                return true;
+            case Input.Keys.H:
+                simulationScreen.getSimulationScreenInterface().toggleVisible();
                 return true;
         }
         return false;
