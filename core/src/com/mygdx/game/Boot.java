@@ -43,17 +43,19 @@ public class Boot extends Game {
 
 		VisUI.load();
 
-		/*if(arg.length>1) {
-			if (arg[0].equals("sim")) {
-				setScreen(new SimulationScreen(this, arg[1]));
-			} else if (arg[0].equals("play")) {
-				setScreen(new PlayBackScreen(this, arg[1]));
+		if(arg.length>0) {
+			String[] termination = arg[arg.length-1].split("\\.");
+			System.out.println(termination.length);
+			if (termination[termination.length-1].equals("txt")) {
+				setScreen(new SimulationScreen(this, arg[arg.length-1]));
+			} else if (termination[termination.length-1].equals("nbd")) {
+				setScreen(new PlayBackScreen(this, arg[arg.length-1]));
 			}
 		} else {
-			setScreen(new SimulationScreen(this,""));
-		}*/
+			setScreen(new TitleScreen(this));
+		}
 
-		setScreen(new TitleScreen(this));
+
 	}
 
 	@Override
