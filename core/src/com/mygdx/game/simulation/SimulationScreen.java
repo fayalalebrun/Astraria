@@ -149,11 +149,12 @@ public class SimulationScreen extends BaseScreen {
     }
 
     public void clearObjects(){
-        for(SimulationObject simulationObject : simulationObjects){
-            algorithm.removeBody(simulationObject.getBody());
-        }
+        ArrayList<SimulationObject> temp = new ArrayList<SimulationObject>();
+        temp.addAll(simulationObjects);
 
-        simulationObjects.clear();
+        for(SimulationObject simulationObject : temp){
+            this.removeObject(simulationObject);
+        }
     }
 
 
