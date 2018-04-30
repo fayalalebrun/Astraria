@@ -132,7 +132,9 @@ public class PlacementWindow extends VisWindow{
 
         textureSelect.setItems(Arrays.copyOf(Warehouse.getOpenGLTextureManager().getLoadedTextures().toArray(),
                 Warehouse.getOpenGLTextureManager().getLoadedTextures().toArray().length,GLTexture[].class));
-        textureSelect.setSelectedIndex(0);
+        if(textureSelect.getItems().size>0) {
+            textureSelect.setSelectedIndex(0);
+        }
 
         orbitColorButton.addListener(new ChangeListener() {
             @Override

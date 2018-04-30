@@ -1,20 +1,9 @@
 package com.mygdx.game.simulation.renderer;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.files.FileHandle;
-import com.badlogic.gdx.graphics.Pixmap;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.utils.Disposable;
-import com.mokiat.data.front.parser.*;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
-import org.joml.Vector3i;
-
-import java.io.*;
-import java.net.URI;
-import java.net.URL;
-import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
 import java.util.*;
 
 /**
