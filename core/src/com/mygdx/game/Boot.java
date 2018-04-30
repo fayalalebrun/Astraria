@@ -37,10 +37,13 @@ public class Boot extends Game {
 		manager.load("icons/timer.png", Texture.class);
 		manager.load("icons/target.png", Texture.class);
 		manager.load("icons/add.png", Texture.class);
+		manager.load("logo/ASTRARIA LOGO-01.png", Texture.class);
+		manager.load("stars_milky_way.jpg", Texture.class);
 		manager.finishLoading();
 
 		VisUI.load();
-		if(arg.length>1) {
+
+		/*if(arg.length>1) {
 			if (arg[0].equals("sim")) {
 				setScreen(new SimulationScreen(this, arg[1]));
 			} else if (arg[0].equals("play")) {
@@ -48,9 +51,9 @@ public class Boot extends Game {
 			}
 		} else {
 			setScreen(new SimulationScreen(this,""));
-		}
+		}*/
 
-
+		setScreen(new TitleScreen(this));
 	}
 
 	@Override
