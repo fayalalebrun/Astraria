@@ -21,7 +21,7 @@ public class SimCamInputProcessor implements InputProcessor{
 
     private int lastY, lastX;
 
-    private boolean firstMove, rightClickDown;
+    private boolean rightClickDown;
 
     private final Vector2f temp;
 
@@ -77,11 +77,9 @@ public class SimCamInputProcessor implements InputProcessor{
                 return true;
             case Input.Keys.LEFT:
                 SimulationScreen.simSpeed/=10;
-                System.out.println("Simspeed: "+SimulationScreen.simSpeed);
                 return true;
             case Input.Keys.RIGHT:
                 SimulationScreen.simSpeed*=10;
-                System.out.println("Simspeed: "+SimulationScreen.simSpeed);
                 return true;
         }
         return false;
@@ -145,7 +143,6 @@ public class SimCamInputProcessor implements InputProcessor{
                 temp.set(screenX,screenY);
                 temp.sub(object.getScreenCoords());
                 if(Math.abs(temp.length())<20){
-                    System.out.println(object.getParent().getName());
                     camera.setLock(object.getParent());
                     return true;
                 }
