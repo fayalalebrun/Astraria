@@ -4,14 +4,18 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
+import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.kotcrab.vis.ui.util.TableUtils;
 import com.kotcrab.vis.ui.widget.VisImage;
 import com.kotcrab.vis.ui.widget.VisTable;
 import com.kotcrab.vis.ui.widget.VisTextButton;
+import com.mygdx.game.playback.PlayBackScreen;
+import com.mygdx.game.simulation.SimulationScreen;
 
 /**
  * Created by fraayala19 on 4/30/18.
@@ -29,7 +33,7 @@ public class TitleScreen extends BaseScreen{
 
 
 
-    public TitleScreen(Boot boot) {
+    public TitleScreen(final Boot boot) {
         super(boot);
         uiStage = new Stage(new ScreenViewport());
         Gdx.input.setInputProcessor(uiStage);
@@ -47,6 +51,20 @@ public class TitleScreen extends BaseScreen{
 
         simButton = new VisTextButton("Real-Time Simulation");
         playButton = new VisTextButton("Pre-Generated Simulation");
+
+        simButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                boot.setScreen(new SimulationScreen(boot,Gdx.files.internal("examples/Solar_System_2K.txt").file().getAbsolutePath()));
+            }
+        });
+
+        playButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                boot.setScreen(new PlayBackScreen(boot, ""));
+            }
+        });
 
         addWidgets();
     }
