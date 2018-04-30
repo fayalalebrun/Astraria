@@ -40,11 +40,14 @@ public class Boot extends Game {
 		manager.finishLoading();
 
 		VisUI.load();
-
-		if(arg[0].equals("sim")){
-			setScreen(new SimulationScreen(this,arg[1]));
-		} else if (arg[0].equals("play")){
-			setScreen(new PlayBackScreen(this,arg[1]));
+		if(arg.length>1) {
+			if (arg[0].equals("sim")) {
+				setScreen(new SimulationScreen(this, arg[1]));
+			} else if (arg[0].equals("play")) {
+				setScreen(new PlayBackScreen(this, arg[1]));
+			}
+		} else {
+			setScreen(new SimulationScreen(this,""));
 		}
 
 
