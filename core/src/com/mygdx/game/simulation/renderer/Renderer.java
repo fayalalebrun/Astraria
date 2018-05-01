@@ -13,7 +13,6 @@ import com.badlogic.gdx.utils.Disposable;
 import com.mygdx.game.simulation.Options;
 import com.mygdx.game.simulation.PlacementManager;
 import com.mygdx.game.simulation.SimulationObject;
-import com.sun.media.jfxmediaimpl.MediaDisposer;
 import org.joml.*;
 import sun.security.provider.SHA;
 
