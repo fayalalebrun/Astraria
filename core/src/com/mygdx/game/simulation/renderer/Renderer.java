@@ -15,7 +15,6 @@ import com.mygdx.game.simulation.PlacementManager;
 import com.mygdx.game.simulation.SimulationObject;
 import com.sun.media.jfxmediaimpl.MediaDisposer;
 import org.joml.*;
-import sun.security.provider.SHA;
 
 import java.lang.Math;
 import java.nio.Buffer;

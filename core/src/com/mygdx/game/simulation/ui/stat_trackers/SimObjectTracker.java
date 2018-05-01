@@ -9,7 +9,6 @@ import com.mygdx.game.simulation.SimulationObject;
 import com.mygdx.game.simulation.logic.helpers.Units;
 import com.mygdx.game.simulation.ui.SimulationScreenInterface;
 import com.mygdx.game.simulation.ui.windows.StatsWindow;
-import sun.java2d.pipe.SpanShapeRenderer;
 
 import java.text.DecimalFormat;
 
