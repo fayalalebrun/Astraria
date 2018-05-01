@@ -14,6 +14,7 @@ import com.kotcrab.vis.ui.util.TableUtils;
 import com.kotcrab.vis.ui.widget.VisImage;
 import com.kotcrab.vis.ui.widget.VisTable;
 import com.kotcrab.vis.ui.widget.VisTextButton;
+import com.mygdx.game.playback.InitialScreen;
 import com.mygdx.game.playback.PlayBackScreen;
 import com.mygdx.game.simulation.SimulationScreen;
 
@@ -62,7 +63,7 @@ public class TitleScreen extends BaseScreen{
         playButton.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                boot.setScreen(new PlayBackScreen(boot, ""));
+                boot.setScreen(new InitialScreen(boot));
             }
         });
 
