@@ -1,6 +1,7 @@
 package com.mygdx.game;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -59,18 +60,12 @@ public class TitleScreen extends BaseScreen{
         simButton.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
+                FileHandle fileHandle = Gdx.files.internal("./examples/Solar_System_2K.txt/");
                 String path = "";
-                try {
-                    path = getPath()+"/examples/Solar_System_2K.txt/";
-                    File f = new File(path);
-                    if(!f.exists()){
-                        throw new Exception();
-                    }
-
-                } catch (Exception e) {
-                    System.out.println("Error finding 2k solar system file");
-                    path = "";
+                if(fileHandle.file().exists()){
+                    path = fileHandle.file().getAbsolutePath();
                 }
+
                 boot.setScreen(new SimulationScreen(boot,path));
             }
         });
