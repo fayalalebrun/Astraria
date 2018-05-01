@@ -1,6 +1,8 @@
 package com.mygdx.game.playback;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
+import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.*;
@@ -50,6 +52,7 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Vector;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.badlogic.gdx.graphics.GL20.GL_BLEND;
 import static com.badlogic.gdx.graphics.GL20.GL_ONE_MINUS_SRC_ALPHA;
@@ -95,7 +98,11 @@ public class PlayBackScreen extends BaseScreen{
     private ColorPicker upperColorPicker;
     private ColorPicker lowerColorPicker;
 
-    private float timeMultiplier =1 ;
+    private AtomicInteger timeMultiplier = new AtomicInteger(2);
+
+    private float [] tempframe;
+
+    private boolean halfSpeedCheck = false;
 
     Texture bodyTexture;
 
@@ -109,11 +116,15 @@ public class PlayBackScreen extends BaseScreen{
 
     float [] frame;
 
+    private boolean initialized = false;
+
     private Vector3 frameVector;
 
 
     public PlayBackScreen(Boot boot, String arg) {
         super(boot);
+
+        initialized=false;
 
         frameVector=new Vector3();
 
@@ -161,7 +172,6 @@ public class PlayBackScreen extends BaseScreen{
 
 
 
-
         bodies = new ArrayList<PlayBackBody>();
 
         cam = new PerspectiveCamera(67, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
@@ -187,7 +197,6 @@ public class PlayBackScreen extends BaseScreen{
         setWindowPosition();
 
         pause();
-
     }
 
     private void setWindowPosition(){
@@ -215,10 +224,20 @@ public class PlayBackScreen extends BaseScreen{
         return currFrame;
     }
 
+    public void toggleFullscreen(){
+        if(!Gdx.graphics.isFullscreen()){
+            Gdx.graphics.setFullscreenMode(Gdx.graphics.getDisplayMode());
+        } else {
+            Gdx.graphics.setWindowedMode(800, 600);
+        }
+    }
+
     @Override
     public void render(float delta) {
-        if(!paused) {
-            currTime += delta;
+
+        if (!initialized){
+            frame = playBackLoader.requestNextFrame();
+            initialized = true;
         }
 
         uiStage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 30f));
@@ -233,7 +252,20 @@ public class PlayBackScreen extends BaseScreen{
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE);
 
         if (!paused){
-            float [] tempframe = playBackLoader.requestNextFrame();
+            currTime += delta;
+
+            if (timeMultiplier.get()==2){
+                tempframe = playBackLoader.requestNextFrame();
+            }else if (timeMultiplier.get()==1){
+                if (!halfSpeedCheck){
+                    tempframe = playBackLoader.requestNextFrame();
+                }
+                halfSpeedCheck = !halfSpeedCheck;
+            }else {
+                playBackLoader.skipFrames(1);
+                tempframe = playBackLoader.requestNextFrame();
+            }
+
 
             if(tempframe == null){
                 System.out.println(currFrame+" frame not available ");
@@ -246,7 +278,7 @@ public class PlayBackScreen extends BaseScreen{
             spriteBatch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE);
             spriteBatch.begin();
             for(int i = 0; i < frame.length; i+=4){
-                drawBody(frame[i], frame[i+1], frame[i+2], frame[i+3]);
+                drawBody(frame[i]*100f, frame[i+1]*100f, frame[i+2]*100f, frame[i+3]);
             }
             spriteBatch.end();
 
@@ -396,8 +428,8 @@ public class PlayBackScreen extends BaseScreen{
         return bodies;
     }
 
-    public void setTimeMultiplier (float value){
-        timeMultiplier = value;
+    public void setTimeMultiplier (int value){
+        timeMultiplier.set(value);
     }
 
     public float getBodyScaleMod() {
