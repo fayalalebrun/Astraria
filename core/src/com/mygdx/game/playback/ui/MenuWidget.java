@@ -18,6 +18,7 @@ import com.kotcrab.vis.ui.util.TableUtils;
 import com.kotcrab.vis.ui.widget.*;
 import com.kotcrab.vis.ui.widget.file.FileChooser;
 import com.kotcrab.vis.ui.widget.file.FileChooserAdapter;
+import com.kotcrab.vis.ui.widget.file.FileTypeFilter;
 import com.mygdx.game.playback.PlayBackBody;
 import com.mygdx.game.playback.PlayBackScreen;
 
@@ -43,6 +44,11 @@ public class MenuWidget extends MenuBar {
         final CustomFileChooser fileChooser = new CustomFileChooser(FileChooser.Mode.OPEN);
         fileChooser.setSelectionMode(FileChooser.SelectionMode.FILES);
         fileChooser.fadeOut(0);
+
+        final FileTypeFilter fileTypeFilter = new FileTypeFilter(true);
+        fileTypeFilter.addRule("NBD files (*.txt)","nbd");
+
+        fileChooser.setFileTypeFilter(fileTypeFilter);
         fileChooser.setListener(new FileChooserAdapter() {
 
             @Override
