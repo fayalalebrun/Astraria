@@ -94,7 +94,7 @@ public class ProgressWindow extends VisWindow{
         doubleSpeed.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                myPlayBackScreen.setTimeMultiplier(2);
+                myPlayBackScreen.setTimeMultiplier(3);
             }
         });
 
@@ -103,7 +103,7 @@ public class ProgressWindow extends VisWindow{
         normalSpeed.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                myPlayBackScreen.setTimeMultiplier(1);
+                myPlayBackScreen.setTimeMultiplier(2);
             }
         });
 
@@ -112,7 +112,7 @@ public class ProgressWindow extends VisWindow{
         halfSpeed.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                myPlayBackScreen.setTimeMultiplier(0.5f);
+                myPlayBackScreen.setTimeMultiplier(1);
             }
         });
 
