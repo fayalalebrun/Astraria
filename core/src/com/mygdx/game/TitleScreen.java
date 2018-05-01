@@ -1,20 +1,22 @@
 package com.mygdx.game;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
+import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.kotcrab.vis.ui.util.TableUtils;
 import com.kotcrab.vis.ui.widget.VisImage;
 import com.kotcrab.vis.ui.widget.VisTable;
 import com.kotcrab.vis.ui.widget.VisTextButton;
-import com.mygdx.game.playback.InitialScreen;
+import com.kotcrab.vis.ui.widget.file.FileChooser;
+import com.kotcrab.vis.ui.widget.file.FileChooserAdapter;
+import com.kotcrab.vis.ui.widget.file.FileTypeFilter;
 import com.mygdx.game.playback.PlayBackScreen;
 import com.mygdx.game.simulation.SimulationScreen;
 
@@ -31,6 +33,8 @@ public class TitleScreen extends BaseScreen{
 
     private VisImage logo;
     private VisImage background;
+
+    private FileChooser fileChooser;
 
 
 
@@ -63,9 +67,42 @@ public class TitleScreen extends BaseScreen{
         playButton.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                boot.setScreen(new InitialScreen(boot));
+                //boot.setScreen(new InitialScreen(boot));
+                uiStage.addActor(fileChooser.fadeIn());
             }
         });
+
+        fileChooser = new FileChooser(FileChooser.Mode.OPEN);
+        //fileChooser.fadeOut(0);
+        fileChooser.setSelectionMode(FileChooser.SelectionMode.FILES);
+
+        final FileTypeFilter fileTypeFilter = new FileTypeFilter(true);
+        fileTypeFilter.addRule("NBD files (*.nbd)","nbd");
+
+        fileChooser.setFileTypeFilter(fileTypeFilter);
+        fileChooser.setListener(new FileChooserAdapter() {
+
+
+
+            @Override
+            public void selected (Array<FileHandle> file) {
+                fileChooser.fadeOut(0);
+                if (file.get(0).file().exists()){
+                    try {
+                        boot.setScreen(new PlayBackScreen(boot,file.get(0).file().getCanonicalPath()));
+                    }catch (Exception e){
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+            @Override
+            public void canceled() {
+                super.canceled();
+            }
+        });
+
+        //uiStage.addActor(fileChooser);
 
         addWidgets();
     }
