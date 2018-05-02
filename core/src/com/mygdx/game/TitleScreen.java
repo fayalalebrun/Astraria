@@ -20,6 +20,9 @@ import com.kotcrab.vis.ui.widget.file.FileTypeFilter;
 import com.mygdx.game.playback.PlayBackScreen;
 import com.mygdx.game.simulation.SimulationScreen;
 
+import java.io.File;
+import java.net.URISyntaxException;
+
 /**
  * Created by fraayala19 on 4/30/18.
  */
@@ -60,7 +63,13 @@ public class TitleScreen extends BaseScreen{
         simButton.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                boot.setScreen(new SimulationScreen(boot,Gdx.files.internal("examples/Solar_System_2K.txt").file().getAbsolutePath()));
+                FileHandle fileHandle = Gdx.files.internal("./examples/Solar_System_2K.txt/");
+                String path = "";
+                if(fileHandle.file().exists()){
+                    path = fileHandle.file().getAbsolutePath();
+                }
+
+                boot.setScreen(new SimulationScreen(boot,path));
             }
         });
 
@@ -105,6 +114,11 @@ public class TitleScreen extends BaseScreen{
         //uiStage.addActor(fileChooser);
 
         addWidgets();
+    }
+
+    private String getPath() throws Exception{
+        File f = new File(TitleScreen.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+        return f.getParentFile().getAbsolutePath();
     }
 
     private void addWidgets(){
