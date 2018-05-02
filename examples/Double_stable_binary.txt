@@ -1,0 +1,23 @@
+v3
+
+type: star
+name: AlfaStar
+radius: 695700.0
+mass: 333054.0
+velocity: 0.99999 1.890282E-6 0.0
+position: -0.028147 17000.99999 0.0
+texture: ./Planet Textures/astar.jpg
+orbit_color: 1.0 1.0 1.0 0.8
+rotation: 0 0 0 0
+temperature: 8000
+
+type: star
+name: BetaStar
+radius: 695700.0
+mass: 333054.0
+velocity: -0.99999 -1.8896615E-6 0.0
+position: 0.028147 -17000.99999 0.0
+texture: ./Planet Textures/bstar.png
+orbit_color: 1.0 1.0 1.0 0.8
+rotation: 0 0 0 0
+temperature: 8000
