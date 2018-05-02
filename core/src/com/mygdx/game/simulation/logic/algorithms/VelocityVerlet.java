@@ -83,6 +83,9 @@ public class VelocityVerlet extends NBodyAlgorithm{
                     b.setCurrAccelY(ay);
                     b.setCurrAccelZ(az);
                 }
+
+                //cycleEnergy += b.getMass()*sq(Math.sqrt(sq(b.getvX())+sq(b.getvY())+sq(b.getvZ())));
+
             }
         }
     }

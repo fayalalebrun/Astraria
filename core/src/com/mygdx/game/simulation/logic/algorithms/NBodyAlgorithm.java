@@ -21,6 +21,11 @@ public abstract class NBodyAlgorithm implements Runnable {
 
     private double lastTime, lastDelta;
 
+    /*protected boolean energyInit = false;
+    protected double firstEnergy;
+    protected double energyError = 0;
+    protected double cycleEnergy;*/
+
 
     private int calcSec;
     private double timeSinceCalcSec;
@@ -38,6 +43,14 @@ public abstract class NBodyAlgorithm implements Runnable {
 
             runAlgorithm();
 
+            /*if(!energyInit){
+                firstEnergy = cycleEnergy;
+                energyInit=true;
+            }
+
+            energyError = Math.abs(firstEnergy-cycleEnergy);
+            cycleEnergy = 0;*/
+
             calcSec++;
             timeSinceCalcSec += lastDelta;
             if (timeSinceCalcSec >= 1) {
@@ -54,6 +67,10 @@ public abstract class NBodyAlgorithm implements Runnable {
                 toRemove.clear();
             }
             synchronized (toAdd) {
+                /*if(toAdd.size()>0){
+                    energyInit=false;
+                }*/
+
                 bodies.addAll(toAdd);
                 toAdd.clear();
             }
