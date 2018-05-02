@@ -63,6 +63,7 @@ public class SimulationScreen extends BaseScreen {
 
         algorithm = new VelocityVerlet();
         algorithmThread = new Thread(algorithm);
+        algorithmThread.setDaemon(true);
         algorithmThread.start();
 
         renderer = new Renderer(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
