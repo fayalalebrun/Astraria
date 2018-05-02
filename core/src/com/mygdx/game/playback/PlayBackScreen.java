@@ -1,9 +1,6 @@
 package com.mygdx.game.playback;
 
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
-import com.badlogic.gdx.InputAdapter;
-import com.badlogic.gdx.InputMultiplexer;
+import com.badlogic.gdx.*;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
@@ -24,6 +21,7 @@ import com.mygdx.game.playback.ui.MenuWidget;
 import com.mygdx.game.playback.ui.ProgressWindow;
 import net.dermetfan.utils.Pair;
 
+import java.security.Key;
 import java.util.ArrayList;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -128,13 +126,13 @@ public class PlayBackScreen extends BaseScreen{
 
         uiGroup = new Group();
 
-        VisTable table = new VisTable();
+        final VisTable menuWidgteTable = new VisTable();
 
-        table.setFillParent(true);
-        table.left().top();
-        uiStage.addActor(table);
+        menuWidgteTable.setFillParent(true);
+        menuWidgteTable.left().top();
+        uiStage.addActor(menuWidgteTable);
 
-        table.add(new MenuWidget(uiGroup, this ).getTable()).fillX().expandX().row();
+        menuWidgteTable.add(new MenuWidget(uiGroup, this ).getTable()).fillX().expandX().row();
 
         uiStage.addActor(uiGroup);
 
@@ -154,8 +152,59 @@ public class PlayBackScreen extends BaseScreen{
         camControl.setVelocity(1000f);
 
         InputMultiplexer multiplexer = new InputMultiplexer();
+        multiplexer.addProcessor(new InputProcessor() {
+            @Override
+            public boolean keyDown(int keycode) {
+                if (keycode == Input.Keys.H){
+                    uiGroup.setVisible(!uiGroup.isVisible());
+                    menuWidgteTable.setVisible(!menuWidgteTable.isVisible());
+                    return true;
+                }
+                if (keycode == Input.Keys.F){
+                    toggleFullscreen();
+                    return true;
+                }
+                return false;
+            }
+
+            @Override
+            public boolean keyUp(int keycode) {
+                return false;
+            }
+
+            @Override
+            public boolean keyTyped(char character) {
+                return false;
+            }
+
+            @Override
+            public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+                return false;
+            }
+
+            @Override
+            public boolean touchUp(int screenX, int screenY, int pointer, int button) {
+                return false;
+            }
+
+            @Override
+            public boolean touchDragged(int screenX, int screenY, int pointer) {
+                return false;
+            }
+
+            @Override
+            public boolean mouseMoved(int screenX, int screenY) {
+                return false;
+            }
+
+            @Override
+            public boolean scrolled(int amount) {
+                return false;
+            }
+        });
         multiplexer.addProcessor(uiStage);
         multiplexer.addProcessor(camControl);
+
 
         Gdx.input.setInputProcessor(multiplexer);
 
@@ -187,6 +236,7 @@ public class PlayBackScreen extends BaseScreen{
         uiGroup.addActor(progressWindow);
         uiGroup.addActor(upperColorPicker);
         uiGroup.addActor(lowerColorPicker);
+
 
     }
 
