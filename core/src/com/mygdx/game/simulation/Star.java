@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.mygdx.game.simulation.logic.Body;
 import com.mygdx.game.simulation.renderer.*;
+import com.mygdx.game.simulation.ui.stat_trackers.StarTracker;
 import org.joml.Matrix4f;
 import org.joml.Vector3d;
 import org.joml.Vector3f;
@@ -57,6 +58,11 @@ public class Star extends SphericObject implements LightEmitter{
 
     public float getTemperature() {
         return temperature;
+    }
+
+    @Override
+    protected void createTracker() {
+        tracker = new StarTracker(this);
     }
 
     @Override
@@ -144,4 +150,9 @@ public class Star extends SphericObject implements LightEmitter{
     public Vector3d getAbsolutePosition() {
         return position;
     }
+
+    public void setTemperature(float temperature) {
+        this.temperature = temperature;
+    }
+
 }
