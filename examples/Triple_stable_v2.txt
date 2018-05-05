@@ -1,0 +1,35 @@
+v3
+
+type: star
+name: Sun_1
+radius: 695700.0
+mass: 1.9890650988E30
+velocity: -22633.500000000004 2.7718043328501617E-12 0.0
+position: 0.0 2.2439680605E11 0.0
+texture: ./Planet Textures/bstar.png
+orbit_color: 1.0 1.0 1.0 0.8
+rotation: 0.0 0.0 10.0 0
+temperature: 13751
+
+type: star
+name: Sun_2
+radius: 695700.0
+mass: 1.9890650988E30
+velocity: 11316.750000000002 19601.18597655509 0.0
+position: 1.2955555637759573E11 0.0 0.0
+texture: ./Planet Textures/bstar.png
+orbit_color: 1.0 1.0 1.0 0.8
+rotation: 0.0 0.0 10.0 0
+temperature: 11325
+
+type: star
+name: Sun_3
+radius: 695700.0
+mass: 1.9890650988E30
+velocity: 11316.750000000002 -19601.18597655509 0.0
+position: -1.2955555637759573E11 0.0 0.0
+texture: ./Planet Textures/bstar.png
+orbit_color: 1.0 1.0 1.0 0.8
+rotation: 0.0 0.0 10.0 0
+temperature: 12077
+
