@@ -61,8 +61,10 @@ public class ColorTools extends VisWindow {
             public void changed(ChangeEvent event, Actor actor) {
                 if(preset1.isChecked()) {
                     ColorTools.this.disableOthers(0);
-                    playBackScreen.setUpperColor(new Color(0.80784315F, 0.9607843F, 0.30588236F, 1.0F));
-                    playBackScreen.setLowerColor(new Color(0.8666667F, 0.9607843F, 0.49803922F, 1.0F));
+                    //playBackScreen.setUpperColor(new Color(0.80784315F, 0.9607843F, 0.30588236F, 1.0F));
+                    //playBackScreen.setLowerColor(new Color(0.8666667F, 0.9607843F, 0.49803922F, 1.0F));
+                    playBackScreen.setUpperColor(new Color(0.2823529f, 0.3372549f, 0.3803921f, 1.0f));
+                    playBackScreen.setLowerColor(new Color(0.2862745f,0.2862745f, 0.368627f, 1.0f ));
                 }
 
             }
