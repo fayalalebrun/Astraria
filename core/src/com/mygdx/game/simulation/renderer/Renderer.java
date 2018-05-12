@@ -14,7 +14,6 @@ import com.mygdx.game.simulation.Options;
 import com.mygdx.game.simulation.PlacementManager;
 import com.mygdx.game.simulation.SimulationObject;
 import org.joml.*;
-import sun.security.provider.SHA;
 
 import java.lang.Math;
 import java.nio.Buffer;

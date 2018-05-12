@@ -5,7 +5,6 @@ import com.badlogic.gdx.utils.Queue;
 import com.mygdx.game.simulation.renderer.Camera;
 import com.mygdx.game.simulation.renderer.Line;
 import com.mygdx.game.simulation.renderer.Shader;
-import com.sun.jmx.remote.internal.ArrayQueue;
 import org.joml.Vector3d;
 
 import java.util.ArrayList;

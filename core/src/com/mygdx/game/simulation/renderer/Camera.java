@@ -1,7 +1,6 @@
 package com.mygdx.game.simulation.renderer;
 
 import com.mygdx.game.simulation.SimulationObject;
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.joml.*;
 
 import java.lang.Math;
