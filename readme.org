@@ -9,11 +9,11 @@ It includes a custom-made graphics engine.
 [[https://i.postimg.cc/50jgVMdq/earth.png]]
 [[https://i.postimg.cc/VLt7v1SK/galaxies.png]]
 [[https://i.postimg.cc/7ZyKTc0w/galaxy.png]]
-https://i.postimg.cc/Nj7p84kT/galaxy-pink.png
-https://i.postimg.cc/pdWksFsS/galaxy-side.png
-https://i.postimg.cc/Pfg4Bc6Y/mars-ui.png
-https://i.postimg.cc/QN9mYsqj/moon.png
-https://i.postimg.cc/3J2B7B66/solar-system.png
+[[https://i.postimg.cc/Nj7p84kT/galaxy-pink.png]]
+[[https://i.postimg.cc/pdWksFsS/galaxy-side.png]]
+[[https://i.postimg.cc/Pfg4Bc6Y/mars-ui.png]]
+[[https://i.postimg.cc/QN9mYsqj/moon.png]]
+[[https://i.postimg.cc/3J2B7B66/solar-system.png]]
 
 * Related Projects
 ** [[https://github.com/Fran4x/orbit-simulator][Orbit Simulator]]
