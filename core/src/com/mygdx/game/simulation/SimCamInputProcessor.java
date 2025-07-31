@@ -174,9 +174,14 @@ public class SimCamInputProcessor implements InputProcessor{
     }
 
     @Override
-    public boolean scrolled(int amount) {
+    public boolean scrolled(float amountX, float amountY) {
 
-        camera.changeSpeed(-amount);
+        camera.changeSpeed((int)-amountY);
         return true;
+    }
+
+    @Override
+    public boolean touchCancelled(int screenX, int screenY, int pointer, int button) {
+        return false;
     }
 }

@@ -1,0 +1,18 @@
+# yaml-language-server: $schema=https://devenv.sh/devenv.schema.json
+
+# Astraria - LibGDX Orbital Simulator Development Environment
+# This project is a Java-based 3D orbital mechanics simulator built with LibGDX
+
+inputs:
+  nixpkgs:
+    url: github:cachix/devenv-nixpkgs/rolling
+
+# Allow unfree packages (needed for some Java development tools)
+allowUnfree: true
+
+# Project metadata
+project:
+  name: "Astraria"
+  description: "3D Orbital Mechanics Simulator built with LibGDX"
+  languages: ["java"]
+  frameworks: ["libgdx", "gradle"]
