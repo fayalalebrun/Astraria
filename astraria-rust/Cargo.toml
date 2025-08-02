@@ -1,0 +1,48 @@
+[package]
+name = "astraria-rust"
+version = "0.1.0"
+edition = "2021"
+authors = ["Astraria Rust Port"]
+description = "3D Orbital Mechanics Simulator - Rust port of Astraria"
+license = "MIT"
+
+[dependencies]
+# Graphics and windowing
+wgpu = "0.17"
+winit = "0.28"
+pollster = "0.3"
+
+# Math
+glam = { version = "0.24", features = ["bytemuck"] }
+bytemuck = { version = "1.14", features = ["derive"] }
+
+# Asset loading
+image = { version = "0.24", features = ["png", "jpeg"] }
+tobj = "4.0"
+
+# UI
+egui = "0.23"
+egui-winit = "0.23"
+egui-wgpu = "0.23"
+
+# Utilities
+anyhow = "1.0"
+thiserror = "1.0"
+log = "0.4"
+env_logger = "0.10"
+
+# Async/threading
+tokio = { version = "1.0", features = ["full"] }
+futures = "0.3"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+ron = "0.8"
+
+[lib]
+name = "astraria_rust"
+path = "src/lib.rs"
+
+[[bin]]
+name = "astraria"
+path = "src/main.rs"
