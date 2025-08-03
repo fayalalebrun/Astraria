@@ -86,7 +86,13 @@ impl LineShader {
                 unclipped_depth: false,
                 conservative: false,
             },
-            depth_stencil: None, // No depth buffer for test mode
+            depth_stencil: Some(wgpu::DepthStencilState {
+                format: wgpu::TextureFormat::Depth32Float,
+                depth_write_enabled: true,
+                depth_compare: wgpu::CompareFunction::Less,
+                stencil: wgpu::StencilState::default(),
+                bias: wgpu::DepthBiasState::default(),
+            }), // No depth buffer for test mode
             multisample: wgpu::MultisampleState {
                 count: 1,
                 mask: !0,

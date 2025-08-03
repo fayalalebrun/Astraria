@@ -62,12 +62,36 @@ var spectrum_texture: texture_2d<f32>;
 @group(2) @binding(2)
 var texture_sampler: sampler;
 
+// Logarithmic depth buffer function (ported from original GLSL)
+fn model_to_clip_coordinates(
+    position: vec4<f32>,
+    mvp_matrix: mat4x4<f32>,
+    depth_constant: f32,
+    far_plane_distance: f32
+) -> vec4<f32> {
+    var clip = mvp_matrix * position;
+    
+    // WebGPU logarithmic depth: maps to [0,1] range instead of OpenGL's [-1,1]
+    // Formula: z = log2(max(1e-6, 1.0 + w)) * Fcoef
+    // where Fcoef = 1.0 / log2(farplane + 1.0) for [0,1] range
+    let fcoef = 1.0 / log2(far_plane_distance + 1.0);
+    clip.z = log2(max(1e-6, 1.0 + clip.w)) * fcoef * clip.w;
+    
+    return clip;
+}
+
 @vertex
 fn vs_main(input: VertexInput) -> VertexOutput {
     var out: VertexOutput;
     
-    // Use actual transform matrix from uniform
-    out.clip_position = camera.projection_matrix * camera.view_matrix * transform.model_matrix * vec4<f32>(input.position, 1.0);
+    // Use logarithmic depth buffer for astronomical scale support
+    let world_position = transform.model_matrix * vec4<f32>(input.position, 1.0);
+    out.clip_position = model_to_clip_coordinates(
+        world_position,
+        camera.view_projection_matrix,
+        camera.log_depth_constant,
+        camera.far_plane_distance
+    );
     out.tex_coord = input.tex_coord;
     
     // Calculate dot product between camera direction and star direction for occlusion testing

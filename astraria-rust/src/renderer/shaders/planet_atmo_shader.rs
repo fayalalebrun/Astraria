@@ -325,7 +325,13 @@ impl PlanetAtmoShader {
                 unclipped_depth: false,
                 conservative: false,
             },
-            depth_stencil: None,
+            depth_stencil: Some(wgpu::DepthStencilState {
+                format: wgpu::TextureFormat::Depth32Float,
+                depth_write_enabled: true,
+                depth_compare: wgpu::CompareFunction::Less,
+                stencil: wgpu::StencilState::default(),
+                bias: wgpu::DepthBiasState::default(),
+            }),
             multisample: wgpu::MultisampleState {
                 count: 1,
                 mask: !0,
@@ -462,9 +468,8 @@ impl PlanetAtmoShader {
     }
 
     pub fn render_planet<'a>(&'a self, render_pass: &mut RenderPass<'a>, model: &'a ModelAsset) {
+        // Groups 0 and 1 (camera and transform) already set by main renderer
         render_pass.set_pipeline(&self.pipeline);
-        render_pass.set_bind_group(0, &self.camera_bind_group, &[]);
-        render_pass.set_bind_group(1, &self.transform_bind_group, &[]);
         render_pass.set_bind_group(2, &self.lighting_bind_group, &[]);
         if let Some(ref texture_bind_group) = self.texture_bind_group {
             render_pass.set_bind_group(3, texture_bind_group, &[]);
@@ -481,9 +486,8 @@ impl PlanetAtmoShader {
         index_buffer: &'a Buffer,
         num_indices: u32,
     ) {
+        // Groups 0 and 1 (camera and transform) already set by main renderer
         render_pass.set_pipeline(&self.pipeline);
-        render_pass.set_bind_group(0, &self.camera_bind_group, &[]);
-        render_pass.set_bind_group(1, &self.transform_bind_group, &[]);
         render_pass.set_bind_group(2, &self.lighting_bind_group, &[]);
         if let Some(ref texture_bind_group) = self.texture_bind_group {
             render_pass.set_bind_group(3, texture_bind_group, &[]);

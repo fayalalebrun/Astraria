@@ -34,20 +34,35 @@ var<uniform> camera: CameraUniform;
 @group(1) @binding(0)
 var<uniform> line_uniform: LineUniform;
 
+// WebGPU-compatible logarithmic depth buffer function
+fn model_to_clip_coordinates(
+    position: vec4<f32>,
+    mvp_matrix: mat4x4<f32>,
+    depth_constant: f32,
+    far_plane_distance: f32
+) -> vec4<f32> {
+    var clip = mvp_matrix * position;
+    
+    // WebGPU logarithmic depth: maps to [0,1] range instead of OpenGL's [-1,1]
+    let fcoef = 1.0 / log2(far_plane_distance + 1.0);
+    clip.z = log2(max(1e-6, 1.0 + clip.w)) * fcoef * clip.w;
+    
+    return clip;
+}
+
 @vertex
 fn vs_main(input: VertexInput) -> VertexOutput {
     var out: VertexOutput;
     
-    // Basic transformation to clip space
-    out.clip_position = camera.projection_matrix * camera.view_matrix * vec4<f32>(input.position, 1.0);
+    // Use logarithmic depth transformation
+    out.clip_position = model_to_clip_coordinates(
+        vec4<f32>(input.position, 1.0),
+        camera.view_projection_matrix,
+        camera.log_depth_constant,
+        camera.far_plane_distance
+    );
     
-    // Calculate logarithmic depth (corrected from original shader)
-    if (out.clip_position.w > 0.0) {
-        out.log_z = log(out.clip_position.w * camera.log_depth_constant + 1.0) * camera.fc_constant;
-        out.clip_position.z = (2.0 * out.log_z - 1.0) * out.clip_position.w;
-    } else {
-        out.log_z = out.clip_position.z;
-    }
+    out.log_z = out.clip_position.z;
     
     return out;
 }

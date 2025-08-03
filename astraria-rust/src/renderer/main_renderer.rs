@@ -508,6 +508,7 @@ impl MainRenderer {
                     *camera_position,
                 );
 
+                // Sun shader: groups 0 and 1 already set by main renderer
                 render_pass.set_pipeline(&self.sun_shader.pipeline);
                 render_pass.set_bind_group(2, &self.sun_shader.bind_group, &[]);
                 render_pass.set_bind_group(3, &self.sun_texture_bind_group, &[]);

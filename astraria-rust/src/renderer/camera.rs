@@ -211,8 +211,8 @@ impl Camera {
         self.update_matrices();
 
         if let Some(buffer) = &self.uniform_buffer {
-            // Calculate fc_constant for logarithmic depth (from original Java implementation)
-            let fc_constant = 2.0 / (self.log_depth_constant * self.far_plane + 1.0).ln();
+            // Calculate fc_constant for logarithmic depth (matches Java: 1.0f/(float)Math.log(MAXVIEWDISTANCE*LOGDEPTHCONSTANT + 1))
+            let fc_constant = 1.0 / (self.log_depth_constant * self.far_plane + 1.0).ln();
 
             let uniforms = CameraUniform {
                 view_matrix: self.view_matrix.to_cols_array_2d(),

@@ -6,10 +6,13 @@ struct CameraUniform {
     projection_matrix: mat4x4<f32>,
     view_projection_matrix: mat4x4<f32>,
     camera_position: vec3<f32>,
+    _padding1: f32,
     camera_direction: vec3<f32>,
+    _padding2: f32,
     log_depth_constant: f32,
     far_plane_distance: f32,
     near_plane_distance: f32,
+    fc_constant: f32,
 };
 
 struct TransformUniform {
@@ -128,8 +131,11 @@ fn model_to_clip_coordinates(
 ) -> vec4<f32> {
     var clip = model_view_perspective_matrix * position;
     
-    // Apply logarithmic depth transformation exactly as in Java/GLSL
-    clip.z = ((2.0 * log(depth_constant * clip.z + 1.0) / log(depth_constant * far_plane_distance + 1.0)) - 1.0) * clip.w;
+    // WebGPU logarithmic depth: maps to [0,1] range instead of OpenGL's [-1,1]
+    // Formula: z = log2(max(1e-6, 1.0 + w)) * Fcoef
+    // where Fcoef = 1.0 / log2(farplane + 1.0) for [0,1] range
+    let fcoef = 1.0 / log2(far_plane_distance + 1.0);
+    clip.z = log2(max(1e-6, 1.0 + clip.w)) * fcoef * clip.w;
     
     return clip;
 }
@@ -138,10 +144,14 @@ fn model_to_clip_coordinates(
 fn vs_main(input: VertexInput) -> VertexOutput {
     var out: VertexOutput;
     
-    // Step 6: Temporarily revert logarithmic depth due to astronomical scale issues
-    // TODO: Fix logarithmic depth for astronomical distances
+    // Use logarithmic depth buffer for astronomical scale support
     let world_position = transform.model_matrix * vec4<f32>(input.position, 1.0);
-    out.clip_position = camera.projection_matrix * camera.view_matrix * world_position;
+    out.clip_position = model_to_clip_coordinates(
+        world_position,
+        camera.view_projection_matrix,
+        camera.log_depth_constant,
+        camera.far_plane_distance
+    );
     
     // Extract the 3x3 part from the mat3x4 for normal transformation
     let normal_matrix_3x3 = mat3x3<f32>(

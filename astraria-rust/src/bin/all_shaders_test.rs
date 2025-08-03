@@ -17,10 +17,12 @@ async fn save_render(
     renderer: &MainRenderer,
     texture: &wgpu::Texture,
     buffer: &wgpu::Buffer,
+    depth_texture: &wgpu::Texture,
     filename: &str,
     test_type: u8,
 ) -> AstrariaResult<()> {
     let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
+    let depth_view = depth_texture.create_view(&wgpu::TextureViewDescriptor::default());
     let mut encoder = renderer
         .device()
         .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
@@ -41,7 +43,14 @@ async fn save_render(
                     store: true,
                 },
             })],
-            depth_stencil_attachment: None,
+            depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                view: &depth_view,
+                depth_ops: Some(wgpu::Operations {
+                    load: wgpu::LoadOp::Clear(1.0),
+                    store: true,
+                }),
+                stencil_ops: None,
+            }),
         });
         match test_type {
             0 => {
@@ -68,7 +77,7 @@ async fn save_render(
                     overglow: 0.1,
                     use_ambient_texture: true,
                 };
-                renderer.render(&mut rp, &command, Mat4::IDENTITY);
+                renderer.render(&mut rp, &command, Mat4::from_scale(Vec3::splat(2.0)));
             }
             3 => {
                 let command = RenderCommand::Sun {
@@ -76,7 +85,7 @@ async fn save_render(
                     star_position: Vec3::new(0.0, 0.0, 0.0),
                     camera_position: Vec3::new(0.0, 0.0, 3.0),
                 };
-                renderer.render(&mut rp, &command, Mat4::IDENTITY);
+                renderer.render(&mut rp, &command, Mat4::from_scale(Vec3::splat(2.0)));
             }
             4 => {
                 let command = RenderCommand::Skybox;
@@ -104,13 +113,120 @@ async fn save_render(
                 let command = RenderCommand::Point;
                 renderer.render(&mut rp, &command, Mat4::IDENTITY);
             }
+            10 => {
+                // Near objects test (0.5, 1.0, 2.0 units from camera)
+                let command = RenderCommand::Default {
+                    mesh_type: MeshType::Sphere,
+                    light_position: Vec3::new(2.0, 2.0, 2.0),
+                    light_color: Vec3::new(1.0, 1.0, 1.0),
+                };
+                // Render three spheres at different near distances
+                renderer.render(
+                    &mut rp,
+                    &command,
+                    Mat4::from_translation(Vec3::new(-2.0, 0.0, -0.5)),
+                );
+                renderer.render(
+                    &mut rp,
+                    &command,
+                    Mat4::from_translation(Vec3::new(0.0, 0.0, -1.0)),
+                );
+                renderer.render(
+                    &mut rp,
+                    &command,
+                    Mat4::from_translation(Vec3::new(2.0, 0.0, -2.0)),
+                );
+            }
+            11 => {
+                // Medium distance test (10, 50, 100 units)
+                let command = RenderCommand::Default {
+                    mesh_type: MeshType::Cube,
+                    light_position: Vec3::new(2.0, 2.0, 2.0),
+                    light_color: Vec3::new(1.0, 1.0, 1.0),
+                };
+                renderer.render(
+                    &mut rp,
+                    &command,
+                    Mat4::from_translation(Vec3::new(-20.0, 0.0, -10.0)),
+                );
+                renderer.render(
+                    &mut rp,
+                    &command,
+                    Mat4::from_translation(Vec3::new(0.0, 0.0, -50.0)),
+                );
+                renderer.render(
+                    &mut rp,
+                    &command,
+                    Mat4::from_translation(Vec3::new(20.0, 0.0, -100.0)),
+                );
+            }
+            12 => {
+                // Far distance test - keep objects reasonable but scale them up
+                let command = RenderCommand::Default {
+                    mesh_type: MeshType::Sphere,
+                    light_position: Vec3::new(200.0, 200.0, 200.0),
+                    light_color: Vec3::new(1.0, 1.0, 1.0),
+                };
+                // Render three different sized spheres at far distances
+                renderer.render(
+                    &mut rp,
+                    &command,
+                    Mat4::from_translation(Vec3::new(-200.0, 0.0, -100.0))
+                        * Mat4::from_scale(Vec3::splat(20.0)),
+                );
+                renderer.render(
+                    &mut rp,
+                    &command,
+                    Mat4::from_translation(Vec3::new(0.0, 0.0, -500.0))
+                        * Mat4::from_scale(Vec3::splat(80.0)),
+                );
+                renderer.render(
+                    &mut rp,
+                    &command,
+                    Mat4::from_translation(Vec3::new(200.0, 0.0, -1000.0))
+                        * Mat4::from_scale(Vec3::splat(200.0)),
+                );
+            }
+            13 => {
+                // Large scale test - test the logarithmic depth precision
+                let command = RenderCommand::Default {
+                    mesh_type: MeshType::Cube,
+                    light_position: Vec3::new(5000.0, 5000.0, 5000.0),
+                    light_color: Vec3::new(1.0, 1.0, 1.0),
+                };
+                // Large objects at progressively farther distances
+                renderer.render(
+                    &mut rp,
+                    &command,
+                    Mat4::from_translation(Vec3::new(-10000.0, 0.0, -10000.0))
+                        * Mat4::from_scale(Vec3::splat(2000.0)),
+                );
+                renderer.render(
+                    &mut rp,
+                    &command,
+                    Mat4::from_translation(Vec3::new(0.0, 0.0, -100000.0))
+                        * Mat4::from_scale(Vec3::splat(20000.0)),
+                );
+                renderer.render(
+                    &mut rp,
+                    &command,
+                    Mat4::from_translation(Vec3::new(10000.0, 0.0, -500000.0))
+                        * Mat4::from_scale(Vec3::splat(100000.0)),
+                );
+            }
             _ => {}
         }
     }
 
+    // Copy color texture to buffer
     copy_texture_to_buffer_aligned(&mut encoder, texture, buffer, SIZE, SIZE);
+
+    // Note: Depth texture copying not supported on this platform
+    // Depth testing is still working, just can't visualize it directly
+
     renderer.queue().submit(std::iter::once(encoder.finish()));
 
+    // Save color image
     let slice = buffer.slice(..);
     slice.map_async(wgpu::MapMode::Read, |_| {});
     renderer.device().poll(wgpu::Maintain::Wait);
@@ -159,6 +275,21 @@ async fn run() -> AstrariaResult<()> {
         view_formats: &[],
     });
 
+    let depth_texture = renderer.device().create_texture(&wgpu::TextureDescriptor {
+        label: Some("Depth Texture"),
+        size: wgpu::Extent3d {
+            width: SIZE,
+            height: SIZE,
+            depth_or_array_layers: 1,
+        },
+        mip_level_count: 1,
+        sample_count: 1,
+        dimension: wgpu::TextureDimension::D2,
+        format: wgpu::TextureFormat::Depth32Float,
+        usage: wgpu::TextureUsages::COPY_SRC | wgpu::TextureUsages::RENDER_ATTACHMENT,
+        view_formats: &[],
+    });
+
     let buffer_size = calculate_aligned_buffer_size(SIZE, SIZE);
     let buffer = renderer.device().create_buffer(&wgpu::BufferDescriptor {
         label: Some("Test Buffer"),
@@ -183,6 +314,11 @@ async fn run() -> AstrariaResult<()> {
         ),
         (8, "LineShader + Orbital Paths", "line_shader.png"),
         (9, "PointShader + Distant Objects", "point_shader.png"),
+        // Depth precision tests with varied distances
+        (10, "Depth Test - Near Objects", "depth_test_near.png"),
+        (11, "Depth Test - Medium Distance", "depth_test_medium.png"),
+        (12, "Depth Test - Far Objects", "depth_test_far.png"),
+        (13, "Depth Test - Large Scale", "depth_test_large_scale.png"),
     ];
 
     // Test all shaders
@@ -190,7 +326,16 @@ async fn run() -> AstrariaResult<()> {
         println!("🔸 {}", description);
         let filepath = format!("{}/{}", output_dir, filename);
 
-        match save_render(&renderer, &texture, &buffer, &filepath, test_type).await {
+        match save_render(
+            &renderer,
+            &texture,
+            &buffer,
+            &depth_texture,
+            &filepath,
+            test_type,
+        )
+        .await
+        {
             Ok(_) => println!("✅ Saved: {}", filepath),
             Err(e) => println!(
                 "⚠️  Failed to render {}: {} (shader may not be fully implemented)",

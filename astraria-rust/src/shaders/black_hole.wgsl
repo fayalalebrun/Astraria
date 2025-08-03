@@ -65,8 +65,11 @@ fn model_to_clip_coordinates(
 ) -> vec4<f32> {
     var clip = model_view_perspective_matrix * position;
     
-    // Apply logarithmic depth transformation
-    clip.z = ((2.0 * log(depth_constant * clip.z + 1.0) / log(depth_constant * far_plane_distance + 1.0)) - 1.0) * clip.w;
+    // WebGPU logarithmic depth: maps to [0,1] range instead of OpenGL's [-1,1]
+    // Formula: z = log2(max(1e-6, 1.0 + w)) * Fcoef
+    // where Fcoef = 1.0 / log2(farplane + 1.0) for [0,1] range
+    let fcoef = 1.0 / log2(far_plane_distance + 1.0);
+    clip.z = log2(max(1e-6, 1.0 + clip.w)) * fcoef * clip.w;
     
     return clip;
 }
@@ -75,9 +78,14 @@ fn model_to_clip_coordinates(
 fn vs_main(input: VertexInput) -> VertexOutput {
     var out: VertexOutput;
     
-    // Debug: Use simple transformation like default shader
+    // Use logarithmic depth buffer for astronomical scale support
     let world_position = transform.model_matrix * vec4<f32>(input.position, 1.0);
-    out.clip_position = camera.view_projection_matrix * world_position;
+    out.clip_position = model_to_clip_coordinates(
+        world_position,
+        camera.view_projection_matrix,
+        camera.log_depth_constant,
+        camera.far_plane_distance
+    );
     out.tex_coord = input.tex_coord;
     out.normal = input.normal;
     out.world_position = world_position.xyz;

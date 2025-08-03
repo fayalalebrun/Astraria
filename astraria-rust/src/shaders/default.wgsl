@@ -55,7 +55,8 @@ struct VertexOutput {
 @group(3) @binding(0) var diffuse_texture: texture_2d<f32>;
 @group(3) @binding(1) var diffuse_sampler: sampler;
 
-// Logarithmic depth buffer function (ported from original GLSL)
+// WebGPU-compatible logarithmic depth buffer function
+// Based on Outerra's optimized implementation for [0,1] depth range
 fn model_to_clip_coordinates(
     position: vec4<f32>,
     mvp_matrix: mat4x4<f32>,
@@ -63,8 +64,13 @@ fn model_to_clip_coordinates(
     far_plane_distance: f32
 ) -> vec4<f32> {
     var clip = mvp_matrix * position;
-    clip.z = ((2.0 * log(depth_constant * clip.z + 1.0) / 
-              log(depth_constant * far_plane_distance + 1.0)) - 1.0) * clip.w;
+    
+    // WebGPU logarithmic depth: maps to [0,1] range instead of OpenGL's [-1,1]
+    // Formula: z = log2(max(1e-6, 1.0 + w)) * Fcoef
+    // where Fcoef = 1.0 / log2(farplane + 1.0) for [0,1] range
+    let fcoef = 1.0 / log2(far_plane_distance + 1.0);
+    clip.z = log2(max(1e-6, 1.0 + clip.w)) * fcoef * clip.w;
+    
     return clip;
 }
 
@@ -80,16 +86,13 @@ fn vs_main(input: VertexInput) -> VertexOutput {
     // Transform normal to world space
     out.world_normal = normalize(transform.normal_matrix * input.normal);
     
-    // For testing, use simple transformation without logarithmic depth
-    out.clip_position = camera.view_projection_matrix * world_position;
-    
-    // TODO: Re-enable logarithmic depth transformation later
-    // out.clip_position = model_to_clip_coordinates(
-    //     world_position,
-    //     camera.view_projection_matrix,
-    //     camera.log_depth_constant,
-    //     camera.far_plane_distance
-    // );
+    // Use logarithmic depth buffer for astronomical scale support
+    out.clip_position = model_to_clip_coordinates(
+        world_position,
+        camera.view_projection_matrix,
+        camera.log_depth_constant,
+        camera.far_plane_distance
+    );
     
     out.tex_coord = input.tex_coord;
     
