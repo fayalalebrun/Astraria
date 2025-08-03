@@ -1,13 +1,14 @@
-use glam::{Mat4, Vec2, Vec3, Vec4};
+use glam::{Mat4, Vec3, Vec4};
 use std::sync::Arc;
 use wgpu::util::DeviceExt;
 /// Main Renderer that manages all shader types
 /// Equivalent to the Java Renderer class that owns all shader instances
-use wgpu::{CommandEncoder, Device, Queue, RenderPass, Surface, SurfaceConfiguration};
+use wgpu::{Device, Queue, RenderPass};
 
 use crate::{
-    assets::{AssetManager, CubemapAsset, ModelAsset, TextureAsset},
+    assets::{AssetManager, CubemapAsset, TextureAsset},
     renderer::{
+        camera::Camera,
         core::*,
         shaders::{
             BillboardShader, BlackHoleShader, DefaultShader, LensGlowShader, LineShader,
@@ -23,6 +24,9 @@ pub struct MainRenderer {
     // Core wgpu resources
     device: Device,
     queue: Queue,
+
+    // Camera system
+    pub camera: Camera,
 
     // Asset management
     pub asset_manager: AssetManager,
@@ -54,7 +58,6 @@ pub struct MainRenderer {
     pub black_hole_uniform_bind_group: wgpu::BindGroup,
     pub lens_glow_texture_bind_group: wgpu::BindGroup,
     pub transform_bind_group: wgpu::BindGroup,
-    pub camera_bind_group: wgpu::BindGroup,
 
     // Geometry buffers for testing
     cube_vertex_buffer: wgpu::Buffer,
@@ -74,7 +77,6 @@ pub struct MainRenderer {
     line_num_indices: u32,
 
     point_vertex_buffer: wgpu::Buffer,
-    point_index_buffer: wgpu::Buffer,
     point_num_indices: u32,
 
     // Rendering constants (like Java Renderer)
@@ -172,7 +174,7 @@ impl MainRenderer {
             usage: wgpu::BufferUsages::VERTEX,
         });
 
-        let point_index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        let _point_index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Point Index Buffer"),
             contents: bytemuck::cast_slice(&point_indices),
             usage: wgpu::BufferUsages::INDEX,
@@ -232,8 +234,9 @@ impl MainRenderer {
             )
             .await?;
 
-        // Create camera bind group layout that all shaders will use
-        let camera_bind_group_layout = create_camera_bind_group_layout(&device);
+        // Create camera system first since some shaders need the bind group layout
+        let mut camera = Camera::new(800.0 / 600.0); // Aspect ratio
+        let camera_bind_group_layout = camera.initialize_gpu_resources(&device);
 
         // Create all shader instances (textures are now loaded)
         let default_shader = DefaultShader::new(&device)?;
@@ -299,29 +302,15 @@ impl MainRenderer {
             ],
         });
 
-        // Create camera and transform data structures
-        let camera_position = Vec3::new(0.0, 0.0, 3.0);
-        let camera_direction = Vec3::new(0.0, 0.0, -1.0);
-        let view_matrix = Mat4::look_at_rh(camera_position, Vec3::ZERO, Vec3::Y);
-        let projection_matrix =
-            Mat4::perspective_rh(45.0_f32.to_radians(), 800.0 / 600.0, 0.1, 100.0);
-        let view_projection_matrix = projection_matrix * view_matrix;
-
-        // Create transform uniform buffer with full structure expected by shaders
+        // Update camera uniforms first so we can use its matrices
+        camera.update(&queue);
+        
         let model_matrix = Mat4::IDENTITY;
+        let view_matrix = camera.view_projection_matrix(); // Get from camera
         let model_view_matrix = view_matrix * model_matrix;
         let normal_matrix = model_view_matrix.inverse().transpose();
 
-        #[repr(C)]
-        #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-        struct FullTransformUniform {
-            model_matrix: [[f32; 4]; 4],
-            model_view_matrix: [[f32; 4]; 4],
-            normal_matrix: [[f32; 4]; 3], // mat4x3 stored as 3 vec4 for alignment (192 bytes total)
-            _padding: [f32; 4],
-        }
-
-        let full_transform_uniform = FullTransformUniform {
+        let transform_uniform = TransformUniform {
             model_matrix: model_matrix.to_cols_array_2d(),
             model_view_matrix: model_view_matrix.to_cols_array_2d(),
             normal_matrix: [
@@ -349,7 +338,7 @@ impl MainRenderer {
 
         let transform_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Transform Buffer"),
-            contents: bytemuck::cast_slice(&[full_transform_uniform]),
+            contents: bytemuck::cast_slice(&[transform_uniform]),
             usage: wgpu::BufferUsages::UNIFORM,
         });
 
@@ -362,44 +351,6 @@ impl MainRenderer {
                 binding: 0,
                 resource: transform_buffer.as_entire_binding(),
             }],
-        });
-
-        // Create camera uniform buffer with full structure expected by shaders
-
-        #[repr(C)]
-        #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-        struct FullCameraUniform {
-            view_matrix: [[f32; 4]; 4],
-            projection_matrix: [[f32; 4]; 4],
-            view_projection_matrix: [[f32; 4]; 4],
-            camera_position: [f32; 3],
-            _padding1: f32,
-            camera_direction: [f32; 3],
-            _padding2: f32,
-            log_depth_constant: f32,
-            far_plane_distance: f32,
-            near_plane_distance: f32,
-            _padding3: f32,
-        }
-
-        let full_camera_uniform = FullCameraUniform {
-            view_matrix: view_matrix.to_cols_array_2d(),
-            projection_matrix: projection_matrix.to_cols_array_2d(),
-            view_projection_matrix: view_projection_matrix.to_cols_array_2d(),
-            camera_position: camera_position.to_array(),
-            _padding1: 0.0,
-            camera_direction: camera_direction.to_array(),
-            _padding2: 0.0,
-            log_depth_constant: 1.0,
-            far_plane_distance: 100.0,
-            near_plane_distance: 0.1,
-            _padding3: 0.0,
-        };
-
-        let camera_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Camera Buffer"),
-            contents: bytemuck::cast_slice(&[full_camera_uniform]),
-            usage: wgpu::BufferUsages::UNIFORM,
         });
 
         // Create lens glow texture bind group
@@ -438,38 +389,39 @@ impl MainRenderer {
             ],
         });
 
-        // Create black hole uniforms bind group (camera, transform, black hole data)
+        // Create black hole uniform buffer
+        use crate::renderer::shaders::black_hole_shader::BlackHoleUniform;
+        let black_hole_uniform = BlackHoleUniform {
+            hole_position: [0.0, 0.0, 0.0],
+            _padding: 0.0,
+        };
+        let black_hole_uniform_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Black Hole Uniform Buffer"),
+            contents: bytemuck::cast_slice(&[black_hole_uniform]),
+            usage: wgpu::BufferUsages::UNIFORM,
+        });
+
+        // Create black hole specific uniforms bind group (transform and black hole data only)
+        // Note: Camera is now handled by the shared camera bind group (group 0)
         let black_hole_uniform_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: Some("Black Hole Uniform Bind Group"),
             layout: &black_hole_shader.uniform_bind_group_layout,
             entries: &[
                 wgpu::BindGroupEntry {
                     binding: 0,
-                    resource: camera_buffer.as_entire_binding(),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 1,
                     resource: transform_buffer.as_entire_binding(),
                 },
                 wgpu::BindGroupEntry {
-                    binding: 2,
-                    resource: black_hole_shader.uniform_buffer.as_entire_binding(),
+                    binding: 1,
+                    resource: black_hole_uniform_buffer.as_entire_binding(),
                 },
             ],
-        });
-
-        let camera_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("Camera Bind Group"),
-            layout: &camera_bind_group_layout,
-            entries: &[wgpu::BindGroupEntry {
-                binding: 0,
-                resource: camera_buffer.as_entire_binding(),
-            }],
         });
 
         Ok(Self {
             device,
             queue,
+            camera,
             asset_manager,
             default_shader,
             planet_atmo_shader,
@@ -493,7 +445,6 @@ impl MainRenderer {
             black_hole_uniform_bind_group,
             lens_glow_texture_bind_group,
             transform_bind_group,
-            camera_bind_group,
             cube_vertex_buffer,
             cube_index_buffer,
             cube_num_indices: cube_indices.len() as u32,
@@ -507,7 +458,6 @@ impl MainRenderer {
             line_index_buffer,
             line_num_indices: line_indices.len() as u32,
             point_vertex_buffer,
-            point_index_buffer,
             point_num_indices: point_indices.len() as u32,
             max_view_distance: 100000000000.0, // Like Java MAXVIEWDISTANCE
             log_depth_constant: 1.0,           // Like Java LOGDEPTHCONSTANT
@@ -516,11 +466,11 @@ impl MainRenderer {
 
     /// Render a cube using default shader
     pub fn render_default_cube<'a>(&'a self, render_pass: &mut RenderPass<'a>) {
-        // Update uniforms (in real usage, these would be provided as parameters)
+        // Update uniforms using camera matrices
         self.default_shader.update_uniforms(
             &self.queue,
-            Mat4::look_at_rh(Vec3::new(0.0, 0.0, 3.0), Vec3::ZERO, Vec3::Y),
-            Mat4::perspective_rh(45.0_f32.to_radians(), 800.0 / 600.0, 0.1, 100.0),
+            self.camera.view_matrix(),
+            self.camera.projection_matrix(),
             Mat4::IDENTITY,
             Vec3::new(2.0, 2.0, 2.0),
             Vec3::new(1.0, 1.0, 1.0),
@@ -538,11 +488,11 @@ impl MainRenderer {
 
     /// Render a sphere using default shader
     pub fn render_default_sphere<'a>(&'a self, render_pass: &mut RenderPass<'a>) {
-        // Update uniforms
+        // Update uniforms using camera matrices
         self.default_shader.update_uniforms(
             &self.queue,
-            Mat4::look_at_rh(Vec3::new(0.0, 0.0, 3.0), Vec3::ZERO, Vec3::Y),
-            Mat4::perspective_rh(45.0_f32.to_radians(), 800.0 / 600.0, 0.1, 100.0),
+            self.camera.view_matrix(),
+            self.camera.projection_matrix(),
             Mat4::IDENTITY,
             Vec3::new(2.0, 2.0, 2.0),
             Vec3::new(1.0, 1.0, 1.0),
@@ -561,12 +511,11 @@ impl MainRenderer {
     /// Render a planet with atmosphere using Earth textures
     pub fn render_atmospheric_planet<'a>(&'a self, render_pass: &mut RenderPass<'a>) {
         // Calculate positions relative to camera (as done in Java implementation)
-        let view_matrix = Mat4::look_at_rh(Vec3::new(0.0, 0.0, 3.0), Vec3::ZERO, Vec3::Y);
-        let projection_matrix =
-            Mat4::perspective_rh(45.0_f32.to_radians(), 800.0 / 600.0, 0.1, 100.0);
+        let view_matrix = self.camera.view_matrix();
+        let projection_matrix = self.camera.projection_matrix();
         let model_matrix = Mat4::IDENTITY;
 
-        let camera_position = Vec3::new(0.0, 0.0, 3.0);
+        let camera_position = self.camera.position().as_vec3();
         let star_world_position = Vec3::new(5.0, 5.0, 5.0); // Star position in world space
         let planet_world_position = Vec3::ZERO; // Planet at origin
 
@@ -603,131 +552,9 @@ impl MainRenderer {
         &self.device
     }
 
-    /// Create a standard sampler for texture rendering
-    fn create_sampler(&self) -> wgpu::Sampler {
-        self.device.create_sampler(&wgpu::SamplerDescriptor {
-            address_mode_u: wgpu::AddressMode::ClampToEdge,
-            address_mode_v: wgpu::AddressMode::ClampToEdge,
-            address_mode_w: wgpu::AddressMode::ClampToEdge,
-            mag_filter: wgpu::FilterMode::Linear,
-            min_filter: wgpu::FilterMode::Linear,
-            mipmap_filter: wgpu::FilterMode::Linear,
-            ..Default::default()
-        })
-    }
-
     /// Get queue reference for external use
     pub fn queue(&self) -> &Queue {
         &self.queue
-    }
-
-    /// Create texture bind groups for various shader types (DRY helper)
-    fn create_texture_bind_groups(
-        &self,
-    ) -> AstrariaResult<(
-        wgpu::BindGroup,
-        wgpu::BindGroup,
-        wgpu::BindGroup,
-        wgpu::BindGroup,
-    )> {
-        // Create a default sampler for all textures
-        let sampler = self.device.create_sampler(&wgpu::SamplerDescriptor {
-            label: Some("Default Texture Sampler"),
-            address_mode_u: wgpu::AddressMode::Repeat,
-            address_mode_v: wgpu::AddressMode::Repeat,
-            address_mode_w: wgpu::AddressMode::Repeat,
-            mag_filter: wgpu::FilterMode::Linear,
-            min_filter: wgpu::FilterMode::Linear,
-            mipmap_filter: wgpu::FilterMode::Linear,
-            lod_min_clamp: 0.0,
-            lod_max_clamp: 100.0,
-            compare: None,
-            anisotropy_clamp: 1,
-            border_color: None,
-        });
-
-        // Planet atmosphere bind group (day + night + atmospheric gradient)
-        let planet_texture_bind_group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("Planet Atmosphere Texture Bind Group"),
-            layout: &self.planet_atmo_shader.texture_bind_group_layout,
-            entries: &[
-                wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: wgpu::BindingResource::TextureView(&self.earth_day_texture.view),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 1,
-                    resource: wgpu::BindingResource::TextureView(&self.earth_night_texture.view),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 2,
-                    resource: wgpu::BindingResource::TextureView(&self.atmo_gradient_texture.view),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 3,
-                    resource: wgpu::BindingResource::Sampler(&sampler),
-                },
-            ],
-        });
-
-        // Skybox bind group (cubemap)
-        let skybox_bind_group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("Skybox Texture Bind Group"),
-            layout: &self.skybox_shader.bind_group_layout,
-            entries: &[
-                wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: wgpu::BindingResource::TextureView(&self.skybox_cubemap.view),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 1,
-                    resource: wgpu::BindingResource::Sampler(&sampler),
-                },
-            ],
-        });
-
-        // Lens glow bind group (glow + spectrum textures)
-        let lens_glow_bind_group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("Lens Glow Texture Bind Group"),
-            layout: &self.lens_glow_shader.texture_bind_group_layout,
-            entries: &[
-                wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: wgpu::BindingResource::TextureView(&self.star_glow_texture.view),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 1,
-                    resource: wgpu::BindingResource::TextureView(&self.star_spectrum_texture.view),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 2,
-                    resource: wgpu::BindingResource::Sampler(&sampler),
-                },
-            ],
-        });
-
-        // Sun texture bind group (single texture)
-        let sun_bind_group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("Sun Texture Bind Group"),
-            layout: &self.sun_shader.texture_bind_group_layout,
-            entries: &[
-                wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: wgpu::BindingResource::TextureView(&self.sun_texture.view),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 1,
-                    resource: wgpu::BindingResource::Sampler(&sampler),
-                },
-            ],
-        });
-
-        Ok((
-            planet_texture_bind_group,
-            skybox_bind_group,
-            lens_glow_bind_group,
-            sun_bind_group,
-        ))
     }
 
     /// Render sun with stellar surface texture
@@ -742,7 +569,7 @@ impl MainRenderer {
 
         // Set all required bind groups in correct order
         render_pass.set_pipeline(&self.sun_shader.pipeline);
-        render_pass.set_bind_group(0, &self.camera_bind_group, &[]); // Camera at index 0
+        render_pass.set_bind_group(0, self.camera.bind_group().unwrap(), &[]); // Camera at index 0
         render_pass.set_bind_group(1, &self.transform_bind_group, &[]); // Transform at index 1
         render_pass.set_bind_group(2, &self.sun_shader.bind_group, &[]); // Sun uniforms at index 2
         render_pass.set_bind_group(3, &self.sun_texture_bind_group, &[]); // Texture at index 3
@@ -758,7 +585,7 @@ impl MainRenderer {
     pub fn render_skybox<'a>(&'a self, render_pass: &mut RenderPass<'a>) {
         // Set all required bind groups in correct order
         render_pass.set_pipeline(&self.skybox_shader.pipeline);
-        render_pass.set_bind_group(0, &self.camera_bind_group, &[]); // Camera at index 0
+        render_pass.set_bind_group(0, self.camera.bind_group().unwrap(), &[]); // Camera at index 0
         render_pass.set_bind_group(1, &self.skybox_texture_bind_group, &[]); // Texture at index 1
         render_pass.set_vertex_buffer(0, self.cube_vertex_buffer.slice(..));
         render_pass.set_index_buffer(self.cube_index_buffer.slice(..), wgpu::IndexFormat::Uint32);
@@ -767,16 +594,9 @@ impl MainRenderer {
 
     /// Render billboard sprite
     pub fn render_billboard<'a>(&'a self, render_pass: &mut RenderPass<'a>) {
-        // Update billboard shader uniforms for test mode
-        self.billboard_shader.update_simple_uniforms(
-            &self.queue,
-            Mat4::look_at_rh(Vec3::new(0.0, 0.0, 3.0), Vec3::ZERO, Vec3::Y),
-            Mat4::perspective_rh(45.0_f32.to_radians(), 800.0 / 600.0, 0.1, 100.0),
-        );
-
-        // Use the billboard shader with proper quad geometry
+        // Use the billboard shader with proper quad geometry and shared uniforms
         render_pass.set_pipeline(&self.billboard_shader.pipeline);
-        render_pass.set_bind_group(0, &self.billboard_shader.bind_group, &[]);
+        render_pass.set_bind_group(0, self.camera.bind_group().unwrap(), &[]); // Use shared camera bind group
         render_pass.set_vertex_buffer(0, self.quad_vertex_buffer.slice(..));
         render_pass.set_index_buffer(self.quad_index_buffer.slice(..), wgpu::IndexFormat::Uint32);
         render_pass.draw_indexed(0..self.quad_num_indices, 0, 0..1);
@@ -784,17 +604,11 @@ impl MainRenderer {
 
     /// Render lens glow effect with temperature-based colors
     pub fn render_lens_glow<'a>(&'a self, render_pass: &mut RenderPass<'a>) {
-        // Update lens glow shader uniforms
-        let view_matrix = Mat4::look_at_rh(Vec3::new(0.0, 0.0, 3.0), Vec3::ZERO, Vec3::Y);
-        let projection_matrix =
-            Mat4::perspective_rh(45.0_f32.to_radians(), 800.0 / 600.0, 0.1, 100.0);
-        self.lens_glow_shader
-            .update_simple_uniforms(&self.queue, view_matrix, projection_matrix);
-
-        // Use the lens glow shader with flare effects
+        // Use the lens glow shader with flare effects (uses camera from bind group 0)
         render_pass.set_pipeline(&self.lens_glow_shader.pipeline);
-        render_pass.set_bind_group(0, &self.lens_glow_shader.bind_group, &[]); // Uniforms at index 0
-        render_pass.set_bind_group(1, &self.lens_glow_texture_bind_group, &[]); // Textures at index 1
+        render_pass.set_bind_group(0, self.camera.bind_group().unwrap(), &[]); // Shared camera (group 0)
+        render_pass.set_bind_group(1, &self.lens_glow_shader.uniform_bind_group, &[]); // Lens glow uniforms (group 1)
+        render_pass.set_bind_group(2, &self.lens_glow_texture_bind_group, &[]); // Textures (group 2)
         render_pass.set_vertex_buffer(0, self.quad_vertex_buffer.slice(..));
         render_pass.set_index_buffer(self.quad_index_buffer.slice(..), wgpu::IndexFormat::Uint32);
         render_pass.draw_indexed(0..self.quad_num_indices, 0, 0..1);
@@ -802,13 +616,13 @@ impl MainRenderer {
 
     /// Render black hole with gravitational lensing effect
     pub fn render_black_hole<'a>(&'a self, render_pass: &mut RenderPass<'a>) {
-        // Update black hole shader uniforms (position etc.)
-        self.black_hole_shader.update_simple_uniforms(&self.queue);
+        // Use black hole shader with shared uniforms
 
         // Use the black hole shader with gravitational lensing
         render_pass.set_pipeline(&self.black_hole_shader.pipeline);
-        render_pass.set_bind_group(0, &self.black_hole_uniform_bind_group, &[]); // Uniforms at index 0
-        render_pass.set_bind_group(1, &self.black_hole_texture_bind_group, &[]); // Skybox texture at index 1
+        render_pass.set_bind_group(0, self.camera.bind_group().unwrap(), &[]); // Shared camera (group 0)
+        render_pass.set_bind_group(1, &self.black_hole_uniform_bind_group, &[]); // Black hole uniforms (group 1)
+        render_pass.set_bind_group(2, &self.black_hole_texture_bind_group, &[]); // Skybox texture (group 2)
         render_pass.set_vertex_buffer(0, self.sphere_vertex_buffer.slice(..));
         render_pass.set_index_buffer(
             self.sphere_index_buffer.slice(..),
@@ -819,16 +633,10 @@ impl MainRenderer {
 
     /// Render orbital lines
     pub fn render_line<'a>(&'a self, render_pass: &mut RenderPass<'a>) {
-        // Update line shader uniforms for test mode
-        self.line_shader.update_simple_uniforms(
-            &self.queue,
-            Mat4::look_at_rh(Vec3::new(0.0, 0.0, 3.0), Vec3::ZERO, Vec3::Y),
-            Mat4::perspective_rh(45.0_f32.to_radians(), 800.0 / 600.0, 0.1, 100.0),
-        );
-
         // Use the line shader with line geometry for orbital paths
         render_pass.set_pipeline(&self.line_shader.pipeline);
-        render_pass.set_bind_group(0, &self.line_shader.bind_group, &[]);
+        render_pass.set_bind_group(0, self.camera.bind_group().unwrap(), &[]); // Shared camera (group 0)
+        render_pass.set_bind_group(1, &self.line_shader.line_bind_group, &[]); // Line-specific (group 1)
         render_pass.set_vertex_buffer(0, self.line_vertex_buffer.slice(..));
         render_pass.set_index_buffer(self.line_index_buffer.slice(..), wgpu::IndexFormat::Uint32);
         render_pass.draw_indexed(0..self.line_num_indices, 0, 0..1);
@@ -836,16 +644,11 @@ impl MainRenderer {
 
     /// Render distant point objects
     pub fn render_point<'a>(&'a self, render_pass: &mut RenderPass<'a>) {
-        // Update point shader uniforms for test mode
-        self.point_shader.update_simple_uniforms(
-            &self.queue,
-            Mat4::look_at_rh(Vec3::new(0.0, 0.0, 3.0), Vec3::ZERO, Vec3::Y),
-            Mat4::perspective_rh(45.0_f32.to_radians(), 800.0 / 600.0, 0.1, 100.0),
-        );
+        // Use point shader with shared uniforms
 
         // Use point geometry for distant object rendering
         render_pass.set_pipeline(&self.point_shader.pipeline);
-        render_pass.set_bind_group(0, &self.point_shader.bind_group, &[]);
+        render_pass.set_bind_group(0, self.camera.bind_group().unwrap(), &[]); // Use shared camera bind group
         render_pass.set_vertex_buffer(0, self.point_vertex_buffer.slice(..));
         render_pass.draw(0..self.point_num_indices, 0..1);
     }

@@ -1,38 +1,11 @@
 use glam::{Mat3, Mat4, Vec3, Vec4};
-use std::sync::Arc;
-use wgpu::util::DeviceExt;
 /// Planet atmosphere shader using the complete WGSL implementation
 /// Matches the original Java atmospheric scattering with full feature set
 use wgpu::{BindGroup, Buffer, Device, Queue, RenderPass, RenderPipeline};
 
-use crate::{assets::ModelAsset, graphics::Vertex, AstrariaResult};
+use crate::{assets::ModelAsset, graphics::Vertex, AstrariaResult, renderer::core::*};
 
-// Camera uniform matching the proper shader
-#[repr(C)]
-#[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct CameraUniform {
-    pub view_matrix: [[f32; 4]; 4],
-    pub projection_matrix: [[f32; 4]; 4],
-    pub view_projection_matrix: [[f32; 4]; 4],
-    pub camera_position: [f32; 3],
-    pub _padding1: f32,
-    pub camera_direction: [f32; 3],
-    pub _padding2: f32,
-    pub log_depth_constant: f32,
-    pub far_plane_distance: f32,
-    pub near_plane_distance: f32,
-    pub _padding3: f32,
-}
-
-// Transform uniform matching the proper shader
-#[repr(C)]
-#[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct TransformUniform {
-    pub model_matrix: [[f32; 4]; 4],      // 64 bytes
-    pub model_view_matrix: [[f32; 4]; 4], // 64 bytes
-    pub normal_matrix: [[f32; 4]; 3],     // 48 bytes (mat3x3 stored as 3 vec4 for alignment)
-    pub _padding: [f32; 4],               // 16 bytes (total = 192 bytes)
-}
+// CameraUniform and TransformUniform are now imported from core.rs to eliminate duplication
 
 // Point light structure
 #[repr(C)]
@@ -74,9 +47,6 @@ pub struct AtmosphereUniform {
 pub struct PlanetAtmoShader {
     pub pipeline: RenderPipeline,
     // Bind group layouts
-    camera_bind_group_layout: wgpu::BindGroupLayout,
-    transform_bind_group_layout: wgpu::BindGroupLayout,
-    lighting_bind_group_layout: wgpu::BindGroupLayout,
     pub texture_bind_group_layout: wgpu::BindGroupLayout,
     // Buffers
     camera_buffer: Buffer,
@@ -93,7 +63,7 @@ pub struct PlanetAtmoShader {
 impl PlanetAtmoShader {
     pub fn new(
         device: &Device,
-        queue: &Queue,
+        _queue: &Queue,
         day_texture: &wgpu::Texture,
         night_texture: &wgpu::Texture,
         atmosphere_texture: &wgpu::Texture,
@@ -366,9 +336,6 @@ impl PlanetAtmoShader {
 
         Ok(Self {
             pipeline,
-            camera_bind_group_layout,
-            transform_bind_group_layout,
-            lighting_bind_group_layout,
             texture_bind_group_layout,
             camera_buffer,
             transform_buffer,
@@ -388,11 +355,11 @@ impl PlanetAtmoShader {
         projection_matrix: Mat4,
         model_matrix: Mat4,
         light_position: Vec3,
-        light_color: Vec3,
+        _light_color: Vec3,
         star_position: Vec3,
         planet_position: Vec3,
-        atmosphere_color_mod: Vec4,
-        overglow: f32,
+        _atmosphere_color_mod: Vec4,
+        _overglow: f32,
         use_ambient_texture: bool,
     ) {
         // Camera uniforms
@@ -409,7 +376,7 @@ impl PlanetAtmoShader {
             log_depth_constant: 1.0, // From Java: LOGDEPTHCONSTANT = 1f
             far_plane_distance: 100000000000.0, // From Java: MAXVIEWDISTANCE = 100000000000f
             near_plane_distance: 1.0, // From Java: near plane = 1f
-            _padding3: 0.0,
+            fc_constant: 2.0 / (100000000000.0f32 + 1.0).ln(),
         };
 
         // Transform uniforms

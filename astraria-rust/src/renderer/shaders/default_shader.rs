@@ -1,15 +1,11 @@
 use glam::{Mat4, Vec3};
-use std::sync::Arc;
-use wgpu::util::DeviceExt;
 /// Default shader for planet and object rendering with PBR lighting
 /// Equivalent to the Java DefaultShader class
 use wgpu::{BindGroup, Buffer, Device, Queue, RenderPass, RenderPipeline};
 
 use crate::{
-    assets::{AssetManager, ModelAsset},
-    graphics::Vertex,
-    renderer::core::*,
-    AstrariaError, AstrariaResult,
+    assets::ModelAsset,
+    graphics::Vertex, AstrariaResult,
 };
 
 #[repr(C)]
@@ -20,7 +16,6 @@ pub struct DefaultUniforms {
 
 pub struct DefaultShader {
     pipeline: RenderPipeline,
-    bind_group_layout: wgpu::BindGroupLayout,
     uniform_buffer: Buffer,
     bind_group: BindGroup,
 }
@@ -107,7 +102,6 @@ impl DefaultShader {
 
         Ok(Self {
             pipeline,
-            bind_group_layout,
             uniform_buffer,
             bind_group,
         })
@@ -119,10 +113,10 @@ impl DefaultShader {
         view_matrix: Mat4,
         projection_matrix: Mat4,
         model_matrix: Mat4,
-        light_position: Vec3,
-        light_color: Vec3,
-        far_plane_distance: f32,
-        log_depth_constant: f32,
+        _light_position: Vec3,
+        _light_color: Vec3,
+        _far_plane_distance: f32,
+        _log_depth_constant: f32,
     ) {
         let view_projection = projection_matrix * view_matrix * model_matrix;
         let uniforms = DefaultUniforms {

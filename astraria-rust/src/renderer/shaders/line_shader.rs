@@ -1,30 +1,11 @@
 use bytemuck::{Pod, Zeroable};
-use glam::{Mat4, Vec3, Vec4};
-use std::sync::Arc;
-use wgpu::util::DeviceExt;
 /// Line shader for orbital path rendering
 /// Renders line geometry with logarithmic depth buffer support
-use wgpu::{BindGroup, BindGroupLayout, Buffer, Device, Queue, RenderPass, RenderPipeline};
+use wgpu::{Device, Queue, RenderPipeline};
 
-use crate::{
-    assets::{AssetManager, ModelAsset},
-    graphics::Vertex,
-    renderer::core::*,
-    AstrariaError, AstrariaResult,
-};
+use crate::AstrariaResult;
 
-#[repr(C)]
-#[derive(Copy, Clone, Debug, Pod, Zeroable)]
-pub struct CameraUniform {
-    pub view_matrix: [[f32; 4]; 4],
-    pub projection_matrix: [[f32; 4]; 4],
-    pub camera_position: [f32; 3],
-    pub _padding1: f32,
-    pub log_depth_constant: f32,
-    pub far_plane_distance: f32,
-    pub fc_constant: f32, // FC constant from original
-    pub _padding2: f32,
-}
+// CameraUniform and TransformUniform are now imported from core.rs to eliminate duplication
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, Pod, Zeroable)]
@@ -34,10 +15,8 @@ pub struct LineUniform {
 
 pub struct LineShader {
     pub pipeline: RenderPipeline,
-    pub bind_group: BindGroup,
-    pub camera_buffer: wgpu::Buffer,
     pub line_buffer: wgpu::Buffer,
-    uniform_bind_group_layout: wgpu::BindGroupLayout,
+    pub line_bind_group: wgpu::BindGroup,
 }
 
 impl LineShader {
@@ -47,37 +26,27 @@ impl LineShader {
             source: wgpu::ShaderSource::Wgsl(include_str!("../../shaders/line.wgsl").into()),
         });
 
-        // Uniform bind group layout (group 0)
-        let uniform_bind_group_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                label: Some("Line Uniform Bind Group Layout"),
-                entries: &[
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 0,
-                        visibility: wgpu::ShaderStages::VERTEX,
-                        ty: wgpu::BindingType::Buffer {
-                            ty: wgpu::BufferBindingType::Uniform,
-                            has_dynamic_offset: false,
-                            min_binding_size: None,
-                        },
-                        count: None,
-                    },
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 1,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Buffer {
-                            ty: wgpu::BufferBindingType::Uniform,
-                            has_dynamic_offset: false,
-                            min_binding_size: None,
-                        },
-                        count: None,
-                    },
-                ],
-            });
+        // Camera bind group layout (group 0) - shared with other shaders
+        let camera_bind_group_layout = crate::renderer::core::create_camera_bind_group_layout(device);
+
+        // Line-specific bind group layout (group 1)
+        let line_bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            label: Some("Line Specific Bind Group Layout"),
+            entries: &[wgpu::BindGroupLayoutEntry {
+                binding: 0,
+                visibility: wgpu::ShaderStages::FRAGMENT,
+                ty: wgpu::BindingType::Buffer {
+                    ty: wgpu::BufferBindingType::Uniform,
+                    has_dynamic_offset: false,
+                    min_binding_size: None,
+                },
+                count: None,
+            }],
+        });
 
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("Line Pipeline Layout"),
-            bind_group_layouts: &[&uniform_bind_group_layout],
+            bind_group_layouts: &[&camera_bind_group_layout, &line_bind_group_layout],
             push_constant_ranges: &[],
         });
 
@@ -124,15 +93,7 @@ impl LineShader {
             multiview: None,
         });
 
-        // Create a simple camera buffer for testing
-        let camera_buffer = device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("Line Camera Buffer"),
-            size: std::mem::size_of::<CameraUniform>() as u64,
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-            mapped_at_creation: false,
-        });
-
-        // Create a simple line buffer for testing
+        // Create line-specific uniform buffer (color)
         let line_buffer = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("Line Uniform Buffer"),
             size: std::mem::size_of::<LineUniform>() as u64,
@@ -140,129 +101,31 @@ impl LineShader {
             mapped_at_creation: false,
         });
 
-        // Create a simple bind group for testing
-        let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        // Initialize line color
+        let line_uniform = LineUniform {
+            color: [0.0, 1.0, 0.0, 1.0], // Green color for orbital paths
+        };
+        queue.write_buffer(&line_buffer, 0, bytemuck::cast_slice(&[line_uniform]));
+
+        // Create line-specific bind group (group 1)
+        let line_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: Some("Line Bind Group"),
-            layout: &uniform_bind_group_layout,
-            entries: &[
-                wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: camera_buffer.as_entire_binding(),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 1,
-                    resource: line_buffer.as_entire_binding(),
-                },
-            ],
+            layout: &line_bind_group_layout,
+            entries: &[wgpu::BindGroupEntry {
+                binding: 0,
+                resource: line_buffer.as_entire_binding(),
+            }],
         });
 
         Ok(Self {
             pipeline,
-            bind_group,
-            camera_buffer,
             line_buffer,
-            uniform_bind_group_layout,
+            line_bind_group,
         })
     }
 
-    pub fn update_uniforms(
-        &self,
-        device: &Device,
-        queue: &Queue,
-        view_matrix: Mat4,
-        projection_matrix: Mat4,
-        camera_position: Vec3,
-        line_color: Vec4,
-    ) -> AstrariaResult<wgpu::BindGroup> {
-        // Camera uniforms
-        let camera_uniform = CameraUniform {
-            view_matrix: view_matrix.to_cols_array_2d(),
-            projection_matrix: projection_matrix.to_cols_array_2d(),
-            camera_position: camera_position.to_array(),
-            _padding1: 0.0,
-            log_depth_constant: 1.0,
-            far_plane_distance: 1000.0,
-            fc_constant: 2.0 / (1000.0f32 * 1.0 + 1.0).ln(), // FC constant calculation
-            _padding2: 0.0,
-        };
-
-        let camera_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Line Camera Buffer"),
-            contents: bytemuck::cast_slice(&[camera_uniform]),
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-        });
-
-        // Line uniforms
-        let line_uniform = LineUniform {
-            color: line_color.to_array(),
-        };
-
-        let line_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Line Uniform Buffer"),
-            contents: bytemuck::cast_slice(&[line_uniform]),
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-        });
-
-        // Create uniform bind group
-        let uniform_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("Line Uniform Bind Group"),
-            layout: &self.uniform_bind_group_layout,
-            entries: &[
-                wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: camera_buffer.as_entire_binding(),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 1,
-                    resource: line_buffer.as_entire_binding(),
-                },
-            ],
-        });
-
-        Ok(uniform_bind_group)
-    }
-
-    pub fn render_geometry<'a>(
-        &'a self,
-        render_pass: &mut RenderPass<'a>,
-        vertex_buffer: &'a Buffer,
-        num_vertices: u32,
-        uniform_bind_group: &'a BindGroup,
-    ) {
-        render_pass.set_pipeline(&self.pipeline);
-        render_pass.set_bind_group(0, uniform_bind_group, &[]);
-        render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
-        render_pass.draw(0..num_vertices, 0..1);
-    }
-
-    pub fn update_simple_uniforms(
-        &self,
-        queue: &Queue,
-        view_matrix: Mat4,
-        projection_matrix: Mat4,
-    ) {
-        let camera_uniform = CameraUniform {
-            view_matrix: view_matrix.to_cols_array_2d(),
-            projection_matrix: projection_matrix.to_cols_array_2d(),
-            camera_position: [0.0, 0.0, 3.0],
-            _padding1: 0.0,
-            log_depth_constant: 1.0,
-            far_plane_distance: 1000.0,
-            fc_constant: 1.0,
-            _padding2: 0.0,
-        };
-
-        queue.write_buffer(
-            &self.camera_buffer,
-            0,
-            bytemuck::cast_slice(&[camera_uniform]),
-        );
-
-        // Also update the line color
-        let line_uniform = LineUniform {
-            color: [0.0, 1.0, 0.0, 1.0], // Green color for orbital paths
-        };
-
+    pub fn update_line_color(&self, queue: &Queue, color: [f32; 4]) {
+        let line_uniform = LineUniform { color };
         queue.write_buffer(&self.line_buffer, 0, bytemuck::cast_slice(&[line_uniform]));
     }
 }

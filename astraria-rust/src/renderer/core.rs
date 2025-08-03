@@ -1,37 +1,39 @@
 use glam::{Mat4, Vec3};
 use wgpu::util::DeviceExt;
 /// Core rendering functionality shared between main app and shader testing
-use wgpu::{BindGroup, Buffer, Device, Queue, RenderPipeline, Texture, TextureView};
+use wgpu::{Buffer, Device, Texture};
 
-use crate::{
-    assets::{AssetManager, ModelAsset},
-    graphics::Vertex,
-    AstrariaError, AstrariaResult,
-};
-use std::sync::Arc;
+use crate::graphics::Vertex;
 
-/// Shared uniform buffer structures
+/// Shared uniform buffer structures - consolidated from all shaders
+/// This is the master definition used by all shaders to eliminate code duplication
+
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct CameraUniform {
-    pub view_matrix: [[f32; 4]; 4],
-    pub projection_matrix: [[f32; 4]; 4],
-}
+    pub view_matrix: [[f32; 4]; 4],           // 64 bytes
+    pub projection_matrix: [[f32; 4]; 4],     // 64 bytes
+    pub view_projection_matrix: [[f32; 4]; 4], // 64 bytes
+    pub camera_position: [f32; 3],            // 12 bytes
+    pub _padding1: f32,                       // 4 bytes
+    pub camera_direction: [f32; 3],           // 12 bytes
+    pub _padding2: f32,                       // 4 bytes
+    pub log_depth_constant: f32,              // 4 bytes
+    pub far_plane_distance: f32,              // 4 bytes
+    pub near_plane_distance: f32,             // 4 bytes
+    pub fc_constant: f32,                     // 4 bytes (for logarithmic depth calculations)
+}                                             // Total: 240 bytes
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct TransformUniform {
-    pub model_matrix: [[f32; 4]; 4],
-}
+    pub model_matrix: [[f32; 4]; 4],          // 64 bytes
+    pub model_view_matrix: [[f32; 4]; 4],     // 64 bytes
+    pub normal_matrix: [[f32; 4]; 3],         // 48 bytes (mat3x3 stored as 3 vec4 for alignment)
+    pub _padding: [f32; 4],                   // 16 bytes
+}                                             // Total: 192 bytes
 
-#[repr(C)]
-#[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct LightingUniform {
-    pub light_position: [f32; 3],
-    pub _padding: f32,
-    pub light_color: [f32; 3],
-    pub _padding2: f32,
-}
+use crate::renderer::buffers::LightingUniform;
 
 /// Shared geometry creation functions
 pub fn create_cube_geometry() -> (Vec<Vertex>, Vec<u32>) {
@@ -249,27 +251,62 @@ pub struct RenderSetup {
 
 impl RenderSetup {
     pub fn new(width: u32, height: u32) -> Self {
+        let view_matrix = Mat4::look_at_rh(Vec3::new(0.0, 0.0, 3.0), Vec3::ZERO, Vec3::Y);
+        let projection_matrix = Mat4::perspective_rh(
+            45.0_f32.to_radians(),
+            width as f32 / height as f32,
+            0.1,
+            100.0,
+        );
         let camera_uniform = CameraUniform {
-            view_matrix: Mat4::look_at_rh(Vec3::new(0.0, 0.0, 3.0), Vec3::ZERO, Vec3::Y)
-                .to_cols_array_2d(),
-            projection_matrix: Mat4::perspective_rh(
-                45.0_f32.to_radians(),
-                width as f32 / height as f32,
-                0.1,
-                100.0,
-            )
-            .to_cols_array_2d(),
+            view_matrix: view_matrix.to_cols_array_2d(),
+            projection_matrix: projection_matrix.to_cols_array_2d(),
+            view_projection_matrix: (projection_matrix * view_matrix).to_cols_array_2d(),
+            camera_position: [0.0, 0.0, 3.0],
+            _padding1: 0.0,
+            camera_direction: [0.0, 0.0, -1.0],
+            _padding2: 0.0,
+            log_depth_constant: 1.0,
+            far_plane_distance: 100.0,
+            near_plane_distance: 0.1,
+            fc_constant: 2.0 / (100.0f32 + 1.0).ln(),
         };
 
         let transform_uniform = TransformUniform {
             model_matrix: Mat4::IDENTITY.to_cols_array_2d(),
+            model_view_matrix: (view_matrix * Mat4::IDENTITY).to_cols_array_2d(),
+            normal_matrix: [[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0]],
+            _padding: [0.0; 4],
         };
 
-        let lighting_uniform = LightingUniform {
-            light_position: [2.0, 2.0, 2.0],
-            _padding: 0.0,
-            light_color: [1.0, 1.0, 1.0],
+        use crate::renderer::buffers::PointLight;
+        let default_light = PointLight {
+            position: [2.0, 2.0, 2.0],
+            _padding1: 0.0,
+            ambient: [0.1, 0.1, 0.1],
             _padding2: 0.0,
+            diffuse: [1.0, 1.0, 1.0],
+            _padding3: 0.0,
+            specular: [1.0, 1.0, 1.0],
+            _padding4: 0.0,
+        };
+        
+        let mut lights = [PointLight {
+            position: [0.0; 3],
+            _padding1: 0.0,
+            ambient: [0.0; 3],
+            _padding2: 0.0,
+            diffuse: [0.0; 3],
+            _padding3: 0.0,
+            specular: [0.0; 3],
+            _padding4: 0.0,
+        }; 8];
+        lights[0] = default_light;
+        
+        let lighting_uniform = LightingUniform {
+            lights,
+            num_lights: 1,
+            _padding: [0.0; 3],
         };
 
         Self {

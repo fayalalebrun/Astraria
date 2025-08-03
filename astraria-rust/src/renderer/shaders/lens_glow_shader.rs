@@ -1,30 +1,14 @@
 use bytemuck::{Pod, Zeroable};
-use glam::{Mat4, Vec2, Vec3};
-use std::sync::Arc;
-use wgpu::util::DeviceExt;
 /// Lens glow shader for stellar lens flare effects
 /// Renders lens flares with temperature-based colors and occlusion testing
-use wgpu::{BindGroup, BindGroupLayout, Buffer, Device, Queue, RenderPass, RenderPipeline};
+use wgpu::{Device, Queue, RenderPipeline};
 
 use crate::{
-    assets::{AssetManager, ModelAsset},
     graphics::Vertex,
-    renderer::core::*,
-    AstrariaError, AstrariaResult,
+    renderer::core::*, AstrariaResult,
 };
 
-#[repr(C)]
-#[derive(Copy, Clone, Debug, Pod, Zeroable)]
-pub struct CameraUniform {
-    pub view_matrix: [[f32; 4]; 4],
-    pub projection_matrix: [[f32; 4]; 4],
-}
-
-#[repr(C)]
-#[derive(Copy, Clone, Debug, Pod, Zeroable)]
-pub struct TransformUniform {
-    pub model_matrix: [[f32; 4]; 4],
-}
+// CameraUniform and TransformUniform are now imported from core.rs to eliminate duplication
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, Pod, Zeroable)]
@@ -41,12 +25,10 @@ pub struct LensGlowUniform {
 
 pub struct LensGlowShader {
     pub pipeline: RenderPipeline,
-    pub uniform_bind_group_layout: wgpu::BindGroupLayout,
+    pub transform_buffer: wgpu::Buffer,
+    pub lens_glow_buffer: wgpu::Buffer,
+    pub uniform_bind_group: wgpu::BindGroup,
     pub texture_bind_group_layout: wgpu::BindGroupLayout,
-    pub bind_group: BindGroup,
-    pub camera_buffer: Buffer,
-    pub transform_buffer: Buffer,
-    pub lens_glow_buffer: Buffer,
 }
 
 impl LensGlowShader {
@@ -56,7 +38,10 @@ impl LensGlowShader {
             source: wgpu::ShaderSource::Wgsl(include_str!("../../shaders/lens_glow.wgsl").into()),
         });
 
-        // Uniform bind group layout (group 0) - 3 separate uniform buffers
+        // Camera bind group layout (group 0) - shared with other shaders
+        let camera_bind_group_layout = crate::renderer::core::create_camera_bind_group_layout(device);
+
+        // Lens glow specific bind group layout (group 1) - transform and lens_glow uniforms
         let uniform_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 label: Some("Lens Glow Uniform Bind Group Layout"),
@@ -73,16 +58,6 @@ impl LensGlowShader {
                     },
                     wgpu::BindGroupLayoutEntry {
                         binding: 1,
-                        visibility: wgpu::ShaderStages::VERTEX,
-                        ty: wgpu::BindingType::Buffer {
-                            ty: wgpu::BufferBindingType::Uniform,
-                            has_dynamic_offset: false,
-                            min_binding_size: None,
-                        },
-                        count: None,
-                    },
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 2,
                         visibility: wgpu::ShaderStages::VERTEX | wgpu::ShaderStages::FRAGMENT,
                         ty: wgpu::BindingType::Buffer {
                             ty: wgpu::BufferBindingType::Uniform,
@@ -94,7 +69,7 @@ impl LensGlowShader {
                 ],
             });
 
-        // Texture bind group layout (group 1)
+        // Texture bind group layout (group 2)
         let texture_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 label: Some("Lens Glow Texture Bind Group Layout"),
@@ -130,7 +105,7 @@ impl LensGlowShader {
 
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("Lens Glow Pipeline Layout"),
-            bind_group_layouts: &[&uniform_bind_group_layout, &texture_bind_group_layout],
+            bind_group_layouts: &[&camera_bind_group_layout, &uniform_bind_group_layout, &texture_bind_group_layout],
             push_constant_ranges: &[],
         });
 
@@ -169,14 +144,6 @@ impl LensGlowShader {
             multiview: None,
         });
 
-        // Create camera uniform buffer
-        let camera_buffer = device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("Lens Glow Camera Buffer"),
-            size: std::mem::size_of::<CameraUniform>() as u64,
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-            mapped_at_creation: false,
-        });
-
         // Create transform uniform buffer
         let transform_buffer = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("Lens Glow Transform Buffer"),
@@ -193,54 +160,43 @@ impl LensGlowShader {
             mapped_at_creation: false,
         });
 
-        // Initialize with placeholder data
-        let camera_uniform = CameraUniform {
-            view_matrix: glam::Mat4::IDENTITY.to_cols_array_2d(),
-            projection_matrix: glam::Mat4::IDENTITY.to_cols_array_2d(),
-        };
-
+        // Initialize transform uniform (identity matrix)
         let transform_uniform = TransformUniform {
             model_matrix: glam::Mat4::IDENTITY.to_cols_array_2d(),
+            model_view_matrix: glam::Mat4::IDENTITY.to_cols_array_2d(),
+            normal_matrix: [
+                [1.0, 0.0, 0.0, 0.0],
+                [0.0, 1.0, 0.0, 0.0],
+                [0.0, 0.0, 1.0, 0.0],
+            ],
+            _padding: [0.0; 4],
         };
+        queue.write_buffer(&transform_buffer, 0, bytemuck::cast_slice(&[transform_uniform]));
 
+        // Initialize lens glow uniform
         let lens_glow_uniform = LensGlowUniform {
-            screen_dimensions: [800.0, 600.0],
-            glow_size: [100.0, 100.0],
+            screen_dimensions: [1920.0, 1080.0],
+            glow_size: [64.0, 64.0],
             star_position: [0.0, 0.0, 0.0],
             _padding1: 0.0,
-            camera_direction: [0.0, 0.0, -1.0],
+            camera_direction: [0.0, 0.0, 1.0],
             _padding2: 0.0,
-            temperature: 5778.0,
+            temperature: 5778.0, // Sun temperature
             _padding3: [0.0; 7],
         };
+        queue.write_buffer(&lens_glow_buffer, 0, bytemuck::cast_slice(&[lens_glow_uniform]));
 
-        queue.write_buffer(&camera_buffer, 0, bytemuck::cast_slice(&[camera_uniform]));
-        queue.write_buffer(
-            &transform_buffer,
-            0,
-            bytemuck::cast_slice(&[transform_uniform]),
-        );
-        queue.write_buffer(
-            &lens_glow_buffer,
-            0,
-            bytemuck::cast_slice(&[lens_glow_uniform]),
-        );
-
-        // Create bind group with all 3 uniform buffers
-        let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("Lens Glow Bind Group"),
+        // Create lens glow specific bind group (group 1)
+        let uniform_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("Lens Glow Uniform Bind Group"),
             layout: &uniform_bind_group_layout,
             entries: &[
                 wgpu::BindGroupEntry {
                     binding: 0,
-                    resource: camera_buffer.as_entire_binding(),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 1,
                     resource: transform_buffer.as_entire_binding(),
                 },
                 wgpu::BindGroupEntry {
-                    binding: 2,
+                    binding: 1,
                     resource: lens_glow_buffer.as_entire_binding(),
                 },
             ],
@@ -248,148 +204,18 @@ impl LensGlowShader {
 
         Ok(Self {
             pipeline,
-            uniform_bind_group_layout,
-            texture_bind_group_layout,
-            bind_group,
-            camera_buffer,
             transform_buffer,
             lens_glow_buffer,
+            uniform_bind_group,
+            texture_bind_group_layout,
         })
     }
 
-    pub fn update_uniforms(
-        &self,
-        device: &Device,
-        queue: &Queue,
-        view_matrix: Mat4,
-        projection_matrix: Mat4,
-        star_position: Vec3,
-        camera_direction: Vec3,
-        temperature: f32,
-        screen_size: Vec2,
-        glow_size: Vec2,
-    ) -> AstrariaResult<wgpu::BindGroup> {
-        // Camera uniforms
-        let camera_uniform = CameraUniform {
-            view_matrix: view_matrix.to_cols_array_2d(),
-            projection_matrix: projection_matrix.to_cols_array_2d(),
-        };
-
-        let camera_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Lens Glow Camera Buffer"),
-            contents: bytemuck::cast_slice(&[camera_uniform]),
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-        });
-
-        // Transform uniforms
-        let transform_uniform = TransformUniform {
-            model_matrix: Mat4::IDENTITY.to_cols_array_2d(),
-        };
-
-        let transform_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Lens Glow Transform Buffer"),
-            contents: bytemuck::cast_slice(&[transform_uniform]),
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-        });
-
-        // Lens glow uniforms
-        let lens_glow_uniform = LensGlowUniform {
-            screen_dimensions: screen_size.to_array(),
-            glow_size: glow_size.to_array(),
-            star_position: star_position.to_array(),
-            _padding1: 0.0,
-            camera_direction: camera_direction.to_array(),
-            _padding2: 0.0,
-            temperature,
-            _padding3: [0.0; 7],
-        };
-
-        let lens_glow_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Lens Glow Uniform Buffer"),
-            contents: bytemuck::cast_slice(&[lens_glow_uniform]),
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-        });
-
-        // Create uniform bind group
-        let uniform_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("Lens Glow Uniform Bind Group"),
-            layout: &self.uniform_bind_group_layout,
-            entries: &[
-                wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: camera_buffer.as_entire_binding(),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 1,
-                    resource: transform_buffer.as_entire_binding(),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 2,
-                    resource: lens_glow_buffer.as_entire_binding(),
-                },
-            ],
-        });
-
-        Ok(uniform_bind_group)
+    pub fn update_transform(&self, queue: &Queue, transform: &TransformUniform) {
+        queue.write_buffer(&self.transform_buffer, 0, bytemuck::cast_slice(&[*transform]));
     }
 
-    pub fn render_geometry<'a>(
-        &'a self,
-        render_pass: &mut RenderPass<'a>,
-        vertex_buffer: &'a Buffer,
-        index_buffer: &'a Buffer,
-        num_indices: u32,
-        uniform_bind_group: &'a BindGroup,
-        texture_bind_group: &'a BindGroup,
-    ) {
-        render_pass.set_pipeline(&self.pipeline);
-        render_pass.set_bind_group(0, uniform_bind_group, &[]);
-        render_pass.set_bind_group(1, texture_bind_group, &[]);
-        render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
-        render_pass.set_index_buffer(index_buffer.slice(..), wgpu::IndexFormat::Uint32);
-        render_pass.draw_indexed(0..num_indices, 0, 0..1);
-    }
-
-    pub fn update_simple_uniforms(
-        &self,
-        queue: &Queue,
-        view_matrix: Mat4,
-        projection_matrix: Mat4,
-    ) {
-        let camera_uniform = CameraUniform {
-            view_matrix: view_matrix.to_cols_array_2d(),
-            projection_matrix: projection_matrix.to_cols_array_2d(),
-        };
-
-        let transform_uniform = TransformUniform {
-            model_matrix: Mat4::IDENTITY.to_cols_array_2d(),
-        };
-
-        let lens_glow_uniform = LensGlowUniform {
-            screen_dimensions: [800.0, 600.0],
-            glow_size: [100.0, 100.0],
-            star_position: [0.0, 0.0, -5.0], // Star position in front of camera
-            _padding1: 0.0,
-            camera_direction: [0.0, 0.0, -1.0],
-            _padding2: 0.0,
-            temperature: 5778.0, // Sun temperature
-            _padding3: [0.0; 7],
-        };
-
-        queue.write_buffer(
-            &self.camera_buffer,
-            0,
-            bytemuck::cast_slice(&[camera_uniform]),
-        );
-        queue.write_buffer(
-            &self.transform_buffer,
-            0,
-            bytemuck::cast_slice(&[transform_uniform]),
-        );
-        queue.write_buffer(
-            &self.lens_glow_buffer,
-            0,
-            bytemuck::cast_slice(&[lens_glow_uniform]),
-        );
+    pub fn update_lens_glow(&self, queue: &Queue, lens_glow: &LensGlowUniform) {
+        queue.write_buffer(&self.lens_glow_buffer, 0, bytemuck::cast_slice(&[*lens_glow]));
     }
 }

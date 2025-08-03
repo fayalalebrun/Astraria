@@ -1,4 +1,3 @@
-use bytemuck::{Pod, Zeroable};
 /// Camera system for 3D navigation and rendering
 /// Ported from the original Java Camera.java with enhanced functionality
 use glam::{DVec3, Mat4, Quat, Vec3};
@@ -18,22 +17,8 @@ pub enum CameraMovement {
     RollRight,
 }
 
-/// Camera uniform buffer data for shaders
-#[repr(C)]
-#[derive(Debug, Clone, Copy, Pod, Zeroable)]
-pub struct CameraUniforms {
-    pub view_matrix: [[f32; 4]; 4],
-    pub projection_matrix: [[f32; 4]; 4],
-    pub view_projection_matrix: [[f32; 4]; 4],
-    pub camera_position: [f32; 3],
-    pub _padding1: f32,
-    pub camera_direction: [f32; 3],
-    pub _padding2: f32,
-    pub log_depth_constant: f32,
-    pub far_plane_distance: f32,
-    pub near_plane_distance: f32,
-    pub _padding3: f32,
-}
+// Import the consolidated CameraUniform from core.rs
+use crate::renderer::core::CameraUniform;
 
 /// 3D camera with astronomical scale support
 pub struct Camera {
@@ -54,6 +39,7 @@ pub struct Camera {
     // Movement properties
     movement_speed: f32,
     sensitivity: f32,
+    scrolled_amount: f32, // For Java-style speed calculation
 
     // Projection properties
     fov: f32,
@@ -72,6 +58,9 @@ pub struct Camera {
     uniform_buffer: Option<wgpu::Buffer>,
     bind_group: Option<wgpu::BindGroup>,
 
+    // Logarithmic depth buffer support
+    log_depth_constant: f32,
+
     // Matrices (cached)
     view_matrix: Mat4,
     projection_matrix: Mat4,
@@ -81,7 +70,8 @@ pub struct Camera {
 
 impl Camera {
     pub fn new(aspect_ratio: f32) -> Self {
-        let position = DVec3::new(0.0, 0.0, 5.0); // Start further back
+        // Match the test setup initial position
+        let position = DVec3::new(0.0, 0.0, 3.0); // Match previous hardcoded test position
         let world_up = Vec3::Y;
         let yaw = -90.0;
         let pitch = 0.0;
@@ -96,8 +86,9 @@ impl Camera {
             yaw,
             pitch,
             roll,
-            movement_speed: 2.5, // Slower speed for testing scene
-            sensitivity: 0.1,
+            movement_speed: 0.0794, // Java base movement speed
+            sensitivity: 0.002, // Java mouse sensitivity (much lower than 0.1)
+            scrolled_amount: 0.0, // Initial scroll amount
             fov: 45.0,
             aspect_ratio,
             near_plane: 0.1,
@@ -107,6 +98,7 @@ impl Camera {
             lock_distance: 1e7, // 10 million units default lock distance
             uniform_buffer: None,
             bind_group: None,
+            log_depth_constant: 1.0, // Logarithmic depth constant matching Java
             view_matrix: Mat4::IDENTITY,
             projection_matrix: Mat4::IDENTITY,
             view_projection_matrix: Mat4::IDENTITY,
@@ -122,7 +114,7 @@ impl Camera {
         // Create uniform buffer
         self.uniform_buffer = Some(device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("Camera Uniform Buffer"),
-            size: std::mem::size_of::<CameraUniforms>() as wgpu::BufferAddress,
+            size: std::mem::size_of::<CameraUniform>() as wgpu::BufferAddress,
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         }));
@@ -219,7 +211,10 @@ impl Camera {
         self.update_matrices();
 
         if let Some(buffer) = &self.uniform_buffer {
-            let uniforms = CameraUniforms {
+            // Calculate fc_constant for logarithmic depth (from original Java implementation)
+            let fc_constant = 2.0 / (self.log_depth_constant * self.far_plane + 1.0).ln();
+            
+            let uniforms = CameraUniform {
                 view_matrix: self.view_matrix.to_cols_array_2d(),
                 projection_matrix: self.projection_matrix.to_cols_array_2d(),
                 view_projection_matrix: self.view_projection_matrix.to_cols_array_2d(),
@@ -230,7 +225,7 @@ impl Camera {
                 log_depth_constant: 1.0, // Logarithmic depth constant
                 far_plane_distance: self.far_plane,
                 near_plane_distance: self.near_plane,
-                _padding3: 0.0,
+                fc_constant, // FC constant for logarithmic depth calculations
             };
 
             queue.write_buffer(buffer, 0, bytemuck::cast_slice(&[uniforms]));
@@ -256,14 +251,16 @@ impl Camera {
         self.update_vectors();
     }
 
-    /// Process scroll wheel for speed adjustment
+    /// Process scroll wheel for speed adjustment (matching Java Camera.java)
     pub fn process_scroll(&mut self, y_offset: f32) {
-        // Adjust movement speed based on scroll
-        let speed_multiplier = if y_offset > 0.0 { 1.1 } else { 0.9 };
-        self.movement_speed *= speed_multiplier;
+        // Update scrolled amount like Java implementation
+        self.scrolled_amount += y_offset;
+        
+        // Apply Java's exponential speed formula: 0.0794f * pow(1.2637, scrolledAmount)
+        self.movement_speed = 0.0794 * 1.2637_f32.powf(self.scrolled_amount);
 
-        // Clamp speed to reasonable range
-        self.movement_speed = self.movement_speed.clamp(1.0, 1e12);
+        // Clamp speed to reasonable range (allowing very slow and very fast speeds)
+        self.movement_speed = self.movement_speed.clamp(1e-10, 1e12);
     }
 
     /// Update camera position based on current movement state
@@ -346,6 +343,16 @@ impl Camera {
     /// Get the view-projection matrix for rendering
     pub fn view_projection_matrix(&self) -> Mat4 {
         self.view_projection_matrix
+    }
+
+    /// Get the view matrix for rendering
+    pub fn view_matrix(&self) -> Mat4 {
+        self.view_matrix
+    }
+
+    /// Get the projection matrix for rendering
+    pub fn projection_matrix(&self) -> Mat4 {
+        self.projection_matrix
     }
 
     /// Get camera position

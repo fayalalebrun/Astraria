@@ -145,19 +145,6 @@ async fn run() -> AstrariaResult<()> {
         }
     }
 
-    println!("\n🎉 ALL Shader Architecture Test Complete!");
-    println!("📁 All renders saved to '{}/'' directory", output_dir);
-    println!("\n📊 Shader Implementation Status:");
-    println!("  ✅ DefaultShader - Basic PBR rendering");
-    println!("  ✅ PlanetAtmoShader - Atmospheric scattering (COMPLETE)");
-    println!("  🚧 SunShader - Stellar temperature (800K-30000K)");
-    println!("  🚧 SkyboxShader - Cubemap backgrounds");
-    println!("  🚧 BillboardShader - Screen-aligned sprites");
-    println!("  🚧 LensGlowShader - Lens flare effects");
-    println!("  🚧 BlackHoleShader - Gravitational lensing");
-    println!("  🚧 LineShader - Orbital path rendering");
-    println!("  🚧 PointShader - Distant object rendering");
-
     Ok(())
 }
 

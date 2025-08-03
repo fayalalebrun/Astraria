@@ -1,31 +1,9 @@
-use crate::{assets::AssetManager, AstrariaResult};
+use crate::{assets::AssetManager, AstrariaResult, renderer::core::*};
 use glam::{Mat4, Vec3};
 /// Buffer management for vertex data, uniforms, and other GPU resources
-use wgpu::{util::DeviceExt, BindGroup, BindGroupLayout, Buffer, Device, Queue, Sampler};
+use wgpu::{util::DeviceExt, BindGroup, Buffer, Device, Queue, Sampler};
 
-#[repr(C)]
-#[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct CameraUniform {
-    pub view_matrix: [[f32; 4]; 4],
-    pub projection_matrix: [[f32; 4]; 4],
-    pub view_projection_matrix: [[f32; 4]; 4],
-    pub camera_position: [f32; 3],
-    pub _padding1: f32,
-    pub camera_direction: [f32; 3],
-    pub _padding2: f32,
-    pub log_depth_constant: f32,
-    pub far_plane_distance: f32,
-    pub near_plane_distance: f32,
-    pub _padding3: f32,
-}
-
-#[repr(C)]
-#[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct TransformUniform {
-    pub model_matrix: [[f32; 4]; 4],
-    pub normal_matrix: [[f32; 3]; 3],
-    pub _padding: [f32; 3],
-}
+// CameraUniform and TransformUniform are now imported from core.rs to eliminate duplication
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
@@ -81,13 +59,14 @@ impl BufferManager {
             log_depth_constant: 1.0,
             far_plane_distance: 1e11,
             near_plane_distance: 0.1,
-            _padding3: 0.0,
+            fc_constant: 2.0 / (1e11f32 + 1.0).ln(),
         };
 
         let transform_uniform = TransformUniform {
             model_matrix: Mat4::IDENTITY.to_cols_array_2d(),
-            normal_matrix: [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
-            _padding: [0.0; 3],
+            model_view_matrix: Mat4::IDENTITY.to_cols_array_2d(),
+            normal_matrix: [[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0]],
+            _padding: [0.0; 4],
         };
 
         let default_light = PointLight {
@@ -331,7 +310,7 @@ impl BufferManager {
             log_depth_constant: 1.0,
             far_plane_distance: 1e11,
             near_plane_distance: 0.1,
-            _padding3: 0.0,
+            fc_constant: 2.0 / (1e11f32 + 1.0).ln(),
         };
 
         queue.write_buffer(
@@ -342,27 +321,33 @@ impl BufferManager {
     }
 
     pub fn update_transform(&self, queue: &Queue, model: Mat4) {
-        let normal_matrix = model.inverse().transpose();
+        let view_matrix = Mat4::look_at_rh(Vec3::new(0.0, 0.0, 3.0), Vec3::ZERO, Vec3::Y);
+        let model_view_matrix = view_matrix * model;
+        let normal_matrix = model_view_matrix.inverse().transpose();
         let transform_uniform = TransformUniform {
             model_matrix: model.to_cols_array_2d(),
+            model_view_matrix: model_view_matrix.to_cols_array_2d(),
             normal_matrix: [
                 [
                     normal_matrix.x_axis.x,
                     normal_matrix.x_axis.y,
                     normal_matrix.x_axis.z,
+                    0.0,
                 ],
                 [
                     normal_matrix.y_axis.x,
                     normal_matrix.y_axis.y,
                     normal_matrix.y_axis.z,
+                    0.0,
                 ],
                 [
                     normal_matrix.z_axis.x,
                     normal_matrix.z_axis.y,
                     normal_matrix.z_axis.z,
+                    0.0,
                 ],
             ],
-            _padding: [0.0; 3],
+            _padding: [0.0; 4],
         };
 
         queue.write_buffer(
@@ -403,27 +388,33 @@ impl BufferManager {
     }
 
     pub fn update_triangle_transform(&self, queue: &Queue, model: Mat4) {
-        let normal_matrix = model.inverse().transpose();
+        let view_matrix = Mat4::look_at_rh(Vec3::new(0.0, 0.0, 3.0), Vec3::ZERO, Vec3::Y);
+        let model_view_matrix = view_matrix * model;
+        let normal_matrix = model_view_matrix.inverse().transpose();
         let transform_uniform = TransformUniform {
             model_matrix: model.to_cols_array_2d(),
+            model_view_matrix: model_view_matrix.to_cols_array_2d(),
             normal_matrix: [
                 [
                     normal_matrix.x_axis.x,
                     normal_matrix.x_axis.y,
                     normal_matrix.x_axis.z,
+                    0.0,
                 ],
                 [
                     normal_matrix.y_axis.x,
                     normal_matrix.y_axis.y,
                     normal_matrix.y_axis.z,
+                    0.0,
                 ],
                 [
                     normal_matrix.z_axis.x,
                     normal_matrix.z_axis.y,
                     normal_matrix.z_axis.z,
+                    0.0,
                 ],
             ],
-            _padding: [0.0; 3],
+            _padding: [0.0; 4],
         };
 
         queue.write_buffer(
@@ -434,27 +425,33 @@ impl BufferManager {
     }
 
     pub fn update_cube_transform(&self, queue: &Queue, model: Mat4) {
-        let normal_matrix = model.inverse().transpose();
+        let view_matrix = Mat4::look_at_rh(Vec3::new(0.0, 0.0, 3.0), Vec3::ZERO, Vec3::Y);
+        let model_view_matrix = view_matrix * model;
+        let normal_matrix = model_view_matrix.inverse().transpose();
         let transform_uniform = TransformUniform {
             model_matrix: model.to_cols_array_2d(),
+            model_view_matrix: model_view_matrix.to_cols_array_2d(),
             normal_matrix: [
                 [
                     normal_matrix.x_axis.x,
                     normal_matrix.x_axis.y,
                     normal_matrix.x_axis.z,
+                    0.0,
                 ],
                 [
                     normal_matrix.y_axis.x,
                     normal_matrix.y_axis.y,
                     normal_matrix.y_axis.z,
+                    0.0,
                 ],
                 [
                     normal_matrix.z_axis.x,
                     normal_matrix.z_axis.y,
                     normal_matrix.z_axis.z,
+                    0.0,
                 ],
             ],
-            _padding: [0.0; 3],
+            _padding: [0.0; 4],
         };
 
         queue.write_buffer(

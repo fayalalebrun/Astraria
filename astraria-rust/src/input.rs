@@ -127,7 +127,7 @@ impl InputHandler {
     }
 
     fn handle_scroll(&mut self, delta: &winit::event::MouseScrollDelta) -> AstrariaResult<bool> {
-        let scroll_amount = match delta {
+        let _scroll_amount = match delta {
             winit::event::MouseScrollDelta::LineDelta(_, y) => *y,
             winit::event::MouseScrollDelta::PixelDelta(pos) => pos.y as f32 / 100.0,
         };

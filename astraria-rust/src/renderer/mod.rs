@@ -12,7 +12,7 @@ use wgpu::{Device, Queue, Surface, SurfaceConfiguration};
 use winit::{dpi::PhysicalSize, window::Window};
 
 use crate::{
-    assets::{AssetManager, ModelAsset},
+    assets::AssetManager,
     graphics::{test_geometry, Mesh},
     physics::PhysicsSimulation,
     AstrariaError, AstrariaResult,
@@ -36,7 +36,6 @@ pub struct Renderer {
 
     // Rendering managers
     camera: Camera,
-    shaders: ShaderManager,
     pub pipelines: PipelineManager,
     pub buffers: BufferManager,
     lights: LightManager,
@@ -57,13 +56,6 @@ pub struct Renderer {
     skybox_num_indices: u32,
     skybox_bind_group: Option<wgpu::BindGroup>,
 
-    // Demo shader bind groups (temporary)
-    demo_star_bind_group: Option<wgpu::BindGroup>,
-    demo_star_texture_bind_group: Option<wgpu::BindGroup>,
-
-    // Logarithmic depth buffer constants
-    log_depth_constant: f32,
-    far_plane_distance: f32,
 }
 
 impl Renderer {
@@ -150,7 +142,6 @@ impl Renderer {
         // Initialize subsystems
         let mut camera = Camera::new(size.width as f32 / size.height as f32);
         camera.initialize_gpu_resources(&device);
-        let shaders = ShaderManager::new();
         // Temporarily disabled for new shader architecture
         // let pipelines = PipelineManager::new(&device, &shaders, surface_format)?;
         let buffers = BufferManager::new(&device, asset_manager, &queue)?;
@@ -176,16 +167,12 @@ impl Renderer {
             }
         };
 
-        // Logarithmic depth buffer constants (from original implementation)
-        let log_depth_constant = 1.0;
-        let far_plane_distance = 1e11; // 100 billion units for astronomical scale
-
         // Load and create skybox
         let (skybox_vertex_buffer, skybox_index_buffer, skybox_num_indices, skybox_bind_group) =
             Self::create_skybox(&device, &queue, asset_manager).await?;
 
         // Create demo shader bind groups
-        let (demo_star_bind_group, demo_star_texture_bind_group) =
+        let (_demo_star_bind_group, _demo_star_texture_bind_group) =
             Self::create_demo_star_bind_groups(&device, &queue, asset_manager).await?;
 
         log::info!("Renderer initialization complete");
@@ -196,7 +183,6 @@ impl Renderer {
             surface,
             surface_config,
             camera,
-            shaders,
             pipelines: PipelineManager::new_empty(),
             buffers,
             lights,
@@ -210,10 +196,6 @@ impl Renderer {
             skybox_index_buffer: Some(skybox_index_buffer),
             skybox_num_indices,
             skybox_bind_group: Some(skybox_bind_group),
-            demo_star_bind_group: Some(demo_star_bind_group),
-            demo_star_texture_bind_group: Some(demo_star_texture_bind_group),
-            log_depth_constant,
-            far_plane_distance,
         })
     }
 

@@ -7,15 +7,19 @@ struct CameraUniform {
     view_projection_matrix: mat4x4<f32>,
     camera_position: vec3<f32>,
     _padding1: f32,
+    camera_direction: vec3<f32>,
+    _padding2: f32,
     log_depth_constant: f32,
     far_plane_distance: f32,
-    _padding2: vec2<f32>,
+    near_plane_distance: f32,
+    fc_constant: f32,
 };
 
 struct TransformUniform {
     model_matrix: mat4x4<f32>,
     model_view_matrix: mat4x4<f32>,
-    normal_matrix: mat4x3<f32>,
+    normal_matrix: mat3x4<f32>,  // mat3x4 for proper alignment (3 vec4s = 48 bytes)
+    _padding: vec4<f32>,
 };
 
 struct BlackHoleUniform {
@@ -40,16 +44,16 @@ struct VertexOutput {
 @group(0) @binding(0)
 var<uniform> camera: CameraUniform;
 
-@group(0) @binding(1)
+@group(1) @binding(0)
 var<uniform> transform: TransformUniform;
 
-@group(0) @binding(2)
+@group(1) @binding(1)
 var<uniform> black_hole: BlackHoleUniform;
 
-@group(1) @binding(0)
+@group(2) @binding(0)
 var skybox_texture: texture_cube<f32>;
 
-@group(1) @binding(1)
+@group(2) @binding(1)
 var texture_sampler: sampler;
 
 // Logarithmic depth buffer function (from original shader)

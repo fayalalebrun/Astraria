@@ -2,7 +2,7 @@ use bytemuck::{Pod, Zeroable};
 use glam::Vec3;
 /// Lighting system management
 /// Ported from the original LightSourceManager.java
-use wgpu::{Buffer, Device, Queue};
+use wgpu::{Device, Queue};
 
 use crate::{physics::PhysicsSimulation, AstrariaResult};
 
@@ -29,7 +29,6 @@ pub struct LightingUniforms {
 
 pub struct LightManager {
     lights: Vec<PointLight>,
-    uniform_buffer: Option<Buffer>,
     max_lights: usize,
 }
 
@@ -37,7 +36,6 @@ impl LightManager {
     pub fn new(_device: &Device) -> AstrariaResult<Self> {
         Ok(Self {
             lights: Vec::new(),
-            uniform_buffer: None,
             max_lights: 8,
         })
     }

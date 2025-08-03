@@ -19,7 +19,6 @@ pub struct VelocityVerlet {
     simulation_speed: Arc<RwLock<f32>>,
     terminate_flag: Arc<AtomicBool>,
     thread_handle: Option<JoinHandle<()>>,
-    last_time: Instant,
 }
 
 impl VelocityVerlet {
@@ -29,7 +28,6 @@ impl VelocityVerlet {
             simulation_speed: Arc::new(RwLock::new(1.0)),
             terminate_flag: Arc::new(AtomicBool::new(false)),
             thread_handle: None,
-            last_time: Instant::now(),
         }
     }
 

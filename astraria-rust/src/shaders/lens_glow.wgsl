@@ -4,10 +4,21 @@
 struct CameraUniform {
     view_matrix: mat4x4<f32>,
     projection_matrix: mat4x4<f32>,
+    view_projection_matrix: mat4x4<f32>,
+    camera_position: vec3<f32>,
+    _padding1: f32,
+    camera_direction: vec3<f32>,
+    _padding2: f32,
+    log_depth_constant: f32,
+    far_plane_distance: f32,
+    near_plane_distance: f32,
+    fc_constant: f32,
 };
 
 struct TransformUniform {
     model_matrix: mat4x4<f32>,
+    normal_matrix: mat4x4<f32>,
+    model_view_matrix: mat4x4<f32>,
 };
 
 struct LensGlowUniform {
@@ -36,31 +47,32 @@ struct VertexOutput {
 @group(0) @binding(0)
 var<uniform> camera: CameraUniform;
 
-@group(0) @binding(1)
+@group(1) @binding(0)
 var<uniform> transform: TransformUniform;
 
-@group(0) @binding(2)
+@group(1) @binding(1)
 var<uniform> lens_glow: LensGlowUniform;
 
-@group(1) @binding(0)
+@group(2) @binding(0)
 var glow_texture: texture_2d<f32>;
 
-@group(1) @binding(1)
+@group(2) @binding(1)
 var spectrum_texture: texture_2d<f32>;
 
-@group(1) @binding(2)
+@group(2) @binding(2)
 var texture_sampler: sampler;
 
 @vertex
 fn vs_main(input: VertexInput) -> VertexOutput {
     var out: VertexOutput;
     
-    // For debugging, just render a simple billboard centered at origin
+    // Use actual transform matrix from uniform
     out.clip_position = camera.projection_matrix * camera.view_matrix * transform.model_matrix * vec4<f32>(input.position, 1.0);
     out.tex_coord = input.tex_coord;
     
-    // Always pass dot view test for debugging
-    out.dot_view = 1.0;
+    // Calculate dot product between camera direction and star direction for occlusion testing
+    let star_direction = normalize(lens_glow.star_position - camera.camera_position);
+    out.dot_view = dot(camera.camera_direction, star_direction);
     
     return out;
 }
@@ -70,7 +82,7 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
     // Sample the glow texture
     let glow_sample = textureSample(glow_texture, texture_sampler, input.tex_coord);
     
-    // Map temperature to spectrum texture coordinates
+    // Map temperature to spectrum texture coordinates  
     // Temperature range: 800K to 30000K (like original)
     let u = (lens_glow.temperature - 800.0) / 29200.0;
     let v = 1.0 - glow_sample.r + 0.125;
@@ -78,8 +90,8 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
     // Sample temperature-based color from spectrum texture
     let spectrum_color = textureSample(spectrum_texture, texture_sampler, vec2<f32>(u, v));
     
-    // Use glow texture red channel as alpha
-    let alpha = glow_sample.r;
+    // Use glow texture red channel as alpha, modulated by dot view for occlusion
+    let alpha = glow_sample.r * max(0.0, input.dot_view);
     
     return vec4<f32>(spectrum_color.rgb, alpha);
 }

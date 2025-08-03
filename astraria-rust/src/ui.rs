@@ -8,7 +8,6 @@ use crate::{physics::PhysicsSimulation, renderer::Renderer, AstrariaResult};
 pub struct UserInterface {
     egui_ctx: egui::Context,
     egui_winit: egui_winit::State,
-    egui_renderer: egui_wgpu::Renderer,
 
     // UI state
     show_controls: bool,
@@ -22,7 +21,7 @@ impl UserInterface {
         let egui_ctx = egui::Context::default();
         let egui_winit = egui_winit::State::new(window);
 
-        let egui_renderer = egui_wgpu::Renderer::new(
+        let _egui_renderer = egui_wgpu::Renderer::new(
             renderer.device(),
             wgpu::TextureFormat::Bgra8UnormSrgb, // Adjust format as needed
             None,
@@ -32,7 +31,6 @@ impl UserInterface {
         Ok(Self {
             egui_ctx,
             egui_winit,
-            egui_renderer,
             show_controls: true,
             show_info: true,
             show_stats: false,
@@ -49,7 +47,7 @@ impl UserInterface {
         &mut self,
         _delta_time: f32,
         physics: Option<&PhysicsSimulation>,
-        renderer: &mut Option<Renderer>,
+        _renderer: &mut Option<Renderer>,
     ) -> AstrariaResult<()> {
         // Update simulation speed if changed
         if let Some(physics) = physics {
@@ -65,7 +63,7 @@ impl UserInterface {
 
     pub fn render(
         &mut self,
-        renderer: &mut Renderer,
+        _renderer: &mut Renderer,
         window: &winit::window::Window,
     ) -> AstrariaResult<()> {
         // Begin egui frame
@@ -198,7 +196,7 @@ impl UserInterface {
         });
     }
 
-    pub fn resize(&mut self, new_size: PhysicalSize<u32>) -> AstrariaResult<()> {
+    pub fn resize(&mut self, _new_size: PhysicalSize<u32>) -> AstrariaResult<()> {
         // egui handles resize automatically
         Ok(())
     }
