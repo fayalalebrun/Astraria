@@ -3,10 +3,7 @@ use bytemuck::{Pod, Zeroable};
 /// Renders lens flares with temperature-based colors and occlusion testing
 use wgpu::{Device, Queue, RenderPipeline};
 
-use crate::{
-    graphics::Vertex,
-    renderer::core::*, AstrariaResult,
-};
+use crate::{graphics::Vertex, renderer::core::*, AstrariaResult};
 
 // CameraUniform and TransformUniform are now imported from core.rs to eliminate duplication
 
@@ -39,7 +36,8 @@ impl LensGlowShader {
         });
 
         // Camera bind group layout (group 0) - shared with other shaders
-        let camera_bind_group_layout = crate::renderer::core::create_camera_bind_group_layout(device);
+        let camera_bind_group_layout =
+            crate::renderer::core::create_camera_bind_group_layout(device);
 
         // Lens glow specific bind group layout (group 1) - transform and lens_glow uniforms
         let uniform_bind_group_layout =
@@ -105,7 +103,11 @@ impl LensGlowShader {
 
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("Lens Glow Pipeline Layout"),
-            bind_group_layouts: &[&camera_bind_group_layout, &uniform_bind_group_layout, &texture_bind_group_layout],
+            bind_group_layouts: &[
+                &camera_bind_group_layout,
+                &uniform_bind_group_layout,
+                &texture_bind_group_layout,
+            ],
             push_constant_ranges: &[],
         });
 
@@ -171,7 +173,11 @@ impl LensGlowShader {
             ],
             _padding: [0.0; 4],
         };
-        queue.write_buffer(&transform_buffer, 0, bytemuck::cast_slice(&[transform_uniform]));
+        queue.write_buffer(
+            &transform_buffer,
+            0,
+            bytemuck::cast_slice(&[transform_uniform]),
+        );
 
         // Initialize lens glow uniform
         let lens_glow_uniform = LensGlowUniform {
@@ -184,7 +190,11 @@ impl LensGlowShader {
             temperature: 5778.0, // Sun temperature
             _padding3: [0.0; 7],
         };
-        queue.write_buffer(&lens_glow_buffer, 0, bytemuck::cast_slice(&[lens_glow_uniform]));
+        queue.write_buffer(
+            &lens_glow_buffer,
+            0,
+            bytemuck::cast_slice(&[lens_glow_uniform]),
+        );
 
         // Create lens glow specific bind group (group 1)
         let uniform_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
@@ -212,10 +222,18 @@ impl LensGlowShader {
     }
 
     pub fn update_transform(&self, queue: &Queue, transform: &TransformUniform) {
-        queue.write_buffer(&self.transform_buffer, 0, bytemuck::cast_slice(&[*transform]));
+        queue.write_buffer(
+            &self.transform_buffer,
+            0,
+            bytemuck::cast_slice(&[*transform]),
+        );
     }
 
     pub fn update_lens_glow(&self, queue: &Queue, lens_glow: &LensGlowUniform) {
-        queue.write_buffer(&self.lens_glow_buffer, 0, bytemuck::cast_slice(&[*lens_glow]));
+        queue.write_buffer(
+            &self.lens_glow_buffer,
+            0,
+            bytemuck::cast_slice(&[*lens_glow]),
+        );
     }
 }

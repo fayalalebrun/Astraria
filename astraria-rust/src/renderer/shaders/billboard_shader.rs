@@ -1,13 +1,9 @@
 /// Billboard shader for screen-aligned sprite rendering
 /// Now uses shared uniform buffers from MainRenderer
-
 use bytemuck::{Pod, Zeroable};
 use wgpu::{Device, Queue, RenderPipeline};
 
-use crate::{
-    graphics::Vertex,
-    AstrariaResult,
-};
+use crate::{graphics::Vertex, AstrariaResult};
 
 // CameraUniform and TransformUniform are now imported from core.rs to eliminate duplication
 
@@ -34,7 +30,8 @@ impl BillboardShader {
         });
 
         // Use shared bind group layouts from MainRenderer
-        let camera_bind_group_layout = crate::renderer::core::create_camera_bind_group_layout(device);
+        let camera_bind_group_layout =
+            crate::renderer::core::create_camera_bind_group_layout(device);
 
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("Billboard Pipeline Layout"),

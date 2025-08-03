@@ -1,12 +1,9 @@
-use glam::{Mat4, Vec3};
+use glam::Mat4;
 /// Default shader for planet and object rendering with PBR lighting
 /// Equivalent to the Java DefaultShader class
-use wgpu::{BindGroup, Buffer, Device, Queue, RenderPass, RenderPipeline};
+use wgpu::{Buffer, Device, Queue, RenderPass, RenderPipeline};
 
-use crate::{
-    assets::ModelAsset,
-    graphics::Vertex, AstrariaResult,
-};
+use crate::{assets::ModelAsset, graphics::Vertex, AstrariaResult};
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
@@ -17,7 +14,7 @@ pub struct DefaultUniforms {
 pub struct DefaultShader {
     pipeline: RenderPipeline,
     uniform_buffer: Buffer,
-    bind_group: BindGroup,
+    bind_group: wgpu::BindGroup,
 }
 
 impl DefaultShader {
@@ -29,11 +26,12 @@ impl DefaultShader {
             ),
         });
 
+        // DefaultShader needs its own bind group layout for view-projection matrix
         let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-            label: Some("Default Bind Group Layout"),
+            label: Some("Default Shader Bind Group Layout"),
             entries: &[wgpu::BindGroupLayoutEntry {
                 binding: 0,
-                visibility: wgpu::ShaderStages::VERTEX | wgpu::ShaderStages::FRAGMENT,
+                visibility: wgpu::ShaderStages::VERTEX,
                 ty: wgpu::BindingType::Buffer {
                     ty: wgpu::BufferBindingType::Uniform,
                     has_dynamic_offset: false,
@@ -58,6 +56,8 @@ impl DefaultShader {
                 resource: uniform_buffer.as_entire_binding(),
             }],
         });
+
+        // Bind group will be managed globally by MainRenderer
 
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("Default Pipeline Layout"),
@@ -113,10 +113,6 @@ impl DefaultShader {
         view_matrix: Mat4,
         projection_matrix: Mat4,
         model_matrix: Mat4,
-        _light_position: Vec3,
-        _light_color: Vec3,
-        _far_plane_distance: f32,
-        _log_depth_constant: f32,
     ) {
         let view_projection = projection_matrix * view_matrix * model_matrix;
         let uniforms = DefaultUniforms {
@@ -146,5 +142,19 @@ impl DefaultShader {
         render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
         render_pass.set_index_buffer(index_buffer.slice(..), wgpu::IndexFormat::Uint32);
         render_pass.draw_indexed(0..num_indices, 0, 0..1);
+    }
+
+    /// Render a mesh using this shader
+    pub fn render_mesh<'a>(
+        &'a self,
+        render_pass: &mut RenderPass<'a>,
+        mesh: &'a crate::graphics::Mesh,
+    ) {
+        self.render_geometry(
+            render_pass,
+            &mesh.vertex_buffer,
+            &mesh.index_buffer,
+            mesh.num_indices,
+        );
     }
 }

@@ -1,9 +1,13 @@
 /// Complete test for ALL shaders in the new architecture
 /// Tests every shader type and generates screenshots for verification
 use astraria_rust::{
-    renderer::{core::*, MainRenderer},
+    renderer::{
+        core::{MeshType, RenderCommand, *},
+        MainRenderer,
+    },
     AstrariaError, AstrariaResult,
 };
+use glam::{Mat4, Vec3, Vec4};
 use image::{ImageBuffer, Rgba};
 use std::fs;
 
@@ -40,16 +44,66 @@ async fn save_render(
             depth_stencil_attachment: None,
         });
         match test_type {
-            0 => renderer.render_default_sphere(&mut rp),
-            1 => renderer.render_default_cube(&mut rp),
-            2 => renderer.render_atmospheric_planet(&mut rp),
-            3 => renderer.render_sun(&mut rp),
-            4 => renderer.render_skybox(&mut rp),
-            5 => renderer.render_billboard(&mut rp),
-            6 => renderer.render_lens_glow(&mut rp),
-            7 => renderer.render_black_hole(&mut rp),
-            8 => renderer.render_line(&mut rp),
-            9 => renderer.render_point(&mut rp),
+            0 => {
+                let command = RenderCommand::Default {
+                    mesh_type: MeshType::Sphere,
+                    light_position: Vec3::new(2.0, 2.0, 2.0),
+                    light_color: Vec3::new(1.0, 1.0, 1.0),
+                };
+                renderer.render(&mut rp, &command, Mat4::IDENTITY);
+            }
+            1 => {
+                let command = RenderCommand::Default {
+                    mesh_type: MeshType::Cube,
+                    light_position: Vec3::new(2.0, 2.0, 2.0),
+                    light_color: Vec3::new(1.0, 1.0, 1.0),
+                };
+                renderer.render(&mut rp, &command, Mat4::IDENTITY);
+            }
+            2 => {
+                let command = RenderCommand::AtmosphericPlanet {
+                    star_position: Vec3::new(5.0, 5.0, 5.0),
+                    planet_position: Vec3::ZERO,
+                    atmosphere_color: Vec4::new(0.4, 0.6, 1.0, 1.0),
+                    overglow: 0.1,
+                    use_ambient_texture: true,
+                };
+                renderer.render(&mut rp, &command, Mat4::IDENTITY);
+            }
+            3 => {
+                let command = RenderCommand::Sun {
+                    temperature: 5778.0,
+                    star_position: Vec3::new(0.0, 0.0, 0.0),
+                    camera_position: Vec3::new(0.0, 0.0, 3.0),
+                };
+                renderer.render(&mut rp, &command, Mat4::IDENTITY);
+            }
+            4 => {
+                let command = RenderCommand::Skybox;
+                renderer.render(&mut rp, &command, Mat4::IDENTITY);
+            }
+            5 => {
+                let command = RenderCommand::Billboard;
+                renderer.render(&mut rp, &command, Mat4::IDENTITY);
+            }
+            6 => {
+                let command = RenderCommand::LensGlow;
+                renderer.render(&mut rp, &command, Mat4::IDENTITY);
+            }
+            7 => {
+                let command = RenderCommand::BlackHole;
+                renderer.render(&mut rp, &command, Mat4::IDENTITY);
+            }
+            8 => {
+                let command = RenderCommand::Line {
+                    color: Vec4::new(0.0, 1.0, 0.0, 1.0), // Green lines
+                };
+                renderer.render(&mut rp, &command, Mat4::IDENTITY);
+            }
+            9 => {
+                let command = RenderCommand::Point;
+                renderer.render(&mut rp, &command, Mat4::IDENTITY);
+            }
             _ => {}
         }
     }

@@ -3,7 +3,7 @@ use glam::{Mat3, Mat4, Vec3, Vec4};
 /// Matches the original Java atmospheric scattering with full feature set
 use wgpu::{BindGroup, Buffer, Device, Queue, RenderPass, RenderPipeline};
 
-use crate::{assets::ModelAsset, graphics::Vertex, AstrariaResult, renderer::core::*};
+use crate::{assets::ModelAsset, graphics::Vertex, renderer::core::*, AstrariaResult};
 
 // CameraUniform and TransformUniform are now imported from core.rs to eliminate duplication
 
@@ -491,5 +491,19 @@ impl PlanetAtmoShader {
         render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
         render_pass.set_index_buffer(index_buffer.slice(..), wgpu::IndexFormat::Uint32);
         render_pass.draw_indexed(0..num_indices, 0, 0..1);
+    }
+
+    /// Render a mesh using this shader
+    pub fn render_mesh<'a>(
+        &'a self,
+        render_pass: &mut RenderPass<'a>,
+        mesh: &'a crate::graphics::Mesh,
+    ) {
+        self.render_geometry(
+            render_pass,
+            &mesh.vertex_buffer,
+            &mesh.index_buffer,
+            mesh.num_indices,
+        );
     }
 }

@@ -1,4 +1,4 @@
-use crate::{assets::AssetManager, AstrariaResult, renderer::core::*};
+use crate::{assets::AssetManager, renderer::core::*, AstrariaResult};
 use glam::{Mat4, Vec3};
 /// Buffer management for vertex data, uniforms, and other GPU resources
 use wgpu::{util::DeviceExt, BindGroup, Buffer, Device, Queue, Sampler};
@@ -65,7 +65,11 @@ impl BufferManager {
         let transform_uniform = TransformUniform {
             model_matrix: Mat4::IDENTITY.to_cols_array_2d(),
             model_view_matrix: Mat4::IDENTITY.to_cols_array_2d(),
-            normal_matrix: [[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0]],
+            normal_matrix: [
+                [1.0, 0.0, 0.0, 0.0],
+                [0.0, 1.0, 0.0, 0.0],
+                [0.0, 0.0, 1.0, 0.0],
+            ],
             _padding: [0.0; 4],
         };
 

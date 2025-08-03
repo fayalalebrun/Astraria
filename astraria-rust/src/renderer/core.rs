@@ -11,27 +11,27 @@ use crate::graphics::Vertex;
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct CameraUniform {
-    pub view_matrix: [[f32; 4]; 4],           // 64 bytes
-    pub projection_matrix: [[f32; 4]; 4],     // 64 bytes
+    pub view_matrix: [[f32; 4]; 4],            // 64 bytes
+    pub projection_matrix: [[f32; 4]; 4],      // 64 bytes
     pub view_projection_matrix: [[f32; 4]; 4], // 64 bytes
-    pub camera_position: [f32; 3],            // 12 bytes
-    pub _padding1: f32,                       // 4 bytes
-    pub camera_direction: [f32; 3],           // 12 bytes
-    pub _padding2: f32,                       // 4 bytes
-    pub log_depth_constant: f32,              // 4 bytes
-    pub far_plane_distance: f32,              // 4 bytes
-    pub near_plane_distance: f32,             // 4 bytes
-    pub fc_constant: f32,                     // 4 bytes (for logarithmic depth calculations)
-}                                             // Total: 240 bytes
+    pub camera_position: [f32; 3],             // 12 bytes
+    pub _padding1: f32,                        // 4 bytes
+    pub camera_direction: [f32; 3],            // 12 bytes
+    pub _padding2: f32,                        // 4 bytes
+    pub log_depth_constant: f32,               // 4 bytes
+    pub far_plane_distance: f32,               // 4 bytes
+    pub near_plane_distance: f32,              // 4 bytes
+    pub fc_constant: f32,                      // 4 bytes (for logarithmic depth calculations)
+} // Total: 240 bytes
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct TransformUniform {
-    pub model_matrix: [[f32; 4]; 4],          // 64 bytes
-    pub model_view_matrix: [[f32; 4]; 4],     // 64 bytes
-    pub normal_matrix: [[f32; 4]; 3],         // 48 bytes (mat3x3 stored as 3 vec4 for alignment)
-    pub _padding: [f32; 4],                   // 16 bytes
-}                                             // Total: 192 bytes
+    pub model_matrix: [[f32; 4]; 4],      // 64 bytes
+    pub model_view_matrix: [[f32; 4]; 4], // 64 bytes
+    pub normal_matrix: [[f32; 4]; 3],     // 48 bytes (mat3x3 stored as 3 vec4 for alignment)
+    pub _padding: [f32; 4],               // 16 bytes
+} // Total: 192 bytes
 
 use crate::renderer::buffers::LightingUniform;
 
@@ -275,7 +275,11 @@ impl RenderSetup {
         let transform_uniform = TransformUniform {
             model_matrix: Mat4::IDENTITY.to_cols_array_2d(),
             model_view_matrix: (view_matrix * Mat4::IDENTITY).to_cols_array_2d(),
-            normal_matrix: [[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0]],
+            normal_matrix: [
+                [1.0, 0.0, 0.0, 0.0],
+                [0.0, 1.0, 0.0, 0.0],
+                [0.0, 0.0, 1.0, 0.0],
+            ],
             _padding: [0.0; 4],
         };
 
@@ -290,7 +294,7 @@ impl RenderSetup {
             specular: [1.0, 1.0, 1.0],
             _padding4: 0.0,
         };
-        
+
         let mut lights = [PointLight {
             position: [0.0; 3],
             _padding1: 0.0,
@@ -302,7 +306,7 @@ impl RenderSetup {
             _padding4: 0.0,
         }; 8];
         lights[0] = default_light;
-        
+
         let lighting_uniform = LightingUniform {
             lights,
             num_lights: 1,
@@ -432,4 +436,92 @@ pub fn create_transform_bind_group_layout(device: &Device) -> wgpu::BindGroupLay
             count: None,
         }],
     })
+}
+
+/// Create combined camera+transform bind group layout for shared use
+/// Group 0 binding 0: Camera uniform, Group 0 binding 1: Transform uniform
+pub fn create_shared_camera_transform_bind_group_layout(device: &Device) -> wgpu::BindGroupLayout {
+    device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+        label: Some("Shared Camera+Transform Bind Group Layout"),
+        entries: &[
+            // Binding 0: Camera uniform
+            wgpu::BindGroupLayoutEntry {
+                binding: 0,
+                visibility: wgpu::ShaderStages::VERTEX | wgpu::ShaderStages::FRAGMENT,
+                ty: wgpu::BindingType::Buffer {
+                    ty: wgpu::BufferBindingType::Uniform,
+                    has_dynamic_offset: false,
+                    min_binding_size: None,
+                },
+                count: None,
+            },
+            // Binding 1: Transform uniform
+            wgpu::BindGroupLayoutEntry {
+                binding: 1,
+                visibility: wgpu::ShaderStages::VERTEX | wgpu::ShaderStages::FRAGMENT,
+                ty: wgpu::BindingType::Buffer {
+                    ty: wgpu::BufferBindingType::Uniform,
+                    has_dynamic_offset: false,
+                    min_binding_size: None,
+                },
+                count: None,
+            },
+        ],
+    })
+}
+
+/// Unified render command enum that describes all shader types and their parameters
+/// This eliminates code duplication by providing a single render interface
+#[derive(Debug, Clone)]
+pub enum RenderCommand {
+    /// Default PBR shader for basic objects
+    Default {
+        mesh_type: MeshType,
+        light_position: Vec3,
+        light_color: Vec3,
+    },
+
+    /// Planet with atmospheric scattering
+    AtmosphericPlanet {
+        star_position: Vec3,
+        planet_position: Vec3,
+        atmosphere_color: glam::Vec4,
+        overglow: f32,
+        use_ambient_texture: bool,
+    },
+
+    /// Sun/star with stellar surface rendering
+    Sun {
+        temperature: f32,
+        star_position: Vec3,
+        camera_position: Vec3,
+    },
+
+    /// Skybox background
+    Skybox,
+
+    /// Billboard sprite (screen-aligned)
+    Billboard,
+
+    /// Lens glow/flare effect
+    LensGlow,
+
+    /// Black hole with gravitational lensing
+    BlackHole,
+
+    /// Orbital path lines
+    Line { color: glam::Vec4 },
+
+    /// Point rendering for distant objects
+    Point,
+}
+
+/// Mesh types available for rendering
+#[derive(Debug, Clone, Copy)]
+pub enum MeshType {
+    Cube,
+    Sphere,
+    Quad,
+    Line,
+    Point,
 }

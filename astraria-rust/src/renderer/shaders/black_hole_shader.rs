@@ -3,9 +3,7 @@ use bytemuck::{Pod, Zeroable};
 /// Simulates gravitational lensing effects using refraction shaders and skybox sampling
 use wgpu::{Device, Queue, RenderPipeline};
 
-use crate::{
-    graphics::Vertex, AstrariaResult,
-};
+use crate::{graphics::Vertex, AstrariaResult};
 
 // CameraUniform and TransformUniform are now imported from core.rs to eliminate duplication
 
@@ -30,8 +28,9 @@ impl BlackHoleShader {
         });
 
         // Camera bind group layout (group 0) - shared with other shaders
-        let camera_bind_group_layout = crate::renderer::core::create_camera_bind_group_layout(device);
-        
+        let camera_bind_group_layout =
+            crate::renderer::core::create_camera_bind_group_layout(device);
+
         // Black hole specific bind group layout (group 1) - transform and black hole uniforms
         let uniform_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -86,7 +85,11 @@ impl BlackHoleShader {
 
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("Black Hole Pipeline Layout"),
-            bind_group_layouts: &[&camera_bind_group_layout, &uniform_bind_group_layout, &texture_bind_group_layout],
+            bind_group_layouts: &[
+                &camera_bind_group_layout,
+                &uniform_bind_group_layout,
+                &texture_bind_group_layout,
+            ],
             push_constant_ranges: &[],
         });
 
@@ -131,6 +134,4 @@ impl BlackHoleShader {
             texture_bind_group_layout,
         })
     }
-
-
 }

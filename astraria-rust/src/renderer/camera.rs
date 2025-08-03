@@ -87,8 +87,8 @@ impl Camera {
             pitch,
             roll,
             movement_speed: 0.0794, // Java base movement speed
-            sensitivity: 0.002, // Java mouse sensitivity (much lower than 0.1)
-            scrolled_amount: 0.0, // Initial scroll amount
+            sensitivity: 0.002,     // Java mouse sensitivity (much lower than 0.1)
+            scrolled_amount: 0.0,   // Initial scroll amount
             fov: 45.0,
             aspect_ratio,
             near_plane: 0.1,
@@ -213,7 +213,7 @@ impl Camera {
         if let Some(buffer) = &self.uniform_buffer {
             // Calculate fc_constant for logarithmic depth (from original Java implementation)
             let fc_constant = 2.0 / (self.log_depth_constant * self.far_plane + 1.0).ln();
-            
+
             let uniforms = CameraUniform {
                 view_matrix: self.view_matrix.to_cols_array_2d(),
                 projection_matrix: self.projection_matrix.to_cols_array_2d(),
@@ -255,7 +255,7 @@ impl Camera {
     pub fn process_scroll(&mut self, y_offset: f32) {
         // Update scrolled amount like Java implementation
         self.scrolled_amount += y_offset;
-        
+
         // Apply Java's exponential speed formula: 0.0794f * pow(1.2637, scrolledAmount)
         self.movement_speed = 0.0794 * 1.2637_f32.powf(self.scrolled_amount);
 
@@ -379,6 +379,11 @@ impl Camera {
         };
         self.movement_speed *= multiplier;
         self.movement_speed = self.movement_speed.clamp(1.0, 1e12);
+    }
+
+    /// Get reference to uniform buffer
+    pub fn uniform_buffer(&self) -> Option<&wgpu::Buffer> {
+        self.uniform_buffer.as_ref()
     }
 }
 

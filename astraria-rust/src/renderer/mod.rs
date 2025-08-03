@@ -55,7 +55,6 @@ pub struct Renderer {
     skybox_index_buffer: Option<wgpu::Buffer>,
     skybox_num_indices: u32,
     skybox_bind_group: Option<wgpu::BindGroup>,
-
 }
 
 impl Renderer {
