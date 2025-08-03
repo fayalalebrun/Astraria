@@ -1,3 +1,4 @@
+use crate::scenario::BodyType;
 use bytemuck::{Pod, Zeroable};
 /// Physics body representation for N-body simulation
 /// Ported from the original Java Body.java with Rust safety improvements
@@ -6,7 +7,7 @@ use std::sync::{Arc, RwLock};
 // Removed serde for now - can be added back when needed
 
 /// A celestial body in the simulation with position, velocity, and mass
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Body {
     /// Mass in kilograms
     pub mass: f64,
@@ -22,10 +23,22 @@ pub struct Body {
 
     /// Whether acceleration has been initialized for this timestep
     pub acceleration_initialized: bool,
+
+    /// Body name for identification
+    pub name: String,
+
+    /// Body type with type-specific properties (radius, texture, etc.)
+    pub body_type: BodyType,
+
+    /// Orbit color for rendering
+    pub orbit_color: [f32; 4],
+
+    /// Rotation parameters (incTilt, axisRightAsc, rotPeriod, offset) in radians
+    pub rotation_params: (f32, f32, f32, f32),
 }
 
 impl Body {
-    /// Create a new body with the given properties
+    /// Create a new body with the given properties (basic constructor)
     pub fn new(mass: f64, position: DVec3, velocity: DVec3) -> Self {
         Self {
             mass,
@@ -33,6 +46,36 @@ impl Body {
             velocity,
             acceleration: DVec3::ZERO,
             acceleration_initialized: false,
+            name: "Unknown".to_string(),
+            body_type: BodyType::Planet {
+                radius: 1000.0,
+                texture_path: "default.jpg".to_string(),
+            },
+            orbit_color: [1.0, 1.0, 1.0, 1.0],
+            rotation_params: (0.0, 0.0, 0.0, 0.0),
+        }
+    }
+
+    /// Create a new body with full properties (for scenario loading)
+    pub fn new_with_properties(
+        mass: f64,
+        position: DVec3,
+        velocity: DVec3,
+        name: String,
+        body_type: BodyType,
+        orbit_color: [f32; 4],
+        rotation_params: (f32, f32, f32, f32),
+    ) -> Self {
+        Self {
+            mass,
+            position,
+            velocity,
+            acceleration: DVec3::ZERO,
+            acceleration_initialized: false,
+            name,
+            body_type,
+            orbit_color,
+            rotation_params,
         }
     }
 

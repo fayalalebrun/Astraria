@@ -186,10 +186,34 @@ impl AssetManager {
         })
     }
 
-    pub async fn load_scenario(&self, _path: &str) -> AstrariaResult<String> {
-        // TODO: Load scenario file
-        // For now, return empty scenario
-        Ok(String::new())
+    pub async fn load_scenario(&self, path: &str) -> AstrariaResult<String> {
+        use std::fs;
+
+        // Try to load from assets/examples/ directory first
+        let full_path = format!("assets/examples/{}", path);
+
+        match fs::read_to_string(&full_path) {
+            Ok(content) => {
+                log::info!("Loaded scenario file: {}", full_path);
+                Ok(content)
+            }
+            Err(_) => {
+                // Try direct path if not found in examples
+                match fs::read_to_string(path) {
+                    Ok(content) => {
+                        log::info!("Loaded scenario file: {}", path);
+                        Ok(content)
+                    }
+                    Err(e) => {
+                        log::error!("Failed to load scenario file '{}': {}", path, e);
+                        Err(crate::AstrariaError::AssetLoading(format!(
+                            "Failed to load scenario file '{}': {}",
+                            path, e
+                        )))
+                    }
+                }
+            }
+        }
     }
 
     pub async fn load_model(

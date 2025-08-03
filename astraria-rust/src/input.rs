@@ -12,6 +12,7 @@ pub struct InputHandler {
     mouse_sensitivity: f32,
     keys_pressed: HashMap<VirtualKeyCode, bool>,
     mouse_delta: Option<(f32, f32)>,
+    scroll_delta: Option<f32>,
 }
 
 impl InputHandler {
@@ -22,6 +23,7 @@ impl InputHandler {
             mouse_sensitivity: 0.1,
             keys_pressed: HashMap::new(),
             mouse_delta: None,
+            scroll_delta: None,
         }
     }
 
@@ -59,15 +61,25 @@ impl InputHandler {
                     Ok(true) // Camera movement keys handled
                 }
                 VirtualKeyCode::E => {
-                    // TODO: Send to camera (roll right)
+                    // Roll right (handled in renderer)
+                    Ok(true)
+                }
+                VirtualKeyCode::Q => {
+                    // Roll left (handled in renderer)
                     Ok(true)
                 }
                 VirtualKeyCode::Up => {
-                    // TODO: Increase camera speed
+                    if pressed {
+                        // Increase camera speed (simulate scroll up)
+                        self.scroll_delta = Some(1.0);
+                    }
                     Ok(true)
                 }
                 VirtualKeyCode::Down => {
-                    // TODO: Decrease camera speed
+                    if pressed {
+                        // Decrease camera speed (simulate scroll down)
+                        self.scroll_delta = Some(-1.0);
+                    }
                     Ok(true)
                 }
                 VirtualKeyCode::Left => {
@@ -98,7 +110,13 @@ impl InputHandler {
     ) -> AstrariaResult<bool> {
         match button {
             MouseButton::Right => {
-                self.mouse_pressed = state == ElementState::Pressed;
+                let pressed = state == ElementState::Pressed;
+                log::info!(
+                    "Right mouse button: {} (was: {})",
+                    if pressed { "PRESSED" } else { "RELEASED" },
+                    self.mouse_pressed
+                );
+                self.mouse_pressed = pressed;
                 Ok(true)
             }
             MouseButton::Left => {
@@ -113,27 +131,32 @@ impl InputHandler {
         let delta_x = x - self.last_mouse_pos.0;
         let delta_y = y - self.last_mouse_pos.1;
 
-        // Store mouse delta for camera look (always, not just when mouse pressed)
-        if delta_x.abs() > 0.1 || delta_y.abs() > 0.1 {
-            // Only if significant movement
-            self.mouse_delta = Some((
-                delta_x * self.mouse_sensitivity,
-                -delta_y * self.mouse_sensitivity,
-            ));
+        // Only store mouse delta for camera look when right mouse button is pressed (like Java)
+        if self.mouse_pressed && (delta_x.abs() > 0.1 || delta_y.abs() > 0.1) {
+            // Pass raw pixel deltas to camera (Java behavior - no scaling here)
+            let mouse_delta = (delta_x, -delta_y);
+            log::info!(
+                "Mouse movement: delta=({:.2}, {:.2}) -> camera_delta=({:.2}, {:.2})",
+                delta_x,
+                delta_y,
+                mouse_delta.0,
+                mouse_delta.1
+            );
+            self.mouse_delta = Some(mouse_delta);
         }
 
         self.last_mouse_pos = (x, y);
-        Ok(true) // Always consume mouse movement for camera
+        Ok(self.mouse_pressed) // Only consume if right mouse is pressed
     }
 
     fn handle_scroll(&mut self, delta: &winit::event::MouseScrollDelta) -> AstrariaResult<bool> {
-        let _scroll_amount = match delta {
+        let scroll_amount = match delta {
             winit::event::MouseScrollDelta::LineDelta(_, y) => *y,
             winit::event::MouseScrollDelta::PixelDelta(pos) => pos.y as f32 / 100.0,
         };
 
-        // TODO: Send scroll to camera for speed adjustment
-        // camera.process_scroll(scroll_amount);
+        // Store scroll amount to be processed by camera later
+        self.scroll_delta = Some(scroll_amount);
 
         Ok(true)
     }
@@ -151,6 +174,11 @@ impl InputHandler {
     /// Get and consume mouse delta for camera look
     pub fn take_mouse_delta(&mut self) -> Option<(f32, f32)> {
         self.mouse_delta.take()
+    }
+
+    /// Get and consume scroll delta for camera speed adjustment
+    pub fn take_scroll_delta(&mut self) -> Option<f32> {
+        self.scroll_delta.take()
     }
 }
 

@@ -17,7 +17,7 @@ glam = { version = "0.24", features = ["bytemuck"] }
 bytemuck = { version = "1.14", features = ["derive"] }
 
 # Asset loading
-image = { version = "0.24", features = ["png", "jpeg"] }
+image = { version = "0.24", features = ["png", "jpeg"], default-features = false }
 tobj = "4.0"
 
 # UI
@@ -46,3 +46,35 @@ path = "src/lib.rs"
 [[bin]]
 name = "astraria"
 path = "src/main.rs"
+
+# Performance optimization profiles
+[profile.dev]
+# Optimize dependencies even in debug builds for faster image loading
+opt-level = 1
+overflow-checks = true
+
+[profile.dev.package.image]
+# Specifically optimize the image library in debug builds
+opt-level = 3
+
+[profile.dev.package.wgpu]
+# Optimize wgpu for better GPU performance in debug
+opt-level = 2
+
+[profile.release]
+# Maximum optimization for release builds
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+panic = "abort"
+strip = true
+
+[profile.release.package.image]
+# Full optimization for image processing in release
+opt-level = 3
+
+# Fast compilation profile for development
+[profile.dev-fast]
+inherits = "dev"
+opt-level = 0
+incremental = true

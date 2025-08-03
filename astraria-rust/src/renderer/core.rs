@@ -35,56 +35,145 @@ pub struct TransformUniform {
 
 use crate::renderer::buffers::LightingUniform;
 
-/// Shared geometry creation functions
+/// Create a skybox cube with all 6 faces visible from inside
 pub fn create_cube_geometry() -> (Vec<Vertex>, Vec<u32>) {
     let vertices = vec![
-        // Front face
+        // Front face (z = 1) - looking towards negative Z
         Vertex {
             position: [-1.0, -1.0, 1.0],
             tex_coord: [0.0, 0.0],
-            normal: [0.0, 0.0, 1.0],
+            normal: [0.0, 0.0, -1.0],
         },
         Vertex {
             position: [1.0, -1.0, 1.0],
             tex_coord: [1.0, 0.0],
-            normal: [0.0, 0.0, 1.0],
+            normal: [0.0, 0.0, -1.0],
         },
         Vertex {
             position: [1.0, 1.0, 1.0],
             tex_coord: [1.0, 1.0],
-            normal: [0.0, 0.0, 1.0],
+            normal: [0.0, 0.0, -1.0],
         },
         Vertex {
             position: [-1.0, 1.0, 1.0],
             tex_coord: [0.0, 1.0],
+            normal: [0.0, 0.0, -1.0],
+        },
+        // Back face (z = -1) - looking towards positive Z
+        Vertex {
+            position: [1.0, -1.0, -1.0],
+            tex_coord: [0.0, 0.0],
             normal: [0.0, 0.0, 1.0],
         },
-        // Back face
         Vertex {
             position: [-1.0, -1.0, -1.0],
             tex_coord: [1.0, 0.0],
-            normal: [0.0, 0.0, -1.0],
+            normal: [0.0, 0.0, 1.0],
         },
         Vertex {
             position: [-1.0, 1.0, -1.0],
             tex_coord: [1.0, 1.0],
-            normal: [0.0, 0.0, -1.0],
+            normal: [0.0, 0.0, 1.0],
         },
         Vertex {
             position: [1.0, 1.0, -1.0],
             tex_coord: [0.0, 1.0],
-            normal: [0.0, 0.0, -1.0],
+            normal: [0.0, 0.0, 1.0],
+        },
+        // Left face (x = -1) - looking towards positive X
+        Vertex {
+            position: [-1.0, -1.0, -1.0],
+            tex_coord: [0.0, 0.0],
+            normal: [1.0, 0.0, 0.0],
+        },
+        Vertex {
+            position: [-1.0, -1.0, 1.0],
+            tex_coord: [1.0, 0.0],
+            normal: [1.0, 0.0, 0.0],
+        },
+        Vertex {
+            position: [-1.0, 1.0, 1.0],
+            tex_coord: [1.0, 1.0],
+            normal: [1.0, 0.0, 0.0],
+        },
+        Vertex {
+            position: [-1.0, 1.0, -1.0],
+            tex_coord: [0.0, 1.0],
+            normal: [1.0, 0.0, 0.0],
+        },
+        // Right face (x = 1) - looking towards negative X
+        Vertex {
+            position: [1.0, -1.0, 1.0],
+            tex_coord: [0.0, 0.0],
+            normal: [-1.0, 0.0, 0.0],
         },
         Vertex {
             position: [1.0, -1.0, -1.0],
+            tex_coord: [1.0, 0.0],
+            normal: [-1.0, 0.0, 0.0],
+        },
+        Vertex {
+            position: [1.0, 1.0, -1.0],
+            tex_coord: [1.0, 1.0],
+            normal: [-1.0, 0.0, 0.0],
+        },
+        Vertex {
+            position: [1.0, 1.0, 1.0],
+            tex_coord: [0.0, 1.0],
+            normal: [-1.0, 0.0, 0.0],
+        },
+        // Top face (y = 1) - looking towards negative Y
+        Vertex {
+            position: [-1.0, 1.0, 1.0],
             tex_coord: [0.0, 0.0],
-            normal: [0.0, 0.0, -1.0],
+            normal: [0.0, -1.0, 0.0],
+        },
+        Vertex {
+            position: [1.0, 1.0, 1.0],
+            tex_coord: [1.0, 0.0],
+            normal: [0.0, -1.0, 0.0],
+        },
+        Vertex {
+            position: [1.0, 1.0, -1.0],
+            tex_coord: [1.0, 1.0],
+            normal: [0.0, -1.0, 0.0],
+        },
+        Vertex {
+            position: [-1.0, 1.0, -1.0],
+            tex_coord: [0.0, 1.0],
+            normal: [0.0, -1.0, 0.0],
+        },
+        // Bottom face (y = -1) - looking towards positive Y
+        Vertex {
+            position: [-1.0, -1.0, -1.0],
+            tex_coord: [0.0, 0.0],
+            normal: [0.0, 1.0, 0.0],
+        },
+        Vertex {
+            position: [1.0, -1.0, -1.0],
+            tex_coord: [1.0, 0.0],
+            normal: [0.0, 1.0, 0.0],
+        },
+        Vertex {
+            position: [1.0, -1.0, 1.0],
+            tex_coord: [1.0, 1.0],
+            normal: [0.0, 1.0, 0.0],
+        },
+        Vertex {
+            position: [-1.0, -1.0, 1.0],
+            tex_coord: [0.0, 1.0],
+            normal: [0.0, 1.0, 0.0],
         },
     ];
 
     let indices = vec![
-        0, 1, 2, 2, 3, 0, // front
-        4, 5, 6, 6, 7, 4, // back
+        // Each face uses counter-clockwise winding when viewed from inside the cube
+        0, 1, 2, 2, 3, 0, // Front
+        4, 5, 6, 6, 7, 4, // Back
+        8, 9, 10, 10, 11, 8, // Left
+        12, 13, 14, 14, 15, 12, // Right
+        16, 17, 18, 18, 19, 16, // Top
+        20, 21, 22, 22, 23, 20, // Bottom
     ];
 
     (vertices, indices)

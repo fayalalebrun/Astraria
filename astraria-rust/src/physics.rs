@@ -212,7 +212,7 @@ impl VelocityVerlet {
             let body = body_ref.read().map_err(|_| {
                 AstrariaError::Physics("Failed to acquire body read lock".to_string())
             })?;
-            result.push(*body);
+            result.push(body.clone());
         }
 
         Ok(result)
@@ -286,10 +286,53 @@ impl PhysicsSimulation {
         self.algorithm.get_simulation_speed()
     }
 
-    pub fn load_scenario(&mut self, _scenario_data: String) -> AstrariaResult<()> {
-        // TODO: Parse scenario file and load bodies
-        // For now, create a simple test scenario
-        self.create_test_scenario()
+    pub fn load_scenario(&mut self, scenario_data: String) -> AstrariaResult<()> {
+        use crate::math::Body;
+        use crate::scenario::ScenarioParser;
+
+        // Parse the scenario file
+        let scenario = ScenarioParser::parse(&scenario_data)?;
+
+        if scenario.bodies.is_empty() {
+            log::warn!("No bodies found in scenario, creating test scenario");
+            return self.create_test_scenario();
+        }
+
+        log::info!("Loading scenario with {} bodies", scenario.bodies.len());
+
+        // Clear existing bodies
+        {
+            let mut bodies = self.algorithm.bodies.write().map_err(|_| {
+                AstrariaError::Physics("Failed to acquire write lock on bodies".to_string())
+            })?;
+            *bodies = crate::math::BodyCollection::new();
+        }
+
+        // Add bodies from scenario
+        for scenario_body in scenario.bodies {
+            let body = Body::new_with_properties(
+                scenario_body.mass,
+                scenario_body.position,
+                scenario_body.velocity,
+                scenario_body.name.clone(),
+                scenario_body.body_type,
+                scenario_body.orbit_color,
+                scenario_body.rotation_params,
+            );
+
+            log::info!(
+                "Adding body: {} (mass: {:.2e} kg)",
+                scenario_body.name,
+                scenario_body.mass
+            );
+            self.add_body(body)?;
+        }
+
+        // Start the simulation
+        self.start()?;
+
+        log::info!("Scenario loaded successfully");
+        Ok(())
     }
 
     fn create_test_scenario(&mut self) -> AstrariaResult<()> {

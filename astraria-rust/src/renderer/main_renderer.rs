@@ -81,6 +81,7 @@ impl MainRenderer {
             ..Default::default()
         });
 
+        // Request adapter
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
                 power_preference: wgpu::PowerPreference::default(),
@@ -88,20 +89,50 @@ impl MainRenderer {
                 force_fallback_adapter: false,
             })
             .await
-            .ok_or_else(|| AstrariaError::Graphics("Failed to find GPU adapter".to_string()))?;
+            .ok_or_else(|| AstrariaError::Graphics("Failed to find adapter".to_string()))?;
 
+        // Request device and queue
         let (device, queue) = adapter
             .request_device(
                 &wgpu::DeviceDescriptor {
-                    label: Some("Main Renderer Device"),
                     features: wgpu::Features::empty(),
                     limits: wgpu::Limits::default(),
+                    label: None,
                 },
                 None,
             )
             .await
             .map_err(|e| AstrariaError::Graphics(format!("Failed to create device: {}", e)))?;
 
+        Self::with_device(device, queue).await
+    }
+
+    pub async fn with_surface(
+        surface: wgpu::Surface,
+        adapter: &wgpu::Adapter,
+        surface_config: wgpu::SurfaceConfiguration,
+    ) -> AstrariaResult<(Self, wgpu::Surface)> {
+        // Request device and queue with the same adapter as the surface
+        let (device, queue) = adapter
+            .request_device(
+                &wgpu::DeviceDescriptor {
+                    features: wgpu::Features::empty(),
+                    limits: wgpu::Limits::default(),
+                    label: None,
+                },
+                None,
+            )
+            .await
+            .map_err(|e| AstrariaError::Graphics(format!("Failed to create device: {}", e)))?;
+
+        // Configure surface with the matching device
+        surface.configure(&device, &surface_config);
+
+        let main_renderer = Self::with_device(device, queue).await?;
+        Ok((main_renderer, surface))
+    }
+
+    pub async fn with_device(device: wgpu::Device, queue: wgpu::Queue) -> AstrariaResult<Self> {
         // Create test geometry meshes
         let (cube_vertices, cube_indices) = create_cube_geometry();
         let (sphere_vertices, sphere_indices) = create_sphere_geometry(1.0, 32, 64);
@@ -402,6 +433,12 @@ impl MainRenderer {
     /// Get queue reference for external use
     pub fn queue(&self) -> &Queue {
         &self.queue
+    }
+
+    /// Update camera with movement and GPU uniforms
+    pub fn update_camera(&mut self) {
+        self.camera.update_movement(0.016); // Assume ~60fps for now
+        self.camera.update(&self.queue);
     }
 
     /// Unified render method that takes a render command and transform

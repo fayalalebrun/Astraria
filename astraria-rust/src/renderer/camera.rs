@@ -70,6 +70,7 @@ pub struct Camera {
 
 impl Camera {
     pub fn new(aspect_ratio: f32) -> Self {
+        log::info!("Creating new Camera instance");
         // Match the test setup initial position
         let position = DVec3::new(0.0, 0.0, 3.0); // Match previous hardcoded test position
         let world_up = Vec3::Y;
@@ -87,7 +88,7 @@ impl Camera {
             pitch,
             roll,
             movement_speed: 0.0794, // Java base movement speed
-            sensitivity: 0.002,     // Java mouse sensitivity (much lower than 0.1)
+            sensitivity: 0.2,       // Doubled mouse sensitivity for better responsiveness
             scrolled_amount: 0.0,   // Initial scroll amount
             fov: 45.0,
             aspect_ratio,
@@ -178,6 +179,11 @@ impl Camera {
         if !self.dirty {
             return;
         }
+        log::debug!(
+            "Camera matrices dirty, updating: yaw={:.1}°, pitch={:.1}°",
+            self.yaw,
+            self.pitch
+        );
 
         // Handle object locking
         if let Some(locked_pos) = self.locked_object_position {
@@ -211,6 +217,11 @@ impl Camera {
         self.update_matrices();
 
         if let Some(buffer) = &self.uniform_buffer {
+            log::debug!(
+                "Updating camera GPU uniforms: yaw={:.1}°, pitch={:.1}°",
+                self.yaw,
+                self.pitch
+            );
             // Calculate fc_constant for logarithmic depth (matches Java: 1.0f/(float)Math.log(MAXVIEWDISTANCE*LOGDEPTHCONSTANT + 1))
             let fc_constant = 1.0 / (self.log_depth_constant * self.far_plane + 1.0).ln();
 
@@ -242,11 +253,20 @@ impl Camera {
         let x_offset = x_offset * self.sensitivity;
         let y_offset = y_offset * self.sensitivity;
 
+        log::info!("Camera mouse movement: input=({:.2}, {:.2}) scaled=({:.2}, {:.2}) yaw={:.1}° pitch={:.1}°", 
+            x_offset / self.sensitivity, y_offset / self.sensitivity, x_offset, y_offset, self.yaw, self.pitch);
+
         self.yaw += x_offset;
         self.pitch += y_offset;
 
         // Constrain pitch to avoid camera flipping
         self.pitch = self.pitch.clamp(-89.0, 89.0);
+
+        log::info!(
+            "Camera after update: yaw={:.1}° pitch={:.1}°",
+            self.yaw,
+            self.pitch
+        );
 
         self.update_vectors();
     }

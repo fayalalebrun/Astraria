@@ -20,10 +20,15 @@ pub struct AstrariaApp {
     input_handler: Option<InputHandler>,
     asset_manager: Option<AssetManager>,
     last_frame_time: std::time::Instant,
+    scenario_file: String,
 }
 
 impl AstrariaApp {
     pub fn new() -> Result<Self> {
+        Self::new_with_scenario("Solar_System_2K.txt".to_string())
+    }
+
+    pub fn new_with_scenario(scenario_file: String) -> Result<Self> {
         Ok(Self {
             renderer: None,
             physics: None,
@@ -31,6 +36,7 @@ impl AstrariaApp {
             input_handler: None,
             asset_manager: None,
             last_frame_time: std::time::Instant::now(),
+            scenario_file,
         })
     }
 
@@ -115,15 +121,18 @@ impl AstrariaApp {
     }
 
     async fn load_default_scenario(&mut self) -> AstrariaResult<()> {
-        // Try to load the Solar System scenario similar to the original
+        // Try to load the specified scenario file
         if let Some(asset_manager) = &self.asset_manager {
-            if let Ok(scenario_data) = asset_manager.load_scenario("Solar_System_2K.txt").await {
+            if let Ok(scenario_data) = asset_manager.load_scenario(&self.scenario_file).await {
                 if let Some(physics) = &mut self.physics {
                     physics.load_scenario(scenario_data)?;
-                    log::info!("Loaded default Solar System scenario");
+                    log::info!("Loaded scenario: {}", self.scenario_file);
                 }
             } else {
-                log::warn!("Could not load default scenario, starting with empty simulation");
+                log::warn!(
+                    "Could not load scenario '{}', starting with empty simulation",
+                    self.scenario_file
+                );
             }
         }
         Ok(())
@@ -172,14 +181,29 @@ impl AstrariaApp {
     }
 
     fn handle_window_event(&mut self, event: &WindowEvent) -> AstrariaResult<bool> {
-        // Let UI handle the event first
+        // Let input handler process camera-related events first
+        if let Some(input_handler) = &mut self.input_handler {
+            // Give input handler priority for mouse events (needed for camera controls)
+            match event {
+                WindowEvent::MouseInput { .. }
+                | WindowEvent::CursorMoved { .. }
+                | WindowEvent::MouseWheel { .. } => {
+                    if input_handler.handle_event(event)? {
+                        return Ok(true); // Event consumed by input handler
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        // Let UI handle the event next (but only if input handler didn't consume it)
         if let Some(ui) = &mut self.ui {
             if ui.handle_event(event)? {
                 return Ok(true); // Event consumed by UI
             }
         }
 
-        // Then let input handler process it
+        // Finally let input handler process keyboard events
         if let Some(input_handler) = &mut self.input_handler {
             if input_handler.handle_event(event)? {
                 return Ok(true); // Event consumed by input handler
