@@ -176,6 +176,11 @@ impl Renderer {
         Ok(())
     }
 
+    /// Update camera with delta time for movement
+    pub fn update_camera(&mut self, delta_time: f32) {
+        self.main_renderer.update_camera(delta_time);
+    }
+
     pub fn begin_frame(&mut self) -> AstrariaResult<()> {
         // Get the next frame
         let frame = self.surface.get_current_texture().map_err(|e| {
@@ -207,8 +212,6 @@ impl Renderer {
                     label: Some("Render Encoder"),
                 });
 
-        // Update camera movement and matrices
-        self.main_renderer.update_camera();
 
         self.lights.update(self.main_renderer.queue(), physics)?;
 
@@ -447,6 +450,14 @@ impl Renderer {
         &mut self.main_renderer.camera
     }
 
+    pub fn set_camera_position(&mut self, position: glam::DVec3) {
+        self.main_renderer.camera.set_position(position);
+    }
+
+    pub fn set_camera_look_at(&mut self, target: glam::DVec3) {
+        self.main_renderer.camera.look_at(target);
+    }
+
     pub fn device(&self) -> &Device {
         self.main_renderer.device()
     }
@@ -464,87 +475,20 @@ impl Renderer {
         &mut self,
         input: &mut crate::input::InputHandler,
     ) -> AstrariaResult<()> {
-        // Handle WASD movement
-        if input.is_key_pressed(&winit::event::VirtualKeyCode::W) {
-            self.main_renderer
-                .camera
-                .process_keyboard(crate::renderer::camera::CameraMovement::Forward, true);
-        } else {
-            self.main_renderer
-                .camera
-                .process_keyboard(crate::renderer::camera::CameraMovement::Forward, false);
-        }
-
-        if input.is_key_pressed(&winit::event::VirtualKeyCode::S) {
-            self.main_renderer
-                .camera
-                .process_keyboard(crate::renderer::camera::CameraMovement::Backward, true);
-        } else {
-            self.main_renderer
-                .camera
-                .process_keyboard(crate::renderer::camera::CameraMovement::Backward, false);
-        }
-
-        if input.is_key_pressed(&winit::event::VirtualKeyCode::A) {
-            self.main_renderer
-                .camera
-                .process_keyboard(crate::renderer::camera::CameraMovement::Left, true);
-        } else {
-            self.main_renderer
-                .camera
-                .process_keyboard(crate::renderer::camera::CameraMovement::Left, false);
-        }
-
-        if input.is_key_pressed(&winit::event::VirtualKeyCode::D) {
-            self.main_renderer
-                .camera
-                .process_keyboard(crate::renderer::camera::CameraMovement::Right, true);
-        } else {
-            self.main_renderer
-                .camera
-                .process_keyboard(crate::renderer::camera::CameraMovement::Right, false);
-        }
-
-        if input.is_key_pressed(&winit::event::VirtualKeyCode::Space) {
-            self.main_renderer
-                .camera
-                .process_keyboard(crate::renderer::camera::CameraMovement::Up, true);
-        } else {
-            self.main_renderer
-                .camera
-                .process_keyboard(crate::renderer::camera::CameraMovement::Up, false);
-        }
-
-        if input.is_key_pressed(&winit::event::VirtualKeyCode::LShift) {
-            self.main_renderer
-                .camera
-                .process_keyboard(crate::renderer::camera::CameraMovement::Down, true);
-        } else {
-            self.main_renderer
-                .camera
-                .process_keyboard(crate::renderer::camera::CameraMovement::Down, false);
-        }
-
-        // Handle Q/E roll controls
-        if input.is_key_pressed(&winit::event::VirtualKeyCode::Q) {
-            self.main_renderer
-                .camera
-                .process_keyboard(crate::renderer::camera::CameraMovement::RollLeft, true);
-        } else {
-            self.main_renderer
-                .camera
-                .process_keyboard(crate::renderer::camera::CameraMovement::RollLeft, false);
-        }
-
-        if input.is_key_pressed(&winit::event::VirtualKeyCode::E) {
-            self.main_renderer
-                .camera
-                .process_keyboard(crate::renderer::camera::CameraMovement::RollRight, true);
-        } else {
-            self.main_renderer
-                .camera
-                .process_keyboard(crate::renderer::camera::CameraMovement::RollRight, false);
-        }
+        use winit::event::VirtualKeyCode;
+        use crate::renderer::camera::CameraMovement;
+        
+        // Handle WASD movement - only update when key state is pressed
+        let camera = &mut self.main_renderer.camera;
+        
+        camera.process_keyboard(CameraMovement::Forward, input.is_key_pressed(&VirtualKeyCode::W));
+        camera.process_keyboard(CameraMovement::Backward, input.is_key_pressed(&VirtualKeyCode::S));
+        camera.process_keyboard(CameraMovement::Left, input.is_key_pressed(&VirtualKeyCode::A));
+        camera.process_keyboard(CameraMovement::Right, input.is_key_pressed(&VirtualKeyCode::D));
+        camera.process_keyboard(CameraMovement::Up, input.is_key_pressed(&VirtualKeyCode::Space));
+        camera.process_keyboard(CameraMovement::Down, input.is_key_pressed(&VirtualKeyCode::LShift));
+        camera.process_keyboard(CameraMovement::RollLeft, input.is_key_pressed(&VirtualKeyCode::Q));
+        camera.process_keyboard(CameraMovement::RollRight, input.is_key_pressed(&VirtualKeyCode::E));
 
         // Handle mouse look
         if let Some((delta_x, delta_y)) = input.take_mouse_delta() {

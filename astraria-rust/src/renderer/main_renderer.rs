@@ -1,4 +1,4 @@
-use glam::{DMat4, DVec3, Mat4, Vec3};
+use glam::{DMat4, DVec3, Mat4};
 use std::sync::Arc;
 use wgpu::util::DeviceExt;
 
@@ -10,7 +10,7 @@ const MAX_OBJECTS_PER_FRAME: u32 = 64; // Support up to 64 objects per frame
 use wgpu::{Device, Queue, RenderPass};
 
 use crate::{
-    assets::{AssetManager, CubemapAsset, TextureAsset},
+    assets::{AssetManager, CubemapAsset, TextureAsset, ModelAsset},
     graphics::Mesh,
     renderer::{
         camera::Camera,
@@ -93,7 +93,7 @@ pub struct MainRenderer {
 
     // Geometry meshes for testing
     cube_mesh: Mesh,
-    sphere_mesh: Mesh,
+    sphere_model: Arc<ModelAsset>,  // Use loaded OBJ model for sphere
     quad_mesh: Mesh,
     line_mesh: Mesh,
     point_mesh: Mesh,
@@ -207,6 +207,9 @@ impl MainRenderer {
         let atmo_gradient_texture = asset_manager.load_texture(&device, &queue, "assets/atmoGradient.png").await?;
         let star_glow_texture = asset_manager.load_texture(&device, &queue, "assets/star_glow.png").await?;
         let star_spectrum_texture = asset_manager.load_texture(&device, &queue, "assets/star_spectrum_1D.png").await?;
+        
+        // Load sphere.obj model
+        let sphere_model = asset_manager.load_model(&device, "assets/models/sphere.obj").await?;
 
         // Initialize camera
         let mut camera = Camera::new(800.0 / 600.0); // aspect ratio
@@ -214,15 +217,14 @@ impl MainRenderer {
 
         // Create geometry meshes using test geometry
         use crate::graphics::test_geometry::{
-            create_test_cube, create_test_sphere, create_test_quad, 
+            create_test_cube, create_test_quad, 
             create_test_line, create_test_point
         };
         
         let (cube_vertices, cube_indices) = create_test_cube();
         let cube_mesh = Mesh::new(&device, &cube_vertices, &cube_indices);
         
-        let (sphere_vertices, sphere_indices) = create_test_sphere(1.0, 16, 32); // Radius 1.0, 16 stacks, 32 slices
-        let sphere_mesh = Mesh::new(&device, &sphere_vertices, &sphere_indices);
+        // Keep the Arc reference to the sphere model
         
         let (quad_vertices, quad_indices) = create_test_quad();
         let quad_mesh = Mesh::new(&device, &quad_vertices, &quad_indices);
@@ -583,7 +585,7 @@ impl MainRenderer {
             planet_texture_bind_group,
             billboard_uniform_bind_group,
             cube_mesh,
-            sphere_mesh,
+            sphere_model,
             quad_mesh,
             line_mesh,
             point_mesh,
@@ -608,8 +610,8 @@ impl MainRenderer {
     }
 
     /// Update camera with movement and GPU uniforms
-    pub fn update_camera(&mut self) {
-        self.camera.update_movement(0.016); // Assume ~60fps for now
+    pub fn update_camera(&mut self, delta_time: f32) {
+        self.camera.update_movement(delta_time);
         self.camera.update(&self.queue);
     }
 
@@ -619,7 +621,7 @@ impl MainRenderer {
         let mvp_matrix = calculate_mvp_matrix_64bit(
             self.camera.position(),
             self.camera.direction(),
-            Vec3::Y, // Up vector
+            self.camera.up(), // Use camera's actual up vector
             object_position,
             object_scale,
             self.camera.projection_matrix(),
@@ -653,7 +655,7 @@ impl MainRenderer {
         let (mvp_matrix, camera_to_object_transform, light_direction_camera_space) = calculate_mvp_matrix_64bit_with_atmosphere(
             self.camera.position(),
             self.camera.direction(),
-            Vec3::Y, // Up vector
+            self.camera.up(), // Use camera's actual up vector
             planet_position,
             planet_scale,
             self.camera.projection_matrix(),
@@ -683,7 +685,7 @@ impl MainRenderer {
         let mvp_matrix = calculate_mvp_matrix_64bit(
             self.camera.position(),
             self.camera.direction(),
-            Vec3::Y, // Up vector
+            self.camera.up(), // Use camera's actual up vector
             DVec3::ZERO, // Skybox doesn't need translation
             DVec3::ONE,  // Default scale
             self.camera.projection_matrix(),
@@ -857,11 +859,21 @@ impl MainRenderer {
                 render_pass.set_bind_group(1, &self.default_lighting_bind_group, &[]);
                 render_pass.set_bind_group(2, &self.default_texture_bind_group, &[]);
 
-                let mesh = self.get_mesh(mesh_type);
-                render_pass.set_vertex_buffer(0, mesh.vertex_buffer.slice(..));
-                render_pass
-                    .set_index_buffer(mesh.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
-                render_pass.draw_indexed(0..mesh.num_indices, 0, 0..1);
+                // Special handling for sphere to use OBJ model
+                if matches!(mesh_type, MeshType::Sphere) {
+                    render_pass.set_vertex_buffer(0, self.sphere_model.vertex_buffer.slice(..));
+                    render_pass.set_index_buffer(
+                        self.sphere_model.index_buffer.slice(..),
+                        wgpu::IndexFormat::Uint32,
+                    );
+                    render_pass.draw_indexed(0..self.sphere_model.num_indices, 0, 0..1);
+                } else {
+                    let mesh = self.get_mesh(mesh_type);
+                    render_pass.set_vertex_buffer(0, mesh.vertex_buffer.slice(..));
+                    render_pass
+                        .set_index_buffer(mesh.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
+                    render_pass.draw_indexed(0..mesh.num_indices, 0, 0..1);
+                }
             }
 
             RenderCommand::AtmosphericPlanet { .. } => {
@@ -870,12 +882,12 @@ impl MainRenderer {
                 render_pass.set_bind_group(0, &self.mvp_bind_group, &[mvp_offset]); // Dynamic offset
                 render_pass.set_bind_group(1, &self.planet_lighting_bind_group, &[]);
                 render_pass.set_bind_group(2, &self.planet_texture_bind_group, &[]);
-                render_pass.set_vertex_buffer(0, self.sphere_mesh.vertex_buffer.slice(..));
+                render_pass.set_vertex_buffer(0, self.sphere_model.vertex_buffer.slice(..));
                 render_pass.set_index_buffer(
-                    self.sphere_mesh.index_buffer.slice(..),
+                    self.sphere_model.index_buffer.slice(..),
                     wgpu::IndexFormat::Uint32,
                 );
-                render_pass.draw_indexed(0..self.sphere_mesh.num_indices, 0, 0..1);
+                render_pass.draw_indexed(0..self.sphere_model.num_indices, 0, 0..1);
             }
 
             RenderCommand::Sun {
@@ -894,12 +906,12 @@ impl MainRenderer {
                 render_pass.set_bind_group(0, &self.mvp_bind_group, &[mvp_offset]); // Dynamic offset
                 render_pass.set_bind_group(1, &self.sun_shader.bind_group, &[]);
                 render_pass.set_bind_group(2, &self.sun_texture_bind_group, &[]);
-                render_pass.set_vertex_buffer(0, self.sphere_mesh.vertex_buffer.slice(..));
+                render_pass.set_vertex_buffer(0, self.sphere_model.vertex_buffer.slice(..));
                 render_pass.set_index_buffer(
-                    self.sphere_mesh.index_buffer.slice(..),
+                    self.sphere_model.index_buffer.slice(..),
                     wgpu::IndexFormat::Uint32,
                 );
-                render_pass.draw_indexed(0..self.sphere_mesh.num_indices, 0, 0..1);
+                render_pass.draw_indexed(0..self.sphere_model.num_indices, 0, 0..1);
             }
 
             RenderCommand::Skybox => {
@@ -944,12 +956,12 @@ impl MainRenderer {
                 render_pass.set_bind_group(0, &self.mvp_bind_group, &[mvp_offset]); // Dynamic offset
                 render_pass.set_bind_group(1, &self.black_hole_uniform_bind_group, &[]);
                 render_pass.set_bind_group(2, &self.black_hole_texture_bind_group, &[]);
-                render_pass.set_vertex_buffer(0, self.sphere_mesh.vertex_buffer.slice(..));
+                render_pass.set_vertex_buffer(0, self.sphere_model.vertex_buffer.slice(..));
                 render_pass.set_index_buffer(
-                    self.sphere_mesh.index_buffer.slice(..),
+                    self.sphere_model.index_buffer.slice(..),
                     wgpu::IndexFormat::Uint32,
                 );
-                render_pass.draw_indexed(0..self.sphere_mesh.num_indices, 0, 0..1);
+                render_pass.draw_indexed(0..self.sphere_model.num_indices, 0, 0..1);
             }
 
             RenderCommand::Line { color: _ } => {
@@ -995,7 +1007,7 @@ impl MainRenderer {
     fn get_mesh(&self, mesh_type: &MeshType) -> &Mesh {
         match mesh_type {
             MeshType::Cube => &self.cube_mesh,
-            MeshType::Sphere => &self.sphere_mesh,
+            MeshType::Sphere => panic!("Sphere mesh should use sphere_model directly"),
             MeshType::Quad => &self.quad_mesh,
             MeshType::Line => &self.line_mesh,
             MeshType::Point => &self.point_mesh,

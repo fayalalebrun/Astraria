@@ -107,7 +107,7 @@ impl ScenarioParser {
         let name = Self::extract_value(lines[*i])?;
         *i += 1;
 
-        let radius = Self::extract_value(lines[*i])?.parse::<f32>()?;
+        let radius = Self::extract_value(lines[*i])?.parse::<f32>()? * 1000.0; // Convert km to meters
         *i += 1;
 
         let mass = Self::extract_value(lines[*i])?.parse::<f64>()?;
@@ -148,7 +148,7 @@ impl ScenarioParser {
         let name = Self::extract_value(lines[*i])?;
         *i += 1;
 
-        let radius = Self::extract_value(lines[*i])?.parse::<f32>()?;
+        let radius = Self::extract_value(lines[*i])?.parse::<f32>()? * 1000.0; // Convert km to meters
         *i += 1;
 
         let mass = Self::extract_value(lines[*i])?.parse::<f64>()?;
@@ -193,7 +193,7 @@ impl ScenarioParser {
         let name = Self::extract_value(lines[*i])?;
         *i += 1;
 
-        let radius = Self::extract_value(lines[*i])?.parse::<f32>()?;
+        let radius = Self::extract_value(lines[*i])?.parse::<f32>()? * 1000.0; // Convert km to meters
         *i += 1;
 
         let mass = Self::extract_value(lines[*i])?.parse::<f64>()?;
@@ -246,7 +246,7 @@ impl ScenarioParser {
         let name = Self::extract_value(lines[*i])?;
         *i += 1;
 
-        let radius = Self::extract_value(lines[*i])?.parse::<f32>()?;
+        let radius = Self::extract_value(lines[*i])?.parse::<f32>()? * 1000.0; // Convert km to meters
         *i += 1;
 
         let mass = Self::extract_value(lines[*i])?.parse::<f64>()?;

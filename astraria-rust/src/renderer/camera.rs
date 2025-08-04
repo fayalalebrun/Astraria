@@ -155,6 +155,8 @@ impl Camera {
         let roll_rad = self.roll.to_radians();
 
         // Calculate front vector
+        // In our coordinate system: +X right, +Y up, +Z forward
+        // Yaw rotates around Y axis, pitch rotates around X axis
         self.front = Vec3::new(
             yaw_rad.cos() * pitch_rad.cos(),
             pitch_rad.sin(),
@@ -162,14 +164,19 @@ impl Camera {
         )
         .normalize();
 
-        // Calculate right and up vectors with roll support
-        let basic_right = self.front.cross(self.world_up).normalize();
-        let basic_up = basic_right.cross(self.front).normalize();
-
-        // Apply roll rotation
-        let roll_quat = Quat::from_axis_angle(self.front, roll_rad);
-        self.right = roll_quat * basic_right;
-        self.up = roll_quat * basic_up;
+        // Calculate right and up vectors
+        // Right vector is perpendicular to front and world up
+        self.right = self.front.cross(self.world_up).normalize();
+        
+        // Up vector is perpendicular to right and front
+        self.up = self.right.cross(self.front).normalize();
+        
+        // Apply roll rotation to up and right vectors
+        if roll_rad.abs() > 0.001 {
+            let roll_quat = Quat::from_axis_angle(self.front, roll_rad);
+            self.right = roll_quat * self.right;
+            self.up = roll_quat * self.up;
+        }
 
         self.dirty = true;
     }
@@ -277,7 +284,8 @@ impl Camera {
     /// Update camera position based on current movement state
     pub fn update_movement(&mut self, delta_time: f32) {
         let velocity = self.movement_speed * delta_time;
-        let mut needs_vector_update = false;
+        let mut position_changed = false;
+        let mut rotation_changed = false;
 
         // Collect movements to avoid borrowing issues
         let movements: Vec<(CameraMovement, bool)> = self
@@ -291,40 +299,49 @@ impl Camera {
                 match *movement {
                     CameraMovement::Forward => {
                         self.position += self.front.as_dvec3() * velocity as f64;
+                        position_changed = true;
                     }
                     CameraMovement::Backward => {
                         self.position -= self.front.as_dvec3() * velocity as f64;
+                        position_changed = true;
                     }
                     CameraMovement::Left => {
                         self.position -= self.right.as_dvec3() * velocity as f64;
+                        position_changed = true;
                     }
                     CameraMovement::Right => {
                         self.position += self.right.as_dvec3() * velocity as f64;
+                        position_changed = true;
                     }
                     CameraMovement::Up => {
                         self.position += self.up.as_dvec3() * velocity as f64;
+                        position_changed = true;
                     }
                     CameraMovement::Down => {
                         self.position -= self.up.as_dvec3() * velocity as f64;
+                        position_changed = true;
                     }
                     CameraMovement::RollLeft => {
                         self.roll -= 90.0 * delta_time; // 90 degrees per second
-                        needs_vector_update = true;
+                        rotation_changed = true;
+                        log::debug!("Roll left: new roll={:.1}°", self.roll);
                     }
                     CameraMovement::RollRight => {
                         self.roll += 90.0 * delta_time; // 90 degrees per second
-                        needs_vector_update = true;
+                        rotation_changed = true;
+                        log::debug!("Roll right: new roll={:.1}°", self.roll);
                     }
                 }
             }
         }
 
-        if needs_vector_update {
+        // Update vectors immediately if rotation changed
+        if rotation_changed {
             self.update_vectors();
         }
 
-        // Always mark as dirty if any movement keys were processed
-        if !movements.is_empty() {
+        // Mark as dirty if anything changed
+        if position_changed || rotation_changed {
             self.dirty = true;
         }
     }
@@ -413,9 +430,19 @@ impl Camera {
         );
     }
 
-    /// Get camera direction
+    /// Get camera direction (front vector)
     pub fn direction(&self) -> Vec3 {
         self.front
+    }
+
+    /// Get camera up vector
+    pub fn up(&self) -> Vec3 {
+        self.up
+    }
+
+    /// Get camera right vector
+    pub fn right(&self) -> Vec3 {
+        self.right
     }
 
     /// Get camera bind group for shaders
@@ -437,6 +464,84 @@ impl Camera {
     /// Get reference to uniform buffer
     pub fn uniform_buffer(&self) -> Option<&wgpu::Buffer> {
         self.uniform_buffer.as_ref()
+    }
+
+    pub fn set_position(&mut self, position: DVec3) {
+        self.position = position;
+        self.update_vectors();
+    }
+
+    pub fn look_at(&mut self, target: DVec3) {
+        // Calculate direction from camera to target
+        let direction = target - self.position;
+        
+        // Check if target is at the same position as camera
+        if direction.length_squared() < 1e-10 {
+            log::warn!("Camera look_at: target is at the same position as camera, ignoring");
+            return;
+        }
+        
+        let direction = direction.normalize();
+        
+        // Set front directly to this direction
+        self.front = direction.as_vec3().normalize();
+        
+        // Calculate right vector
+        // Check if we're looking nearly parallel to world up
+        let dot_with_up = self.front.dot(self.world_up).abs();
+        
+        if dot_with_up > 0.9999 {
+            // Looking almost straight up or down
+            // Use the previous right vector or a default one
+            if self.right.length_squared() > 0.1 {
+                // Keep existing right vector, just ensure it's perpendicular
+                let temp_right = if dot_with_up > 0.0 {
+                    // Looking up, use a vector perpendicular to up
+                    Vec3::X
+                } else {
+                    // Looking down, use opposite
+                    Vec3::NEG_X
+                };
+                self.right = temp_right - self.front * temp_right.dot(self.front);
+                self.right = self.right.normalize();
+            } else {
+                // No valid previous right vector, create one
+                self.right = if self.front.y > 0.0 {
+                    Vec3::X
+                } else {
+                    Vec3::NEG_X
+                };
+            }
+        } else {
+            // Normal case: calculate right as cross product
+            self.right = self.front.cross(self.world_up).normalize();
+        }
+        
+        // Calculate up vector as perpendicular to right and front
+        self.up = self.right.cross(self.front).normalize();
+        
+        // Calculate yaw and pitch from the front vector for consistency
+        // Yaw: angle in the XZ plane (rotation around Y axis)
+        // atan2 handles all quadrants correctly
+        self.yaw = self.front.z.atan2(self.front.x).to_degrees();
+        
+        // Pitch: angle from the horizontal plane
+        // Clamp to avoid numerical issues at extremes
+        let clamped_y = self.front.y.clamp(-0.9999, 0.9999);
+        self.pitch = clamped_y.asin().to_degrees();
+        
+        // Reset roll when looking at a target
+        self.roll = 0.0;
+        
+        // Mark as dirty to force matrix updates
+        self.dirty = true;
+        
+        log::debug!(
+            "Camera look_at: position=({:.2e}, {:.2e}, {:.2e}), target=({:.2e}, {:.2e}, {:.2e}), yaw={:.1}°, pitch={:.1}°",
+            self.position.x, self.position.y, self.position.z,
+            target.x, target.y, target.z,
+            self.yaw, self.pitch
+        );
     }
 }
 

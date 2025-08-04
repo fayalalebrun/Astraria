@@ -10,7 +10,7 @@ use winit::{
 
 use crate::{
     assets::AssetManager, input::InputHandler, physics::PhysicsSimulation, renderer::Renderer,
-    ui::UserInterface, AstrariaResult,
+    ui::UserInterface, AstrariaResult, scenario::BodyType,
 };
 
 pub struct AstrariaApp {
@@ -21,6 +21,7 @@ pub struct AstrariaApp {
     asset_manager: Option<AssetManager>,
     last_frame_time: std::time::Instant,
     scenario_file: String,
+    focus_body_index: usize,
 }
 
 impl AstrariaApp {
@@ -29,6 +30,10 @@ impl AstrariaApp {
     }
 
     pub fn new_with_scenario(scenario_file: String) -> Result<Self> {
+        Self::new_with_scenario_and_focus(scenario_file, 0)
+    }
+
+    pub fn new_with_scenario_and_focus(scenario_file: String, focus_body_index: usize) -> Result<Self> {
         Ok(Self {
             renderer: None,
             physics: None,
@@ -37,6 +42,7 @@ impl AstrariaApp {
             asset_manager: None,
             last_frame_time: std::time::Instant::now(),
             scenario_file,
+            focus_body_index,
         })
     }
 
@@ -115,6 +121,9 @@ impl AstrariaApp {
 
         // Load default scenario if available
         self.load_default_scenario().await?;
+        
+        // Position camera to focus on the specified body
+        self.position_camera_on_focus_body().await?;
 
         log::info!("Astraria initialization complete!");
         Ok(())
@@ -138,6 +147,46 @@ impl AstrariaApp {
         Ok(())
     }
 
+    async fn position_camera_on_focus_body(&mut self) -> AstrariaResult<()> {
+        if let (Some(physics), Some(renderer)) = (&self.physics, &mut self.renderer) {
+            let bodies = physics.get_bodies()?;
+            if let Some(focus_body) = bodies.get(self.focus_body_index) {
+                log::info!("Positioning camera to focus on body '{}' at index {}", focus_body.name, self.focus_body_index);
+                
+                // Calculate camera distance based on body radius
+                let radius = match &focus_body.body_type {
+                    BodyType::Planet { radius, .. } => *radius,
+                    BodyType::Star { radius, .. } => *radius,
+                    BodyType::PlanetAtmo { radius, .. } => *radius,
+                    BodyType::BlackHole { radius } => *radius,
+                };
+                
+                // Position camera at 3x radius distance for good view
+                let camera_distance = (radius * 3.0) as f64;
+                let body_position = focus_body.position;
+                
+                // Place camera slightly above and back from the body
+                let camera_position = glam::DVec3::new(
+                    body_position.x,
+                    body_position.y + camera_distance * 0.5,
+                    body_position.z + camera_distance
+                );
+                
+                // Set camera position and look at the body
+                renderer.set_camera_position(camera_position);
+                renderer.set_camera_look_at(body_position);
+                
+                log::info!("Camera positioned at ({:.2e}, {:.2e}, {:.2e}) looking at '{}' at ({:.2e}, {:.2e}, {:.2e})",
+                    camera_position.x, camera_position.y, camera_position.z,
+                    focus_body.name,
+                    body_position.x, body_position.y, body_position.z);
+            } else {
+                log::warn!("Focus body index {} is out of range, using default camera position", self.focus_body_index);
+            }
+        }
+        Ok(())
+    }
+
     fn update(&mut self, delta_time: f32) -> AstrariaResult<()> {
         // Update physics simulation
         if let Some(physics) = &mut self.physics {
@@ -148,9 +197,10 @@ impl AstrariaApp {
         if let Some(input_handler) = &mut self.input_handler {
             input_handler.update(delta_time);
 
-            // Handle camera input
+            // Handle camera input and update camera movement
             if let Some(renderer) = &mut self.renderer {
                 renderer.handle_camera_input(input_handler)?;
+                renderer.update_camera(delta_time);
             }
         }
 
