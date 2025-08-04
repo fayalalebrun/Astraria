@@ -52,7 +52,6 @@
       pkgs.xorg.libXxf86vm
       pkgs.xorg.libXinerama
       pkgs.mesa
-      pkgs.mesa.drivers
     ];
   };
 

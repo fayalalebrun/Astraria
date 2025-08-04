@@ -9,7 +9,7 @@ use crate::AstrariaResult;
 pub struct InputHandler {
     mouse_pressed: bool,
     last_mouse_pos: (f32, f32),
-    mouse_sensitivity: f32,
+    _mouse_sensitivity: f32,
     keys_pressed: HashMap<VirtualKeyCode, bool>,
     mouse_delta: Option<(f32, f32)>,
     scroll_delta: Option<f32>,
@@ -20,7 +20,7 @@ impl InputHandler {
         Self {
             mouse_pressed: false,
             last_mouse_pos: (0.0, 0.0),
-            mouse_sensitivity: 0.1,
+            _mouse_sensitivity: 0.1,
             keys_pressed: HashMap::new(),
             mouse_delta: None,
             scroll_delta: None,
@@ -111,7 +111,7 @@ impl InputHandler {
         match button {
             MouseButton::Right => {
                 let pressed = state == ElementState::Pressed;
-                log::info!(
+                log::debug!(
                     "Right mouse button: {} (was: {})",
                     if pressed { "PRESSED" } else { "RELEASED" },
                     self.mouse_pressed
@@ -135,7 +135,7 @@ impl InputHandler {
         if self.mouse_pressed && (delta_x.abs() > 0.1 || delta_y.abs() > 0.1) {
             // Pass raw pixel deltas to camera (Java behavior - no scaling here)
             let mouse_delta = (delta_x, -delta_y);
-            log::info!(
+            log::debug!(
                 "Mouse movement: delta=({:.2}, {:.2}) -> camera_delta=({:.2}, {:.2})",
                 delta_x,
                 delta_y,

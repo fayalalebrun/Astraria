@@ -14,7 +14,7 @@ use std::fs;
 const SIZE: u32 = 800;
 
 async fn save_render(
-    renderer: &MainRenderer,
+    renderer: &mut MainRenderer,
     texture: &wgpu::Texture,
     buffer: &wgpu::Buffer,
     depth_texture: &wgpu::Texture,
@@ -59,7 +59,10 @@ async fn save_render(
                     light_position: Vec3::new(2.0, 2.0, 2.0),
                     light_color: Vec3::new(1.0, 1.0, 1.0),
                 };
-                renderer.render(&mut rp, &command, Mat4::IDENTITY);
+                renderer.begin_frame();
+                renderer.prepare_render_command(command, Mat4::from_translation(Vec3::new(0.0, 0.0, -2.0)) * Mat4::from_scale(Vec3::splat(1.5)));
+                renderer.upload_frame_mvp_data();
+                renderer.execute_prepared_commands(&mut rp);
             }
             1 => {
                 let command = RenderCommand::Default {
@@ -67,7 +70,10 @@ async fn save_render(
                     light_position: Vec3::new(2.0, 2.0, 2.0),
                     light_color: Vec3::new(1.0, 1.0, 1.0),
                 };
-                renderer.render(&mut rp, &command, Mat4::IDENTITY);
+                renderer.begin_frame();
+                renderer.prepare_render_command(command, Mat4::from_translation(Vec3::new(0.0, 0.0, -2.0)) * Mat4::from_scale(Vec3::splat(1.5)));
+                renderer.upload_frame_mvp_data();
+                renderer.execute_prepared_commands(&mut rp);
             }
             2 => {
                 let command = RenderCommand::AtmosphericPlanet {
@@ -77,7 +83,10 @@ async fn save_render(
                     overglow: 0.1,
                     use_ambient_texture: true,
                 };
-                renderer.render(&mut rp, &command, Mat4::from_scale(Vec3::splat(2.0)));
+                renderer.begin_frame();
+                renderer.prepare_render_command(command, Mat4::from_translation(Vec3::new(0.0, 0.0, -2.5)) * Mat4::from_scale(Vec3::splat(1.8)));
+                renderer.upload_frame_mvp_data();
+                renderer.execute_prepared_commands(&mut rp);
             }
             3 => {
                 let command = RenderCommand::Sun {
@@ -85,134 +94,130 @@ async fn save_render(
                     star_position: Vec3::new(0.0, 0.0, 0.0),
                     camera_position: Vec3::new(0.0, 0.0, 3.0),
                 };
-                renderer.render(&mut rp, &command, Mat4::from_scale(Vec3::splat(2.0)));
+                renderer.begin_frame();
+                renderer.prepare_render_command(command, Mat4::from_translation(Vec3::new(0.0, 0.0, -2.5)) * Mat4::from_scale(Vec3::splat(1.8)));
+                renderer.upload_frame_mvp_data();
+                renderer.execute_prepared_commands(&mut rp);
             }
             4 => {
                 let command = RenderCommand::Skybox;
-                renderer.render(&mut rp, &command, Mat4::IDENTITY);
+                renderer.begin_frame();
+                renderer.prepare_render_command(command, Mat4::IDENTITY);
+                renderer.upload_frame_mvp_data();
+                renderer.execute_prepared_commands(&mut rp);
             }
             5 => {
                 let command = RenderCommand::Billboard;
-                renderer.render(&mut rp, &command, Mat4::IDENTITY);
+                renderer.begin_frame();
+                renderer.prepare_render_command(command, Mat4::IDENTITY);
+                renderer.upload_frame_mvp_data();
+                renderer.execute_prepared_commands(&mut rp);
             }
             6 => {
                 let command = RenderCommand::LensGlow;
-                renderer.render(&mut rp, &command, Mat4::IDENTITY);
+                renderer.begin_frame();
+                renderer.prepare_render_command(command, Mat4::IDENTITY);
+                renderer.upload_frame_mvp_data();
+                renderer.execute_prepared_commands(&mut rp);
             }
             7 => {
                 let command = RenderCommand::BlackHole;
-                renderer.render(&mut rp, &command, Mat4::IDENTITY);
+                renderer.begin_frame();
+                renderer.prepare_render_command(command, Mat4::IDENTITY);
+                renderer.upload_frame_mvp_data();
+                renderer.execute_prepared_commands(&mut rp);
             }
             8 => {
                 let command = RenderCommand::Line {
                     color: Vec4::new(0.0, 1.0, 0.0, 1.0), // Green lines
                 };
-                renderer.render(&mut rp, &command, Mat4::IDENTITY);
+                renderer.begin_frame();
+                renderer.prepare_render_command(command, Mat4::from_translation(Vec3::new(0.0, 0.0, -2.0)) * Mat4::from_scale(Vec3::splat(5.0)));
+                renderer.upload_frame_mvp_data();
+                renderer.execute_prepared_commands(&mut rp);
             }
             9 => {
                 let command = RenderCommand::Point;
-                renderer.render(&mut rp, &command, Mat4::IDENTITY);
+                renderer.begin_frame();
+                renderer.prepare_render_command(command, Mat4::from_translation(Vec3::new(0.0, 0.0, -2.0)) * Mat4::from_scale(Vec3::splat(5.0)));
+                renderer.upload_frame_mvp_data();
+                renderer.execute_prepared_commands(&mut rp);
             }
             10 => {
-                // Near objects test (0.5, 1.0, 2.0 units from camera)
+                // Near objects test (0.5, 1.0, 2.0 units from camera) - prepare all commands first
+                renderer.begin_frame();
+                
                 let command = RenderCommand::Default {
                     mesh_type: MeshType::Sphere,
                     light_position: Vec3::new(2.0, 2.0, 2.0),
                     light_color: Vec3::new(1.0, 1.0, 1.0),
                 };
-                // Render three spheres at different near distances
-                renderer.render(
-                    &mut rp,
-                    &command,
-                    Mat4::from_translation(Vec3::new(-2.0, 0.0, -0.5)),
-                );
-                renderer.render(
-                    &mut rp,
-                    &command,
-                    Mat4::from_translation(Vec3::new(0.0, 0.0, -1.0)),
-                );
-                renderer.render(
-                    &mut rp,
-                    &command,
-                    Mat4::from_translation(Vec3::new(2.0, 0.0, -2.0)),
-                );
+                
+                // Prepare all three spheres
+                renderer.prepare_render_command(command.clone(), Mat4::from_translation(Vec3::new(-2.0, 0.0, -0.5)));
+                renderer.prepare_render_command(command.clone(), Mat4::from_translation(Vec3::new(0.0, 0.0, -1.0)));
+                renderer.prepare_render_command(command.clone(), Mat4::from_translation(Vec3::new(2.0, 0.0, -2.0)));
+                
+                // Upload once and execute all
+                renderer.upload_frame_mvp_data();
+                renderer.execute_prepared_commands(&mut rp);
             }
             11 => {
                 // Medium distance test (10, 50, 100 units)
+                renderer.begin_frame();
+                
                 let command = RenderCommand::Default {
                     mesh_type: MeshType::Cube,
                     light_position: Vec3::new(2.0, 2.0, 2.0),
                     light_color: Vec3::new(1.0, 1.0, 1.0),
                 };
-                renderer.render(
-                    &mut rp,
-                    &command,
-                    Mat4::from_translation(Vec3::new(-20.0, 0.0, -10.0)),
-                );
-                renderer.render(
-                    &mut rp,
-                    &command,
-                    Mat4::from_translation(Vec3::new(0.0, 0.0, -50.0)),
-                );
-                renderer.render(
-                    &mut rp,
-                    &command,
-                    Mat4::from_translation(Vec3::new(20.0, 0.0, -100.0)),
-                );
+                
+                // Prepare all three cubes
+                renderer.prepare_render_command(command.clone(), Mat4::from_translation(Vec3::new(-20.0, 0.0, -10.0)));
+                renderer.prepare_render_command(command.clone(), Mat4::from_translation(Vec3::new(0.0, 0.0, -50.0)));
+                renderer.prepare_render_command(command.clone(), Mat4::from_translation(Vec3::new(20.0, 0.0, -100.0)));
+                
+                // Upload once and execute all
+                renderer.upload_frame_mvp_data();
+                renderer.execute_prepared_commands(&mut rp);
             }
             12 => {
                 // Far distance test - keep objects reasonable but scale them up
+                renderer.begin_frame();
+                
                 let command = RenderCommand::Default {
                     mesh_type: MeshType::Sphere,
                     light_position: Vec3::new(200.0, 200.0, 200.0),
                     light_color: Vec3::new(1.0, 1.0, 1.0),
                 };
-                // Render three different sized spheres at far distances
-                renderer.render(
-                    &mut rp,
-                    &command,
-                    Mat4::from_translation(Vec3::new(-200.0, 0.0, -100.0))
-                        * Mat4::from_scale(Vec3::splat(20.0)),
-                );
-                renderer.render(
-                    &mut rp,
-                    &command,
-                    Mat4::from_translation(Vec3::new(0.0, 0.0, -500.0))
-                        * Mat4::from_scale(Vec3::splat(80.0)),
-                );
-                renderer.render(
-                    &mut rp,
-                    &command,
-                    Mat4::from_translation(Vec3::new(200.0, 0.0, -1000.0))
-                        * Mat4::from_scale(Vec3::splat(200.0)),
-                );
+                
+                // Prepare three different sized spheres at far distances
+                renderer.prepare_render_command(command.clone(), Mat4::from_translation(Vec3::new(-200.0, 0.0, -100.0)) * Mat4::from_scale(Vec3::splat(20.0)));
+                renderer.prepare_render_command(command.clone(), Mat4::from_translation(Vec3::new(0.0, 0.0, -500.0)) * Mat4::from_scale(Vec3::splat(80.0)));
+                renderer.prepare_render_command(command.clone(), Mat4::from_translation(Vec3::new(200.0, 0.0, -1000.0)) * Mat4::from_scale(Vec3::splat(200.0)));
+                
+                // Upload once and execute all
+                renderer.upload_frame_mvp_data();
+                renderer.execute_prepared_commands(&mut rp);
             }
             13 => {
                 // Large scale test - test the logarithmic depth precision
+                renderer.begin_frame();
+                
                 let command = RenderCommand::Default {
                     mesh_type: MeshType::Cube,
                     light_position: Vec3::new(5000.0, 5000.0, 5000.0),
                     light_color: Vec3::new(1.0, 1.0, 1.0),
                 };
-                // Large objects at progressively farther distances
-                renderer.render(
-                    &mut rp,
-                    &command,
-                    Mat4::from_translation(Vec3::new(-10000.0, 0.0, -10000.0))
-                        * Mat4::from_scale(Vec3::splat(2000.0)),
-                );
-                renderer.render(
-                    &mut rp,
-                    &command,
-                    Mat4::from_translation(Vec3::new(0.0, 0.0, -100000.0))
-                        * Mat4::from_scale(Vec3::splat(20000.0)),
-                );
-                renderer.render(
-                    &mut rp,
-                    &command,
-                    Mat4::from_translation(Vec3::new(10000.0, 0.0, -500000.0))
-                        * Mat4::from_scale(Vec3::splat(100000.0)),
-                );
+                
+                // Prepare large objects at progressively farther distances
+                renderer.prepare_render_command(command.clone(), Mat4::from_translation(Vec3::new(-10000.0, 0.0, -10000.0)) * Mat4::from_scale(Vec3::splat(2000.0)));
+                renderer.prepare_render_command(command.clone(), Mat4::from_translation(Vec3::new(0.0, 0.0, -100000.0)) * Mat4::from_scale(Vec3::splat(20000.0)));
+                renderer.prepare_render_command(command.clone(), Mat4::from_translation(Vec3::new(10000.0, 0.0, -500000.0)) * Mat4::from_scale(Vec3::splat(100000.0)));
+                
+                // Upload once and execute all
+                renderer.upload_frame_mvp_data();
+                renderer.execute_prepared_commands(&mut rp);
             }
             _ => {}
         }
@@ -239,7 +244,13 @@ async fn save_render(
     };
     buffer.unmap();
 
-    let img: ImageBuffer<Rgba<u8>, _> = ImageBuffer::from_raw(SIZE, SIZE, final_data)
+    // Convert BGRA to RGBA for proper image saving
+    let mut rgba_data = final_data;
+    for pixel in rgba_data.chunks_exact_mut(4) {
+        pixel.swap(0, 2); // Swap B and R channels: BGRA -> RGBA
+    }
+
+    let img: ImageBuffer<Rgba<u8>, _> = ImageBuffer::from_raw(SIZE, SIZE, rgba_data)
         .ok_or_else(|| AstrariaError::Graphics("Failed to create image".to_string()))?;
 
     img.save(filename)
@@ -258,7 +269,7 @@ async fn run() -> AstrariaResult<()> {
         AstrariaError::Graphics(format!("Failed to create output directory: {}", e))
     })?;
 
-    let renderer = MainRenderer::new().await?;
+    let mut renderer = MainRenderer::new().await?;
 
     let texture = renderer.device().create_texture(&wgpu::TextureDescriptor {
         label: Some("Test Texture"),
@@ -270,7 +281,7 @@ async fn run() -> AstrariaResult<()> {
         mip_level_count: 1,
         sample_count: 1,
         dimension: wgpu::TextureDimension::D2,
-        format: wgpu::TextureFormat::Rgba8UnormSrgb,
+        format: wgpu::TextureFormat::Bgra8UnormSrgb,
         usage: wgpu::TextureUsages::COPY_SRC | wgpu::TextureUsages::RENDER_ATTACHMENT,
         view_formats: &[],
     });
@@ -327,7 +338,7 @@ async fn run() -> AstrariaResult<()> {
         let filepath = format!("{}/{}", output_dir, filename);
 
         match save_render(
-            &renderer,
+            &mut renderer,
             &texture,
             &buffer,
             &depth_texture,

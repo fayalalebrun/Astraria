@@ -1,6 +1,9 @@
-use crate::{graphics::Vertex, AstrariaResult};
+use crate::{
+    graphics::Vertex, renderer::uniforms::buffer_helpers::create_mvp_bind_group_layout_dynamic,
+    AstrariaResult,
+};
 /// Skybox shader for cubemap background rendering
-/// Based on Java SkyboxShader class implementation
+/// Refactored to use standardized MVP matrix approach with 64-bit precision calculations
 use wgpu::{BindGroup, BindGroupLayout, Buffer, Device, RenderPass, RenderPipeline};
 
 pub struct SkyboxShader {
@@ -9,15 +12,16 @@ pub struct SkyboxShader {
 }
 
 impl SkyboxShader {
-    pub fn new(
-        device: &Device,
-        camera_bind_group_layout: &BindGroupLayout,
-    ) -> AstrariaResult<Self> {
+    pub fn new(device: &Device) -> AstrariaResult<Self> {
         // Load shader
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Skybox Shader"),
             source: wgpu::ShaderSource::Wgsl(include_str!("../../shaders/skybox.wgsl").into()),
         });
+
+        // Create standardized MVP bind group layout
+        let mvp_bind_group_layout =
+            create_mvp_bind_group_layout_dynamic(device, Some("Skybox MVP Bind Group Layout"));
 
         // Create texture bind group layout for cubemap
         let texture_bind_group_layout =
@@ -46,7 +50,7 @@ impl SkyboxShader {
         // Create render pipeline
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("Skybox Pipeline Layout"),
-            bind_group_layouts: &[camera_bind_group_layout, &texture_bind_group_layout],
+            bind_group_layouts: &[&mvp_bind_group_layout, &texture_bind_group_layout],
             push_constant_ranges: &[],
         });
 
@@ -66,7 +70,7 @@ impl SkyboxShader {
                 module: &shader,
                 entry_point: "fs_main",
                 targets: &[Some(wgpu::ColorTargetState {
-                    format: wgpu::TextureFormat::Rgba8UnormSrgb,
+                    format: wgpu::TextureFormat::Bgra8UnormSrgb,
                     blend: Some(wgpu::BlendState::REPLACE),
                     write_mask: wgpu::ColorWrites::ALL,
                 })],
@@ -82,11 +86,11 @@ impl SkyboxShader {
             },
             depth_stencil: Some(wgpu::DepthStencilState {
                 format: wgpu::TextureFormat::Depth32Float,
-                depth_write_enabled: true,
-                depth_compare: wgpu::CompareFunction::Less,
+                depth_write_enabled: true, // Write maximum depth
+                depth_compare: wgpu::CompareFunction::Always, // Always render skybox
                 stencil: wgpu::StencilState::default(),
                 bias: wgpu::DepthBiasState::default(),
-            }), // No depth buffer for skybox in test mode
+            }),
             multisample: wgpu::MultisampleState {
                 count: 1,
                 mask: !0,

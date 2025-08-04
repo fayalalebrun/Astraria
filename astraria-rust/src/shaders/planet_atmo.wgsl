@@ -1,10 +1,9 @@
-// Debug version of atmospheric shader - just shows a simple colored sphere
-// This tests if the rendering pipeline works at all
+// Atmospheric planet shader with Fresnel effects and scattering
+// Refactored to use standardized MVP matrix approach with 64-bit precision calculations
 
-struct CameraUniform {
-    view_matrix: mat4x4<f32>,
-    projection_matrix: mat4x4<f32>,
-    view_projection_matrix: mat4x4<f32>,
+// Standardized MVP uniform structure (shared across all shaders)
+struct StandardMVPUniform {
+    mvp_matrix: mat4x4<f32>,
     camera_position: vec3<f32>,
     _padding1: f32,
     camera_direction: vec3<f32>,
@@ -13,13 +12,14 @@ struct CameraUniform {
     far_plane_distance: f32,
     near_plane_distance: f32,
     fc_constant: f32,
+    // Relative transforms for atmospheric effects (avoiding large coordinate precision issues)
+    camera_to_object_transform: mat4x4<f32>,  // Relative transform from camera to object
+    light_direction_camera_space: vec3<f32>,  // Light direction in camera space (normalized)
+    _padding3: f32,
 };
 
-struct TransformUniform {
-    model_matrix: mat4x4<f32>,
-    model_view_matrix: mat4x4<f32>,
-    normal_matrix: mat3x4<f32>,  // Stored as 3 vec4 for alignment but only use vec3 part
-};
+@group(0) @binding(0)
+var<uniform> mvp: StandardMVPUniform;
 
 struct PointLight {
     position: vec3<f32>,
@@ -67,24 +67,20 @@ struct VertexOutput {
     @location(7) light_direction: vec3<f32>,  // Light direction in camera space
 };
 
-@group(0) @binding(0)
-var<uniform> camera: CameraUniform;
+// Note: StandardMVPUniform is declared above at @group(0) @binding(0)
 
 @group(1) @binding(0)
-var<uniform> transform: TransformUniform;
-
-@group(2) @binding(0)
 var<uniform> lighting: LightingUniform;
-@group(2) @binding(1)
+@group(1) @binding(1)
 var<uniform> atmosphere: AtmosphereUniform;
 
-@group(3) @binding(0)
+@group(2) @binding(0)
 var ambient_texture: texture_2d<f32>;
-@group(3) @binding(1)
+@group(2) @binding(1)
 var diffuse_texture: texture_2d<f32>;
-@group(3) @binding(2)
+@group(2) @binding(2)
 var atmosphere_gradient_texture: texture_2d<f32>;
-@group(3) @binding(3)
+@group(2) @binding(3)
 var texture_sampler: sampler;
 
 // Constants matching the original Java implementation
@@ -144,31 +140,31 @@ fn model_to_clip_coordinates(
 fn vs_main(input: VertexInput) -> VertexOutput {
     var out: VertexOutput;
     
-    // Use logarithmic depth buffer for astronomical scale support
-    let world_position = transform.model_matrix * vec4<f32>(input.position, 1.0);
+    // Use pre-computed MVP matrix (calculated with 64-bit precision on CPU)
+    let vertex_position = vec4<f32>(input.position, 1.0);
     out.clip_position = model_to_clip_coordinates(
-        world_position,
-        camera.view_projection_matrix,
-        camera.log_depth_constant,
-        camera.far_plane_distance
+        vertex_position,
+        mvp.mvp_matrix,
+        mvp.log_depth_constant,
+        mvp.far_plane_distance
     );
     
-    // Extract the 3x3 part from the mat3x4 for normal transformation
-    let normal_matrix_3x3 = mat3x3<f32>(
-        transform.normal_matrix[0].xyz,
-        transform.normal_matrix[1].xyz,
-        transform.normal_matrix[2].xyz
-    );
-    
-    // Calculate all fields properly like the full shader
-    out.light_pos = (camera.view_matrix * vec4<f32>(atmosphere.star_position, 1.0)).xyz;
-    out.planet_pos = (camera.view_matrix * vec4<f32>(atmosphere.planet_position, 1.0)).xyz;
-    out.pixel_pos = (transform.model_view_matrix * vec4<f32>(input.position, 1.0)).xyz;
-    out.pixel_normal = normalize(normal_matrix_3x3 * input.normal);
+    // Use relative coordinates for atmospheric effects (avoids large coordinate precision issues)
+    // Transform vertex to camera-relative space using the precomputed transform
+    out.pixel_pos = (mvp.camera_to_object_transform * vertex_position).xyz;
+    out.pixel_normal = normalize(input.normal);
     out.tex_coords = input.tex_coord;
-    out.light_direction = normalize(out.light_pos - out.planet_pos);
     
-    // Calculate view direction
+    // Light direction is already in camera space and normalized
+    out.light_direction = mvp.light_direction_camera_space;
+    
+    // Planet center is at origin in camera-relative space (object space)
+    out.planet_pos = vec3<f32>(0.0, 0.0, 0.0);
+    
+    // Light position calculated from direction (approximate for atmospheric calculations)
+    out.light_pos = out.planet_pos + out.light_direction * 10.0; // Light "far away" in the direction
+    
+    // Calculate view direction in camera-relative space
     let view_dir = normalize(-out.pixel_pos);
     
     // Calculate light incidence angle (EXACTLY like original Java implementation)

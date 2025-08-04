@@ -20,6 +20,7 @@ pub struct BillboardUniform {
 
 pub struct BillboardShader {
     pub pipeline: RenderPipeline,
+    pub billboard_bind_group_layout: wgpu::BindGroupLayout,
 }
 
 impl BillboardShader {
@@ -31,11 +32,30 @@ impl BillboardShader {
 
         // Use shared bind group layouts from MainRenderer
         let camera_bind_group_layout =
-            crate::renderer::core::create_camera_bind_group_layout(device);
+            crate::renderer::uniforms::buffer_helpers::create_mvp_bind_group_layout_dynamic(
+                device,
+                Some("Billboard MVP Bind Group Layout"),
+            );
+
+        // Create billboard-specific bind group layout
+        let billboard_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: Some("Billboard Bind Group Layout"),
+                entries: &[wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::VERTEX,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                }],
+            });
 
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("Billboard Pipeline Layout"),
-            bind_group_layouts: &[&camera_bind_group_layout],
+            bind_group_layouts: &[&camera_bind_group_layout, &billboard_bind_group_layout],
             push_constant_ranges: &[],
         });
 
@@ -51,7 +71,7 @@ impl BillboardShader {
                 module: &shader,
                 entry_point: "fs_main",
                 targets: &[Some(wgpu::ColorTargetState {
-                    format: wgpu::TextureFormat::Rgba8UnormSrgb,
+                    format: wgpu::TextureFormat::Bgra8UnormSrgb,
                     blend: Some(wgpu::BlendState::ALPHA_BLENDING),
                     write_mask: wgpu::ColorWrites::ALL,
                 })],
@@ -80,6 +100,9 @@ impl BillboardShader {
             multiview: None,
         });
 
-        Ok(Self { pipeline })
+        Ok(Self {
+            pipeline,
+            billboard_bind_group_layout,
+        })
     }
 }

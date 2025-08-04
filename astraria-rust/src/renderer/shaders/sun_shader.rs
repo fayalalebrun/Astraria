@@ -1,4 +1,4 @@
-use crate::{graphics::Vertex, renderer::core::create_transform_bind_group_layout, AstrariaResult};
+use crate::{graphics::Vertex, AstrariaResult};
 use glam::Vec3;
 /// Sun shader for stellar temperature rendering (800K-30000K)
 /// Based on Java SunShader class implementation
@@ -35,9 +35,6 @@ impl SunShader {
             label: Some("Sun Shader"),
             source: wgpu::ShaderSource::Wgsl(include_str!("../../shaders/sun_shader.wgsl").into()),
         });
-
-        // Create transform bind group layout
-        let transform_bind_group_layout = create_transform_bind_group_layout(device);
 
         // Create sun-specific bind group layout
         let sun_bind_group_layout =
@@ -93,10 +90,9 @@ impl SunShader {
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("Sun Pipeline Layout"),
             bind_group_layouts: &[
-                camera_bind_group_layout,
-                &transform_bind_group_layout,
-                &sun_bind_group_layout,
-                &texture_bind_group_layout,
+                camera_bind_group_layout,   // group(0) - StandardMVPUniform
+                &sun_bind_group_layout,     // group(1) - SunUniform
+                &texture_bind_group_layout, // group(2) - textures and sampler
             ],
             push_constant_ranges: &[],
         });
@@ -117,7 +113,7 @@ impl SunShader {
                 module: &shader,
                 entry_point: "fs_main",
                 targets: &[Some(wgpu::ColorTargetState {
-                    format: wgpu::TextureFormat::Rgba8UnormSrgb,
+                    format: wgpu::TextureFormat::Bgra8UnormSrgb,
                     blend: Some(wgpu::BlendState::REPLACE),
                     write_mask: wgpu::ColorWrites::ALL,
                 })],
@@ -202,13 +198,13 @@ impl SunShader {
         vertex_buffer: &'a Buffer,
         index_buffer: &'a Buffer,
         index_count: u32,
-        transform_bind_group: &'a BindGroup,
+        mvp_bind_group: &'a BindGroup,
         texture_bind_group: &'a BindGroup,
     ) {
         render_pass.set_pipeline(&self.pipeline);
-        render_pass.set_bind_group(2, &self.bind_group, &[]);
-        render_pass.set_bind_group(1, transform_bind_group, &[]);
-        render_pass.set_bind_group(3, texture_bind_group, &[]);
+        render_pass.set_bind_group(0, mvp_bind_group, &[0]); // group(0) - StandardMVPUniform
+        render_pass.set_bind_group(1, &self.bind_group, &[]); // group(1) - SunUniform
+        render_pass.set_bind_group(2, texture_bind_group, &[]); // group(2) - textures and sampler
         render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
         render_pass.set_index_buffer(index_buffer.slice(..), wgpu::IndexFormat::Uint32);
         render_pass.draw_indexed(0..index_count, 0, 0..1);

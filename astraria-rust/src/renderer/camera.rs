@@ -1,8 +1,10 @@
 /// Camera system for 3D navigation and rendering
 /// Ported from the original Java Camera.java with enhanced functionality
-use glam::{DVec3, Mat4, Quat, Vec3};
+use glam::{DMat4, DVec3, Mat4, Quat, Vec3};
 use std::collections::HashMap;
 use wgpu::Queue;
+
+use crate::renderer::precision_math::{create_perspective_64bit, create_view_matrix_64bit};
 
 /// Camera movement directions
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -61,18 +63,17 @@ pub struct Camera {
     // Logarithmic depth buffer support
     log_depth_constant: f32,
 
-    // Matrices (cached)
-    view_matrix: Mat4,
-    projection_matrix: Mat4,
-    view_projection_matrix: Mat4,
+    // Matrices (cached) - 64-bit precision for all calculations
+    view_matrix: DMat4,
+    projection_matrix: DMat4,
     dirty: bool,
 }
 
 impl Camera {
     pub fn new(aspect_ratio: f32) -> Self {
         log::info!("Creating new Camera instance");
-        // Match the test setup initial position
-        let position = DVec3::new(0.0, 0.0, 3.0); // Match previous hardcoded test position
+        // Default position - will be set programmatically relative to physics bodies
+        let position = DVec3::new(0.0, 0.0, 0.0);
         let world_up = Vec3::Y;
         let yaw = -90.0;
         let pitch = 0.0;
@@ -92,17 +93,16 @@ impl Camera {
             scrolled_amount: 0.0,   // Initial scroll amount
             fov: 45.0,
             aspect_ratio,
-            near_plane: 0.1,
-            far_plane: 1e11, // 100 billion units for astronomical scale
+            near_plane: 1e3, // 1000 meters (1 km) - much closer for nearby objects
+            far_plane: 1e11, // MAXVIEWDISTANCE from Java version
             movement_keys: HashMap::new(),
             locked_object_position: None,
             lock_distance: 1e7, // 10 million units default lock distance
             uniform_buffer: None,
             bind_group: None,
             log_depth_constant: 1.0, // Logarithmic depth constant matching Java
-            view_matrix: Mat4::IDENTITY,
-            projection_matrix: Mat4::IDENTITY,
-            view_projection_matrix: Mat4::IDENTITY,
+            view_matrix: DMat4::IDENTITY,
+            projection_matrix: DMat4::IDENTITY,
             dirty: true,
         };
 
@@ -192,22 +192,17 @@ impl Camera {
             self.position = locked_pos + direction * self.lock_distance as f64;
         }
 
-        // Convert double precision position to single precision for rendering
-        let render_position = self.position.as_vec3();
+        // Calculate view matrix using 64-bit precision (eliminates NaN at astronomical distances)
+        let target = self.position + self.front.as_dvec3();
+        self.view_matrix = create_view_matrix_64bit(self.position, target, self.up.as_dvec3());
 
-        // Calculate view matrix
-        self.view_matrix = Mat4::look_at_rh(render_position, render_position + self.front, self.up);
-
-        // Calculate projection matrix with logarithmic depth support
-        self.projection_matrix = Mat4::perspective_rh(
-            self.fov.to_radians(),
-            self.aspect_ratio,
-            self.near_plane,
-            self.far_plane,
+        // Calculate projection matrix using 64-bit precision
+        self.projection_matrix = create_perspective_64bit(
+            self.fov.to_radians() as f64,
+            self.aspect_ratio as f64,
+            self.near_plane as f64,
+            self.far_plane as f64,
         );
-
-        // Calculate combined view-projection matrix
-        self.view_projection_matrix = self.projection_matrix * self.view_matrix;
 
         self.dirty = false;
     }
@@ -225,10 +220,15 @@ impl Camera {
             // Calculate fc_constant for logarithmic depth (matches Java: 1.0f/(float)Math.log(MAXVIEWDISTANCE*LOGDEPTHCONSTANT + 1))
             let fc_constant = 1.0 / (self.log_depth_constant * self.far_plane + 1.0).ln();
 
+            // Convert 64-bit matrices to f32 for GPU (safe after 64-bit calculations)
+            let view_matrix_f32 = self.view_matrix.as_mat4();
+            let projection_matrix_f32 = self.projection_matrix.as_mat4();
+            let view_projection_matrix_f32 = (self.projection_matrix * self.view_matrix).as_mat4();
+
             let uniforms = CameraUniform {
-                view_matrix: self.view_matrix.to_cols_array_2d(),
-                projection_matrix: self.projection_matrix.to_cols_array_2d(),
-                view_projection_matrix: self.view_projection_matrix.to_cols_array_2d(),
+                view_matrix: view_matrix_f32.to_cols_array_2d(),
+                projection_matrix: projection_matrix_f32.to_cols_array_2d(),
+                view_projection_matrix: view_projection_matrix_f32.to_cols_array_2d(),
                 camera_position: self.position.as_vec3().to_array(),
                 _padding1: 0.0,
                 camera_direction: self.front.to_array(),
@@ -253,20 +253,11 @@ impl Camera {
         let x_offset = x_offset * self.sensitivity;
         let y_offset = y_offset * self.sensitivity;
 
-        log::info!("Camera mouse movement: input=({:.2}, {:.2}) scaled=({:.2}, {:.2}) yaw={:.1}° pitch={:.1}°", 
-            x_offset / self.sensitivity, y_offset / self.sensitivity, x_offset, y_offset, self.yaw, self.pitch);
-
         self.yaw += x_offset;
         self.pitch += y_offset;
 
         // Constrain pitch to avoid camera flipping
         self.pitch = self.pitch.clamp(-89.0, 89.0);
-
-        log::info!(
-            "Camera after update: yaw={:.1}° pitch={:.1}°",
-            self.yaw,
-            self.pitch
-        );
 
         self.update_vectors();
     }
@@ -360,24 +351,66 @@ impl Camera {
         self.dirty = true;
     }
 
-    /// Get the view-projection matrix for rendering
-    pub fn view_projection_matrix(&self) -> Mat4 {
-        self.view_projection_matrix
-    }
-
-    /// Get the view matrix for rendering
-    pub fn view_matrix(&self) -> Mat4 {
+    /// Get the view matrix in 64-bit precision for matrix calculations
+    pub fn view_matrix(&self) -> DMat4 {
         self.view_matrix
     }
 
-    /// Get the projection matrix for rendering
-    pub fn projection_matrix(&self) -> Mat4 {
+    /// Get the projection matrix in 64-bit precision for matrix calculations
+    pub fn projection_matrix(&self) -> DMat4 {
         self.projection_matrix
+    }
+
+    /// Get the view-projection matrix in 64-bit precision for matrix calculations
+    pub fn view_projection_matrix(&self) -> DMat4 {
+        self.projection_matrix * self.view_matrix
+    }
+
+    /// Get the view matrix converted to f32 for legacy GPU usage
+    pub fn view_matrix_f32(&self) -> Mat4 {
+        self.view_matrix.as_mat4()
+    }
+
+    /// Get view matrix with translation removed (rotation only) - for skybox rendering
+    /// This ensures skybox is never affected by camera position, only rotation
+    pub fn view_matrix_rotation_only(&self) -> DMat4 {
+        use crate::renderer::precision_math::remove_translation_64bit;
+        remove_translation_64bit(self.view_matrix)
+    }
+
+    /// Get the projection matrix converted to f32 for legacy GPU usage
+    pub fn projection_matrix_f32(&self) -> Mat4 {
+        self.projection_matrix.as_mat4()
+    }
+
+    /// Get the view-projection matrix converted to f32 for legacy GPU usage
+    pub fn view_projection_matrix_f32(&self) -> Mat4 {
+        (self.projection_matrix * self.view_matrix).as_mat4()
     }
 
     /// Get camera position
     pub fn position(&self) -> DVec3 {
         self.position
+    }
+
+    /// Position camera relative to a body at a multiple of its radius
+    pub fn position_relative_to_body(
+        &mut self,
+        body_position: DVec3,
+        body_radius: f64,
+        distance_multiplier: f64,
+    ) {
+        let distance = body_radius * distance_multiplier;
+        // Position camera at distance from body, looking at it
+        self.position = body_position + DVec3::new(0.0, 0.0, distance);
+        self.dirty = true;
+        log::info!(
+            "Positioned camera at distance {:.2e} meters from body at ({:.2e}, {:.2e}, {:.2e})",
+            distance,
+            body_position.x,
+            body_position.y,
+            body_position.z
+        );
     }
 
     /// Get camera direction

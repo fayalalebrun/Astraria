@@ -1,10 +1,9 @@
 // Line shader for orbital path rendering with logarithmic depth
 // Direct port from the original Astraria GLSL line shaders
 
-struct CameraUniform {
-    view_matrix: mat4x4<f32>,
-    projection_matrix: mat4x4<f32>,
-    view_projection_matrix: mat4x4<f32>,
+// Standardized MVP uniform structure (shared across all shaders)
+struct StandardMVPUniform {
+    mvp_matrix: mat4x4<f32>,
     camera_position: vec3<f32>,
     _padding1: f32,
     camera_direction: vec3<f32>,
@@ -14,6 +13,11 @@ struct CameraUniform {
     near_plane_distance: f32,
     fc_constant: f32,
 };
+
+@group(0) @binding(0)
+var<uniform> mvp: StandardMVPUniform;
+
+// Legacy structures removed - now using StandardMVPUniform exclusively
 
 struct LineUniform {
     color: vec4<f32>,  // Line color with alpha
@@ -28,8 +32,6 @@ struct VertexOutput {
     @location(0) log_z: f32,
 };
 
-@group(0) @binding(0)
-var<uniform> camera: CameraUniform;
 
 @group(1) @binding(0)
 var<uniform> line_uniform: LineUniform;
@@ -57,9 +59,9 @@ fn vs_main(input: VertexInput) -> VertexOutput {
     // Use logarithmic depth transformation
     out.clip_position = model_to_clip_coordinates(
         vec4<f32>(input.position, 1.0),
-        camera.view_projection_matrix,
-        camera.log_depth_constant,
-        camera.far_plane_distance
+        mvp.mvp_matrix,
+        mvp.log_depth_constant,
+        mvp.far_plane_distance
     );
     
     out.log_z = out.clip_position.z;

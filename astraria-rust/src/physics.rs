@@ -328,6 +328,14 @@ impl PhysicsSimulation {
             self.add_body(body)?;
         }
 
+        // Update the body collection to move bodies from pending_additions to the main bodies vector
+        {
+            let mut bodies = self.algorithm.bodies.write().map_err(|_| {
+                AstrariaError::Physics("Failed to acquire write lock on bodies".to_string())
+            })?;
+            bodies.update_collection();
+        }
+
         // Start the simulation
         self.start()?;
 

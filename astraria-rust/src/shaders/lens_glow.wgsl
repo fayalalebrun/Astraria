@@ -1,10 +1,9 @@
-// Lens glow shader for stellar lens flare effects
-// Direct port from the original Astraria GLSL lensGlow shaders
+// Lens glow shader for stellar lens flare effects  
+// Refactored to use standardized MVP matrix approach with 64-bit precision calculations
 
-struct CameraUniform {
-    view_matrix: mat4x4<f32>,
-    projection_matrix: mat4x4<f32>,
-    view_projection_matrix: mat4x4<f32>,
+// Standardized MVP uniform structure (shared across all shaders)
+struct StandardMVPUniform {
+    mvp_matrix: mat4x4<f32>,
     camera_position: vec3<f32>,
     _padding1: f32,
     camera_direction: vec3<f32>,
@@ -15,11 +14,9 @@ struct CameraUniform {
     fc_constant: f32,
 };
 
-struct TransformUniform {
-    model_matrix: mat4x4<f32>,
-    normal_matrix: mat4x4<f32>,
-    model_view_matrix: mat4x4<f32>,
-};
+@group(0) @binding(0)
+var<uniform> mvp: StandardMVPUniform;
+
 
 struct LensGlowUniform {
     screen_dimensions: vec2<f32>,   // Screen width and height
@@ -44,13 +41,8 @@ struct VertexOutput {
     @location(1) dot_view: f32,
 };
 
-@group(0) @binding(0)
-var<uniform> camera: CameraUniform;
 
 @group(1) @binding(0)
-var<uniform> transform: TransformUniform;
-
-@group(1) @binding(1)
 var<uniform> lens_glow: LensGlowUniform;
 
 @group(2) @binding(0)
@@ -84,19 +76,19 @@ fn model_to_clip_coordinates(
 fn vs_main(input: VertexInput) -> VertexOutput {
     var out: VertexOutput;
     
-    // Use logarithmic depth buffer for astronomical scale support
-    let world_position = transform.model_matrix * vec4<f32>(input.position, 1.0);
+    // Use pre-computed MVP matrix (calculated with 64-bit precision on CPU)
+    let vertex_position = vec4<f32>(input.position, 1.0);
     out.clip_position = model_to_clip_coordinates(
-        world_position,
-        camera.view_projection_matrix,
-        camera.log_depth_constant,
-        camera.far_plane_distance
+        vertex_position,
+        mvp.mvp_matrix,
+        mvp.log_depth_constant,
+        mvp.far_plane_distance
     );
     out.tex_coord = input.tex_coord;
     
     // Calculate dot product between camera direction and star direction for occlusion testing
-    let star_direction = normalize(lens_glow.star_position - camera.camera_position);
-    out.dot_view = dot(camera.camera_direction, star_direction);
+    let star_direction = normalize(lens_glow.star_position - mvp.camera_position);
+    out.dot_view = dot(mvp.camera_direction, star_direction);
     
     return out;
 }
@@ -115,7 +107,8 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
     let spectrum_color = textureSample(spectrum_texture, texture_sampler, vec2<f32>(u, v));
     
     // Use glow texture red channel as alpha, modulated by dot view for occlusion
-    let alpha = glow_sample.r * max(0.0, input.dot_view);
+    // For testing: ensure minimum visibility
+    let alpha = glow_sample.r * max(0.3, input.dot_view);
     
     return vec4<f32>(spectrum_color.rgb, alpha);
 }

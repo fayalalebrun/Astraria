@@ -1,11 +1,9 @@
-// Billboard shader for screen-aligned sprite rendering
-// Direct port from the original Astraria GLSL billboard shaders
+// Billboard shader for screen-aligned sprite rendering  
+// Refactored to use standardized MVP matrix approach with 64-bit precision calculations
 
-// Camera uniform (matches core.rs CameraUniform exactly)
-struct CameraUniform {
-    view_matrix: mat4x4<f32>,
-    projection_matrix: mat4x4<f32>,
-    view_projection_matrix: mat4x4<f32>,
+// Standardized MVP uniform structure (shared across all shaders)
+struct StandardMVPUniform {
+    mvp_matrix: mat4x4<f32>,
     camera_position: vec3<f32>,
     _padding1: f32,
     camera_direction: vec3<f32>,
@@ -16,12 +14,8 @@ struct CameraUniform {
     fc_constant: f32,
 };
 
-// Transform uniform
-struct TransformUniform {
-    model_matrix: mat4x4<f32>,
-    model_view_matrix: mat4x4<f32>,
-    normal_matrix: mat3x3<f32>,
-};
+@group(0) @binding(0)
+var<uniform> mvp: StandardMVPUniform;
 
 // Billboard-specific uniforms
 struct BillboardUniform {
@@ -43,9 +37,10 @@ struct VertexOutput {
     @location(0) tex_coords: vec2<f32>,
 };
 
-// Bind groups - simplified for testing
-@group(0) @binding(0)
-var<uniform> camera: CameraUniform;
+@group(1) @binding(0)
+var<uniform> billboard: BillboardUniform;
+
+// Note: StandardMVPUniform is declared above at @group(0) @binding(0)
 
 // Logarithmic depth buffer transformation (from original implementation)
 fn model_to_clip_coordinates(
@@ -69,12 +64,12 @@ fn model_to_clip_coordinates(
 fn vs_main(input: VertexInput) -> VertexOutput {
     var out: VertexOutput;
     
-    // Use logarithmic depth buffer for astronomical scale support
+    // Use pre-computed MVP matrix (calculated with 64-bit precision on CPU)
     out.clip_position = model_to_clip_coordinates(
         vec4<f32>(input.position, 1.0),
-        camera.view_projection_matrix,
-        camera.log_depth_constant,
-        camera.far_plane_distance
+        mvp.mvp_matrix,
+        mvp.log_depth_constant,
+        mvp.far_plane_distance
     );
     out.tex_coords = input.tex_coord;
     

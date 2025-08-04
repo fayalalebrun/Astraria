@@ -1,10 +1,9 @@
 // Black hole shader with gravitational lensing effects
 // Direct port from the original Astraria GLSL blackHole shaders
 
-struct CameraUniform {
-    view_matrix: mat4x4<f32>,
-    projection_matrix: mat4x4<f32>,
-    view_projection_matrix: mat4x4<f32>,
+// Standardized MVP uniform structure (shared across all shaders)
+struct StandardMVPUniform {
+    mvp_matrix: mat4x4<f32>,
     camera_position: vec3<f32>,
     _padding1: f32,
     camera_direction: vec3<f32>,
@@ -15,12 +14,10 @@ struct CameraUniform {
     fc_constant: f32,
 };
 
-struct TransformUniform {
-    model_matrix: mat4x4<f32>,
-    model_view_matrix: mat4x4<f32>,
-    normal_matrix: mat3x4<f32>,  // mat3x4 for proper alignment (3 vec4s = 48 bytes)
-    _padding: vec4<f32>,
-};
+@group(0) @binding(0)
+var<uniform> mvp: StandardMVPUniform;
+
+// Legacy structures removed - now using StandardMVPUniform exclusively
 
 struct BlackHoleUniform {
     hole_position: vec3<f32>,    // Black hole position in world coordinates
@@ -41,13 +38,8 @@ struct VertexOutput {
     @location(3) model_view_position: vec3<f32>,
 };
 
-@group(0) @binding(0)
-var<uniform> camera: CameraUniform;
 
 @group(1) @binding(0)
-var<uniform> transform: TransformUniform;
-
-@group(1) @binding(1)
 var<uniform> black_hole: BlackHoleUniform;
 
 @group(2) @binding(0)
@@ -79,16 +71,16 @@ fn vs_main(input: VertexInput) -> VertexOutput {
     var out: VertexOutput;
     
     // Use logarithmic depth buffer for astronomical scale support
-    let world_position = transform.model_matrix * vec4<f32>(input.position, 1.0);
+    let vertex_position = vec4<f32>(input.position, 1.0);
     out.clip_position = model_to_clip_coordinates(
-        world_position,
-        camera.view_projection_matrix,
-        camera.log_depth_constant,
-        camera.far_plane_distance
+        vertex_position,
+        mvp.mvp_matrix,
+        mvp.log_depth_constant,
+        mvp.far_plane_distance
     );
     out.tex_coord = input.tex_coord;
     out.normal = input.normal;
-    out.world_position = world_position.xyz;
+    out.world_position = input.position;
     out.model_view_position = input.position;
     
     return out;

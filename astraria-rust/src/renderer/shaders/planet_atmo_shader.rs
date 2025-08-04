@@ -47,6 +47,7 @@ pub struct AtmosphereUniform {
 pub struct PlanetAtmoShader {
     pub pipeline: RenderPipeline,
     // Bind group layouts
+    pub lighting_bind_group_layout: wgpu::BindGroupLayout,
     pub texture_bind_group_layout: wgpu::BindGroupLayout,
     // Buffers
     camera_buffer: Buffer,
@@ -73,21 +74,12 @@ impl PlanetAtmoShader {
             source: wgpu::ShaderSource::Wgsl(include_str!("../../shaders/planet_atmo.wgsl").into()),
         });
 
-        // Camera bind group layout (group 0)
+        // Camera bind group layout (group 0) - use dynamic layout for compatibility
         let camera_bind_group_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                label: Some("Camera Bind Group Layout"),
-                entries: &[wgpu::BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: wgpu::ShaderStages::VERTEX | wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Uniform,
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
-                    },
-                    count: None,
-                }],
-            });
+            crate::renderer::uniforms::buffer_helpers::create_mvp_bind_group_layout_dynamic(
+                device,
+                Some("PlanetAtmo MVP Bind Group Layout"),
+            );
 
         // Transform bind group layout (group 1)
         let transform_bind_group_layout =
@@ -180,7 +172,7 @@ impl PlanetAtmoShader {
         // Create buffers
         let camera_buffer = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("Camera Uniform Buffer"),
-            size: std::mem::size_of::<CameraUniform>() as wgpu::BufferAddress,
+            size: 256, // Match dynamic binding size requirement
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
@@ -291,10 +283,9 @@ impl PlanetAtmoShader {
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("Planet Atmosphere Pipeline Layout"),
             bind_group_layouts: &[
-                &camera_bind_group_layout,
-                &transform_bind_group_layout,
-                &lighting_bind_group_layout,
-                &texture_bind_group_layout,
+                &camera_bind_group_layout,   // Group 0: MVP uniform
+                &lighting_bind_group_layout, // Group 1: Lighting + Atmosphere uniforms
+                &texture_bind_group_layout,  // Group 2: Textures + sampler
             ],
             push_constant_ranges: &[],
         });
@@ -311,7 +302,7 @@ impl PlanetAtmoShader {
                 module: &shader,
                 entry_point: "fs_main",
                 targets: &[Some(wgpu::ColorTargetState {
-                    format: wgpu::TextureFormat::Rgba8UnormSrgb,
+                    format: wgpu::TextureFormat::Bgra8UnormSrgb,
                     blend: Some(wgpu::BlendState::ALPHA_BLENDING),
                     write_mask: wgpu::ColorWrites::ALL,
                 })],
@@ -342,6 +333,7 @@ impl PlanetAtmoShader {
 
         Ok(Self {
             pipeline,
+            lighting_bind_group_layout,
             texture_bind_group_layout,
             camera_buffer,
             transform_buffer,
@@ -470,9 +462,9 @@ impl PlanetAtmoShader {
     pub fn render_planet<'a>(&'a self, render_pass: &mut RenderPass<'a>, model: &'a ModelAsset) {
         // Groups 0 and 1 (camera and transform) already set by main renderer
         render_pass.set_pipeline(&self.pipeline);
-        render_pass.set_bind_group(2, &self.lighting_bind_group, &[]);
+        render_pass.set_bind_group(1, &self.lighting_bind_group, &[]);
         if let Some(ref texture_bind_group) = self.texture_bind_group {
-            render_pass.set_bind_group(3, texture_bind_group, &[]);
+            render_pass.set_bind_group(2, texture_bind_group, &[]);
         }
         render_pass.set_vertex_buffer(0, model.vertex_buffer.slice(..));
         render_pass.set_index_buffer(model.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
@@ -485,13 +477,13 @@ impl PlanetAtmoShader {
         vertex_buffer: &'a Buffer,
         index_buffer: &'a Buffer,
         num_indices: u32,
+        lighting_bind_group: &'a wgpu::BindGroup,
+        texture_bind_group: &'a wgpu::BindGroup,
     ) {
-        // Groups 0 and 1 (camera and transform) already set by main renderer
+        // Group 0 (MVP) needs to be set by main renderer
         render_pass.set_pipeline(&self.pipeline);
-        render_pass.set_bind_group(2, &self.lighting_bind_group, &[]);
-        if let Some(ref texture_bind_group) = self.texture_bind_group {
-            render_pass.set_bind_group(3, texture_bind_group, &[]);
-        }
+        render_pass.set_bind_group(1, lighting_bind_group, &[]);
+        render_pass.set_bind_group(2, texture_bind_group, &[]);
         render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
         render_pass.set_index_buffer(index_buffer.slice(..), wgpu::IndexFormat::Uint32);
         render_pass.draw_indexed(0..num_indices, 0, 0..1);
@@ -502,12 +494,16 @@ impl PlanetAtmoShader {
         &'a self,
         render_pass: &mut RenderPass<'a>,
         mesh: &'a crate::graphics::Mesh,
+        lighting_bind_group: &'a wgpu::BindGroup,
+        texture_bind_group: &'a wgpu::BindGroup,
     ) {
         self.render_geometry(
             render_pass,
             &mesh.vertex_buffer,
             &mesh.index_buffer,
             mesh.num_indices,
+            lighting_bind_group,
+            texture_bind_group,
         );
     }
 }

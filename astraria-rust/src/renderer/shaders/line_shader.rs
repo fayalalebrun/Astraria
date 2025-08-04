@@ -28,7 +28,10 @@ impl LineShader {
 
         // Camera bind group layout (group 0) - shared with other shaders
         let camera_bind_group_layout =
-            crate::renderer::core::create_camera_bind_group_layout(device);
+            crate::renderer::uniforms::buffer_helpers::create_mvp_bind_group_layout_dynamic(
+                device,
+                Some("Line MVP Bind Group Layout"),
+            );
 
         // Line-specific bind group layout (group 1)
         let line_bind_group_layout =
@@ -72,7 +75,7 @@ impl LineShader {
                 module: &shader,
                 entry_point: "fs_main",
                 targets: &[Some(wgpu::ColorTargetState {
-                    format: wgpu::TextureFormat::Rgba8UnormSrgb,
+                    format: wgpu::TextureFormat::Bgra8UnormSrgb,
                     blend: Some(wgpu::BlendState::ALPHA_BLENDING),
                     write_mask: wgpu::ColorWrites::ALL,
                 })],

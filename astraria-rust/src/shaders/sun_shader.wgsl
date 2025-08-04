@@ -1,11 +1,9 @@
 // Sun shader for stellar temperature rendering (800K-30000K)
-// Direct port from the original Astraria GLSL sunShader
+// Refactored to use standardized MVP matrix approach with 64-bit precision calculations
 
-// Camera uniform (matches core.rs CameraUniform exactly)
-struct CameraUniform {
-    view_matrix: mat4x4<f32>,
-    projection_matrix: mat4x4<f32>,
-    view_projection_matrix: mat4x4<f32>,
+// Standardized MVP uniform structure (shared across all shaders)
+struct StandardMVPUniform {
+    mvp_matrix: mat4x4<f32>,
     camera_position: vec3<f32>,
     _padding1: f32,
     camera_direction: vec3<f32>,
@@ -16,12 +14,8 @@ struct CameraUniform {
     fc_constant: f32,
 };
 
-// Transform uniform
-struct TransformUniform {
-    model_matrix: mat4x4<f32>,
-    model_view_matrix: mat4x4<f32>,
-    normal_matrix: mat3x3<f32>,
-};
+@group(0) @binding(0)
+var<uniform> mvp: StandardMVPUniform;
 
 // Sun-specific uniforms
 struct SunUniform {
@@ -48,20 +42,16 @@ struct VertexOutput {
 };
 
 // Bind groups
-@group(0) @binding(0)
-var<uniform> camera: CameraUniform;
+// Note: StandardMVPUniform is declared above at @group(0) @binding(0)
 
 @group(1) @binding(0)
-var<uniform> transform: TransformUniform;
-
-@group(2) @binding(0)
 var<uniform> sun: SunUniform;
 
-@group(3) @binding(0)
+@group(2) @binding(0)
 var diffuse_texture: texture_2d<f32>;
-@group(3) @binding(1)
-var sun_gradient_texture: texture_2d<f32>;
-@group(3) @binding(2)
+@group(2) @binding(1)
+var sun_gradient_texture: texture_2d<f32>;  
+@group(2) @binding(2)
 var texture_sampler: sampler;
 
 // Logarithmic depth buffer transformation (from original implementation)
@@ -86,17 +76,17 @@ fn model_to_clip_coordinates(
 fn vs_main(input: VertexInput) -> VertexOutput {
     var out: VertexOutput;
     
-    // Use logarithmic depth transformation
-    let world_position = transform.model_matrix * vec4<f32>(input.position, 1.0);
+    // Use pre-computed MVP matrix (calculated with 64-bit precision on CPU)
+    let vertex_position = vec4<f32>(input.position, 1.0);
     out.clip_position = model_to_clip_coordinates(
-        world_position,
-        camera.view_projection_matrix,
-        camera.log_depth_constant,
-        camera.far_plane_distance
+        vertex_position,
+        mvp.mvp_matrix,
+        mvp.log_depth_constant,
+        mvp.far_plane_distance
     );
     out.tex_coords = input.tex_coord;
     out.normal = input.normal;
-    out.frag_pos = world_position.xyz;
+    out.frag_pos = input.position; // Approximate world position for sun effect
     out.model_view_pos = input.position;
     
     return out;

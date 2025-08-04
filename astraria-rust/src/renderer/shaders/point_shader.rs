@@ -24,13 +24,16 @@ impl PointShader {
             source: wgpu::ShaderSource::Wgsl(include_str!("../../shaders/point.wgsl").into()),
         });
 
-        // Use shared bind group layouts from MainRenderer
-        let camera_bind_group_layout =
-            crate::renderer::core::create_camera_bind_group_layout(device);
+        // Use standardized MVP bind group layout (shared across all shaders)
+        let mvp_bind_group_layout =
+            crate::renderer::uniforms::buffer_helpers::create_mvp_bind_group_layout_dynamic(
+                device,
+                Some("Point MVP Bind Group Layout"),
+            );
 
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("Point Pipeline Layout"),
-            bind_group_layouts: &[&camera_bind_group_layout],
+            bind_group_layouts: &[&mvp_bind_group_layout],
             push_constant_ranges: &[],
         });
 
@@ -68,7 +71,7 @@ impl PointShader {
                 module: &shader,
                 entry_point: "fs_main",
                 targets: &[Some(wgpu::ColorTargetState {
-                    format: wgpu::TextureFormat::Rgba8UnormSrgb,
+                    format: wgpu::TextureFormat::Bgra8UnormSrgb,
                     blend: Some(wgpu::BlendState::ALPHA_BLENDING),
                     write_mask: wgpu::ColorWrites::ALL,
                 })],

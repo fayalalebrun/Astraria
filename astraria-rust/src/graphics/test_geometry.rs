@@ -169,6 +169,121 @@ pub fn create_test_triangle() -> (Vec<Vertex>, Vec<u32>) {
     (vertices, indices)
 }
 
+/// Create a UV sphere for spherical objects (planets, stars, etc.)
+pub fn create_test_sphere(radius: f32, stacks: u32, slices: u32) -> (Vec<Vertex>, Vec<u32>) {
+    let mut vertices = Vec::new();
+    let mut indices = Vec::new();
+
+    // Generate vertices
+    for i in 0..=stacks {
+        let phi = std::f32::consts::PI * i as f32 / stacks as f32;
+        let sin_phi = phi.sin();
+        let cos_phi = phi.cos();
+
+        for j in 0..=slices {
+            let theta = 2.0 * std::f32::consts::PI * j as f32 / slices as f32;
+            let sin_theta = theta.sin();
+            let cos_theta = theta.cos();
+
+            let x = radius * sin_phi * cos_theta;
+            let y = radius * cos_phi;
+            let z = radius * sin_phi * sin_theta;
+
+            let u = j as f32 / slices as f32;
+            let v = i as f32 / stacks as f32;
+
+            vertices.push(Vertex {
+                position: [x, y, z],
+                tex_coord: [u, v],
+                normal: [x / radius, y / radius, z / radius], // Normalized position for sphere normals
+            });
+        }
+    }
+
+    // Generate indices
+    for i in 0..stacks {
+        for j in 0..slices {
+            let first = i * (slices + 1) + j;
+            let second = first + slices + 1;
+
+            // First triangle
+            indices.push(first);
+            indices.push(second);
+            indices.push(first + 1);
+
+            // Second triangle
+            indices.push(second);
+            indices.push(second + 1);
+            indices.push(first + 1);
+        }
+    }
+
+    (vertices, indices)
+}
+
+/// Create a quad for billboard and UI rendering
+pub fn create_test_quad() -> (Vec<Vertex>, Vec<u32>) {
+    let vertices = vec![
+        Vertex {
+            position: [-1.0, -1.0, 0.0],
+            tex_coord: [0.0, 0.0],
+            normal: [0.0, 0.0, 1.0],
+        },
+        Vertex {
+            position: [1.0, -1.0, 0.0],
+            tex_coord: [1.0, 0.0],
+            normal: [0.0, 0.0, 1.0],
+        },
+        Vertex {
+            position: [1.0, 1.0, 0.0],
+            tex_coord: [1.0, 1.0],
+            normal: [0.0, 0.0, 1.0],
+        },
+        Vertex {
+            position: [-1.0, 1.0, 0.0],
+            tex_coord: [0.0, 1.0],
+            normal: [0.0, 0.0, 1.0],
+        },
+    ];
+
+    let indices = vec![0, 1, 2, 2, 3, 0];
+
+    (vertices, indices)
+}
+
+/// Create a simple line for orbital path rendering
+pub fn create_test_line() -> (Vec<Vertex>, Vec<u32>) {
+    let vertices = vec![
+        Vertex {
+            position: [-0.5, -0.5, 0.0],
+            tex_coord: [0.0, 0.0],
+            normal: [0.0, 0.0, 1.0],
+        },
+        Vertex {
+            position: [0.5, 0.5, 0.0],
+            tex_coord: [1.0, 1.0],
+            normal: [0.0, 0.0, 1.0],
+        },
+    ];
+
+    let indices = vec![0, 1];
+
+    (vertices, indices)
+}
+
+/// Create a single point for distant object rendering
+pub fn create_test_point() -> (Vec<Vertex>, Vec<u32>) {
+    let vertices = vec![Vertex {
+        position: [0.0, 0.0, 0.0],
+        tex_coord: [0.5, 0.5],
+        normal: [0.0, 0.0, 1.0],
+    }];
+
+    let indices = vec![0];
+
+    (vertices, indices)
+}
+
 /// Create a skybox cube for background rendering
 /// Uses exact vertices from original Astraria skybox implementation
 pub fn create_skybox_cube() -> (Vec<[f32; 3]>, Vec<u32>) {

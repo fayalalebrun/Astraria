@@ -1,56 +1,104 @@
-use glam::Mat4;
 /// Default shader for planet and object rendering with PBR lighting
 /// Equivalent to the Java DefaultShader class
 use wgpu::{Buffer, Device, Queue, RenderPass, RenderPipeline};
 
-use crate::{assets::ModelAsset, graphics::Vertex, AstrariaResult};
+use crate::{
+    assets::ModelAsset, graphics::Vertex, renderer::uniforms::StandardMVPUniform, AstrariaResult,
+};
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct DefaultUniforms {
-    pub view_projection: [[f32; 4]; 4],
+pub struct PointLight {
+    pub position: [f32; 3],
+    pub _padding1: f32,
+    pub ambient: [f32; 3],
+    pub _padding2: f32,
+    pub diffuse: [f32; 3],
+    pub _padding3: f32,
+    pub specular: [f32; 3],
+    pub _padding4: f32,
+}
+
+#[repr(C)]
+#[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+pub struct LightingUniforms {
+    pub lights: [PointLight; 8],
+    pub num_lights: i32,
+    pub _padding: [f32; 3],
 }
 
 pub struct DefaultShader {
-    pipeline: RenderPipeline,
+    pub pipeline: RenderPipeline,
     uniform_buffer: Buffer,
-    bind_group: wgpu::BindGroup,
+    mvp_bind_group: wgpu::BindGroup,
+    pub lighting_bind_group_layout: wgpu::BindGroupLayout,
+    pub texture_bind_group_layout: wgpu::BindGroupLayout,
 }
 
 impl DefaultShader {
     pub fn new(device: &Device) -> AstrariaResult<Self> {
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Default Shader"),
-            source: wgpu::ShaderSource::Wgsl(
-                include_str!("../../shaders/default_simple.wgsl").into(),
-            ),
+            source: wgpu::ShaderSource::Wgsl(include_str!("../../shaders/default.wgsl").into()),
         });
 
-        // DefaultShader needs its own bind group layout for view-projection matrix
-        let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-            label: Some("Default Shader Bind Group Layout"),
-            entries: &[wgpu::BindGroupLayoutEntry {
-                binding: 0,
-                visibility: wgpu::ShaderStages::VERTEX,
-                ty: wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Uniform,
-                    has_dynamic_offset: false,
-                    min_binding_size: None,
-                },
-                count: None,
-            }],
-        });
+        // MVP bind group layout (group 0) - use dynamic layout for compatibility with MainRenderer
+        let mvp_bind_group_layout =
+            crate::renderer::uniforms::buffer_helpers::create_mvp_bind_group_layout_dynamic(
+                device,
+                Some("Default MVP Bind Group Layout"),
+            );
+
+        // Lighting bind group layout (group 1)
+        let lighting_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: Some("Lighting Bind Group Layout"),
+                entries: &[wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                }],
+            });
+
+        // Texture bind group layout (group 2)
+        let texture_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: Some("Texture Bind Group Layout"),
+                entries: &[
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            multisampled: false,
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                        },
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 1,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                        count: None,
+                    },
+                ],
+            });
 
         let uniform_buffer = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("Default Uniform Buffer"),
-            size: std::mem::size_of::<DefaultUniforms>() as wgpu::BufferAddress,
+            size: 256, // Match dynamic binding size requirement
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
 
-        let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("Default Bind Group"),
-            layout: &bind_group_layout,
+        let mvp_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("MVP Bind Group"),
+            layout: &mvp_bind_group_layout,
             entries: &[wgpu::BindGroupEntry {
                 binding: 0,
                 resource: uniform_buffer.as_entire_binding(),
@@ -61,7 +109,11 @@ impl DefaultShader {
 
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("Default Pipeline Layout"),
-            bind_group_layouts: &[&bind_group_layout],
+            bind_group_layouts: &[
+                &mvp_bind_group_layout,
+                &lighting_bind_group_layout,
+                &texture_bind_group_layout,
+            ],
             push_constant_ranges: &[],
         });
 
@@ -77,7 +129,7 @@ impl DefaultShader {
                 module: &shader,
                 entry_point: "fs_main",
                 targets: &[Some(wgpu::ColorTargetState {
-                    format: wgpu::TextureFormat::Rgba8UnormSrgb,
+                    format: wgpu::TextureFormat::Bgra8UnormSrgb,
                     blend: Some(wgpu::BlendState::REPLACE),
                     write_mask: wgpu::ColorWrites::ALL,
                 })],
@@ -109,28 +161,27 @@ impl DefaultShader {
         Ok(Self {
             pipeline,
             uniform_buffer,
-            bind_group,
+            mvp_bind_group,
+            lighting_bind_group_layout,
+            texture_bind_group_layout,
         })
     }
 
-    pub fn update_uniforms(
-        &self,
-        queue: &Queue,
-        view_matrix: Mat4,
-        projection_matrix: Mat4,
-        model_matrix: Mat4,
-    ) {
-        let view_projection = projection_matrix * view_matrix * model_matrix;
-        let uniforms = DefaultUniforms {
-            view_projection: view_projection.to_cols_array_2d(),
-        };
-
-        queue.write_buffer(&self.uniform_buffer, 0, bytemuck::cast_slice(&[uniforms]));
+    pub fn update_uniforms(&self, queue: &Queue, uniform: &StandardMVPUniform) {
+        queue.write_buffer(&self.uniform_buffer, 0, bytemuck::cast_slice(&[*uniform]));
     }
 
-    pub fn render_model<'a>(&'a self, render_pass: &mut RenderPass<'a>, model: &'a ModelAsset) {
+    pub fn render_model<'a>(
+        &'a self,
+        render_pass: &mut RenderPass<'a>,
+        model: &'a ModelAsset,
+        lighting_bind_group: &'a wgpu::BindGroup,
+        texture_bind_group: &'a wgpu::BindGroup,
+    ) {
         render_pass.set_pipeline(&self.pipeline);
-        render_pass.set_bind_group(0, &self.bind_group, &[]);
+        render_pass.set_bind_group(0, &self.mvp_bind_group, &[0]);
+        render_pass.set_bind_group(1, lighting_bind_group, &[]);
+        render_pass.set_bind_group(2, texture_bind_group, &[]);
         render_pass.set_vertex_buffer(0, model.vertex_buffer.slice(..));
         render_pass.set_index_buffer(model.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
         render_pass.draw_indexed(0..model.num_indices, 0, 0..1);
@@ -142,9 +193,13 @@ impl DefaultShader {
         vertex_buffer: &'a Buffer,
         index_buffer: &'a Buffer,
         num_indices: u32,
+        lighting_bind_group: &'a wgpu::BindGroup,
+        texture_bind_group: &'a wgpu::BindGroup,
     ) {
         render_pass.set_pipeline(&self.pipeline);
-        render_pass.set_bind_group(0, &self.bind_group, &[]);
+        render_pass.set_bind_group(0, &self.mvp_bind_group, &[0]);
+        render_pass.set_bind_group(1, lighting_bind_group, &[]);
+        render_pass.set_bind_group(2, texture_bind_group, &[]);
         render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
         render_pass.set_index_buffer(index_buffer.slice(..), wgpu::IndexFormat::Uint32);
         render_pass.draw_indexed(0..num_indices, 0, 0..1);
@@ -155,12 +210,16 @@ impl DefaultShader {
         &'a self,
         render_pass: &mut RenderPass<'a>,
         mesh: &'a crate::graphics::Mesh,
+        lighting_bind_group: &'a wgpu::BindGroup,
+        texture_bind_group: &'a wgpu::BindGroup,
     ) {
         self.render_geometry(
             render_pass,
             &mesh.vertex_buffer,
             &mesh.index_buffer,
             mesh.num_indices,
+            lighting_bind_group,
+            texture_bind_group,
         );
     }
 }

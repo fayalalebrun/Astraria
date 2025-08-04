@@ -6,7 +6,9 @@ pub mod core;
 pub mod lighting;
 pub mod main_renderer;
 pub mod pipeline;
+pub mod precision_math;
 pub mod shaders;
+pub mod uniforms;
 
 use wgpu::{Device, Queue, Surface, SurfaceConfiguration};
 use winit::{dpi::PhysicalSize, window::Window};
@@ -24,7 +26,7 @@ pub use shaders::ShaderManager;
 pub struct Renderer {
     surface: Surface,
     surface_config: SurfaceConfiguration,
-    buffers: BufferManager,
+    _buffers: BufferManager,
     lights: LightManager,
 
     // Rendering state
@@ -81,12 +83,11 @@ impl Renderer {
 
         // Configure surface first
         let surface_caps = surface.get_capabilities(&adapter);
-        let surface_format = surface_caps
-            .formats
-            .iter()
-            .find(|f| f.is_srgb())
-            .copied()
-            .unwrap_or(surface_caps.formats[0]);
+        // Use Bgra8UnormSrgb which is supported on this system
+        let surface_format = wgpu::TextureFormat::Bgra8UnormSrgb;
+
+        log::info!("Surface format chosen: {:?}", surface_format);
+        log::info!("Available surface formats: {:?}", surface_caps.formats);
 
         let size = window.inner_size();
         let surface_config = SurfaceConfiguration {
@@ -101,7 +102,7 @@ impl Renderer {
 
         // Create MainRenderer with the surface and adapter to ensure device compatibility
         let (main_renderer, surface) =
-            MainRenderer::with_surface(surface, &adapter, surface_config.clone()).await?;
+            MainRenderer::with_surface(&instance, surface).await?;
 
         // Get device and queue from MainRenderer
         let device = main_renderer.device();
@@ -111,7 +112,7 @@ impl Renderer {
         let (depth_texture, depth_view) = Self::create_depth_texture(device, &surface_config);
 
         // Initialize subsystems
-        let buffers = BufferManager::new(device, asset_manager, queue)?;
+        let _buffers = BufferManager::new(device, asset_manager, queue)?;
         let lights = LightManager::new(device)?;
 
         log::info!("Renderer initialization complete");
@@ -120,7 +121,7 @@ impl Renderer {
             surface,
             surface_config,
             main_renderer,
-            buffers,
+            _buffers,
             lights,
             current_frame: None,
             depth_texture,
@@ -188,7 +189,7 @@ impl Renderer {
     pub fn render_scene(
         &mut self,
         physics: &PhysicsSimulation,
-        asset_manager: &AssetManager,
+        _asset_manager: &AssetManager,
     ) -> AstrariaResult<()> {
         let frame = self
             .current_frame
@@ -211,8 +212,32 @@ impl Renderer {
 
         self.lights.update(self.main_renderer.queue(), physics)?;
 
+        // Position camera relative to the first body (usually the Sun) if not already positioned
+        self.position_camera_if_needed(physics)?;
+
+        // Reset frame MVP data and prepare for new frame
+        self.main_renderer.begin_frame();
+
         // Generate render commands from physics simulation
         let render_commands = self.generate_physics_render_commands(physics)?;
+        log::debug!(
+            "Generated {} render commands for physics bodies",
+            render_commands.len()
+        );
+
+        // Prepare skybox command first
+        let skybox_command = crate::renderer::core::RenderCommand::Skybox;
+        self.main_renderer
+            .prepare_render_command(skybox_command, glam::Mat4::IDENTITY);
+
+        // Prepare all physics body render commands
+        for (command, transform) in &render_commands {
+            self.main_renderer
+                .prepare_render_command(command.clone(), *transform);
+        }
+
+        // Upload all MVP data to GPU buffer (single write operation per frame)
+        self.main_renderer.upload_frame_mvp_data();
 
         // Create render pass
         {
@@ -241,16 +266,10 @@ impl Renderer {
                 }),
             });
 
-            // First render skybox for background
-            let skybox_command = crate::renderer::core::RenderCommand::Skybox;
+            // Execute all prepared render commands with dynamic MVP offsets
+            // This includes skybox and all physics bodies
             self.main_renderer
-                .render(&mut render_pass, &skybox_command, glam::Mat4::IDENTITY);
-
-            // Render all physics bodies using MainRenderer
-            for (command, transform) in &render_commands {
-                self.main_renderer
-                    .render(&mut render_pass, command, *transform);
-            }
+                .execute_prepared_commands(&mut render_pass);
         }
 
         // Submit the command buffer
@@ -274,34 +293,54 @@ impl Renderer {
         // Try to get physics bodies
         if let Ok(bodies) = physics.get_bodies() {
             if !bodies.is_empty() {
-                log::info!("Generating {} physics body render commands", bodies.len());
+                log::debug!("Generating {} physics body render commands", bodies.len());
+                log::debug!(
+                    "Camera position: ({:.2e}, {:.2e}, {:.2e})",
+                    self.main_renderer.camera.position().x,
+                    self.main_renderer.camera.position().y,
+                    self.main_renderer.camera.position().z
+                );
 
                 for body in &bodies {
-                    // Convert astronomical coordinates to camera-relative f32 coordinates
-                    // Scale factor to make Solar System visible (1 AU = ~1.5e11 m -> ~100 units)
-                    let scale_factor = 6.67e-10; // Adjusted for visibility
+                    // Use TRUE ASTRONOMICAL SCALE - no scaling down allowed!
                     let position = Vec3::new(
-                        (body.position.x * scale_factor) as f32,
-                        (body.position.y * scale_factor) as f32,
-                        (body.position.z * scale_factor) as f32,
+                        body.position.x as f32,
+                        body.position.y as f32,
+                        body.position.z as f32,
                     );
 
-                    // Get body radius and choose appropriate render command
-                    // Make planets visible but not too large
+                    // Use TRUE RADIUS - no scaling down allowed!
                     let radius_scale = match &body.body_type {
-                        BodyType::Planet { radius, .. } => (*radius * 1e-6).max(0.1), // Minimum visible size
-                        BodyType::Star { radius, .. } => (*radius * 5e-8).max(1.0), // Sun should be bigger
-                        BodyType::PlanetAtmo { radius, .. } => (*radius * 1e-6).max(0.1),
-                        BodyType::BlackHole { radius } => (*radius * 1e-6).max(0.1),
+                        BodyType::Planet { radius, .. } => *radius as f32,
+                        BodyType::Star { radius, .. } => *radius as f32,
+                        BodyType::PlanetAtmo { radius, .. } => *radius as f32,
+                        BodyType::BlackHole { radius } => *radius as f32,
                     };
 
                     log::debug!(
-                        "Body '{}' at position ({:.2}, {:.2}, {:.2}) with radius {:.2}",
+                        "Body '{}' at position ({:.2e}, {:.2e}, {:.2e}) with radius {:.2e}",
                         body.name,
                         position.x,
                         position.y,
                         position.z,
                         radius_scale
+                    );
+
+                    // Calculate distance from camera to body
+                    let camera_pos = self.main_renderer.camera.position().as_vec3();
+                    let distance_to_camera = (position - camera_pos).length();
+
+                    // Calculate apparent size in pixels (rough estimate)
+                    let fov_radians = 45.0_f32.to_radians(); // Camera FOV
+                    let screen_height = 720.0; // Assumed screen height
+                    let angular_size = 2.0 * (radius_scale / distance_to_camera).atan();
+                    let apparent_pixels = (angular_size / fov_radians) * screen_height;
+
+                    log::debug!(
+                        "Distance from camera to {}: {:.2e} meters, apparent size: {:.2} pixels",
+                        body.name,
+                        distance_to_camera,
+                        apparent_pixels
                     );
 
                     let transform = Mat4::from_translation(position)
@@ -342,8 +381,11 @@ impl Renderer {
 
                     commands.push((command, transform));
 
-                    log::debug!("Generated render command for body '{}' at position ({:.2e}, {:.2e}, {:.2e}) with radius {:.2e}", 
-                        body.name, position.x, position.y, position.z, radius_scale);
+                    log::debug!(
+                        "Generated render command for body '{}' - transform: {:?}",
+                        body.name,
+                        transform
+                    );
                 }
                 return Ok(commands);
             }
@@ -363,6 +405,35 @@ impl Renderer {
     pub fn end_frame(&mut self) -> AstrariaResult<()> {
         if let Some(frame) = self.current_frame.take() {
             frame.present();
+        }
+        Ok(())
+    }
+
+    /// Position camera relative to the first physics body if not already positioned
+    fn position_camera_if_needed(&mut self, physics: &PhysicsSimulation) -> AstrariaResult<()> {
+        // Only position camera if it's at origin (initial position)
+        if self.main_renderer.camera.position().length() < 1e3 {
+            if let Ok(bodies) = physics.get_bodies() {
+                if !bodies.is_empty() {
+                    let first_body = &bodies[0];
+                    let body_radius = match &first_body.body_type {
+                        crate::scenario::BodyType::Planet { radius, .. } => *radius,
+                        crate::scenario::BodyType::Star { radius, .. } => *radius,
+                        crate::scenario::BodyType::PlanetAtmo { radius, .. } => *radius,
+                        crate::scenario::BodyType::BlackHole { radius } => *radius,
+                    };
+
+                    self.main_renderer.camera.position_relative_to_body(
+                        first_body.position,
+                        body_radius as f64,
+                        3.0, // 3x the body's radius
+                    );
+                    log::debug!(
+                        "Positioned camera relative to first body: {}",
+                        first_body.name
+                    );
+                }
+            }
         }
         Ok(())
     }
@@ -477,7 +548,7 @@ impl Renderer {
 
         // Handle mouse look
         if let Some((delta_x, delta_y)) = input.take_mouse_delta() {
-            log::info!(
+            log::debug!(
                 "Processing mouse look: delta=({:.2}, {:.2})",
                 delta_x,
                 delta_y

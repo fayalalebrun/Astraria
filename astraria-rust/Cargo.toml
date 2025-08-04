@@ -13,8 +13,11 @@ winit = "0.28"
 pollster = "0.3"
 
 # Math
-glam = { version = "0.24", features = ["bytemuck"] }
+glam = { version = "0.24", features = ["bytemuck", "mint"] }
 bytemuck = { version = "1.14", features = ["derive"] }
+
+# WGSL preprocessing for shared shader definitions
+wgsl_preprocessor = "1.1.4"
 
 # Asset loading
 image = { version = "0.24", features = ["png", "jpeg"], default-features = false }
