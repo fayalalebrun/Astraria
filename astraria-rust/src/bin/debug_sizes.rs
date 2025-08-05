@@ -3,8 +3,8 @@ use std::mem;
 // Copy the struct definitions from our shader file to check sizes
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-struct PointLight {
-    position: [f32; 3],
+struct DirectionalLight {
+    direction: [f32; 3],
     _padding1: f32,
     ambient: [f32; 3],
     _padding2: f32,
@@ -17,18 +17,18 @@ struct PointLight {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 struct LightingUniform {
-    lights: [PointLight; 8], // 8 * 64 = 512 bytes
-    num_lights: i32,         // 4 bytes
-    _padding: [i32; 3],      // 12 bytes (vec3<i32> in WGSL requires 16-byte alignment)
+    lights: [DirectionalLight; 8], // 8 * 64 = 512 bytes
+    num_lights: i32,               // 4 bytes
+    _padding: [i32; 3],            // 12 bytes (vec3<i32> in WGSL requires 16-byte alignment)
 }
 
 // Test alternative struct alignments
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 struct LightingUniformAligned {
-    lights: [PointLight; 8], // 8 * 64 = 512 bytes
-    num_lights: i32,         // 4 bytes
-    _padding: [i32; 4],      // 16 bytes - try forcing 16-byte alignment with extra field
+    lights: [DirectionalLight; 8], // 8 * 64 = 512 bytes
+    num_lights: i32,               // 4 bytes
+    _padding: [i32; 4],            // 16 bytes - try forcing 16-byte alignment with extra field
 }
 
 #[repr(C)]
@@ -76,7 +76,10 @@ struct LensGlowUniform {
 }
 
 fn main() {
-    println!("PointLight size: {}", mem::size_of::<PointLight>());
+    println!(
+        "DirectionalLight size: {}",
+        mem::size_of::<DirectionalLight>()
+    );
     println!(
         "LightingUniform size: {}",
         mem::size_of::<LightingUniform>()

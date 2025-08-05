@@ -7,8 +7,8 @@ use wgpu::{util::DeviceExt, BindGroup, Buffer, Device, Queue, Sampler};
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct PointLight {
-    pub position: [f32; 3],
+pub struct DirectionalLight {
+    pub direction: [f32; 3], // Normalized direction from object to light
     pub _padding1: f32,
     pub ambient: [f32; 3],
     pub _padding2: f32,
@@ -21,7 +21,7 @@ pub struct PointLight {
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct LightingUniform {
-    pub lights: [PointLight; 8],
+    pub lights: [DirectionalLight; 8],
     pub num_lights: i32,
     pub _padding: [f32; 3],
 }
@@ -73,8 +73,8 @@ impl BufferManager {
             _padding: [0.0; 4],
         };
 
-        let default_light = PointLight {
-            position: [5.0, 5.0, 5.0],
+        let default_light = DirectionalLight {
+            direction: [1.0, 1.0, -1.0], // Light from upper right
             _padding1: 0.0,
             ambient: [0.1, 0.1, 0.1],
             _padding2: 0.0,
@@ -84,8 +84,8 @@ impl BufferManager {
             _padding4: 0.0,
         };
 
-        let mut lights = [PointLight {
-            position: [0.0; 3],
+        let mut lights = [DirectionalLight {
+            direction: [0.0, 0.0, -1.0],
             _padding1: 0.0,
             ambient: [0.0; 3],
             _padding2: 0.0,
@@ -361,9 +361,9 @@ impl BufferManager {
         );
     }
 
-    pub fn update_lighting(&self, queue: &Queue, lights: &[PointLight]) {
-        let mut lighting_lights = [PointLight {
-            position: [0.0; 3],
+    pub fn update_lighting(&self, queue: &Queue, lights: &[DirectionalLight]) {
+        let mut lighting_lights = [DirectionalLight {
+            direction: [0.0, 0.0, -1.0],
             _padding1: 0.0,
             ambient: [0.0; 3],
             _padding2: 0.0,

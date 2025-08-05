@@ -3,8 +3,8 @@
 
 //!include src/shaders/shared/uniforms.wgsl
 
-struct PointLight {
-    position: vec3<f32>,
+struct DirectionalLight {
+    direction: vec3<f32>,  // Normalized direction from object to light (WORLD SPACE)
     _padding1: f32,
     ambient: vec3<f32>,
     _padding2: f32,
@@ -15,7 +15,7 @@ struct PointLight {
 };
 
 struct LightingUniform {
-    lights: array<PointLight, 8>,
+    lights: array<DirectionalLight, 8>,
     num_lights: i32,
     _padding: vec3<i32>,
 };
@@ -35,14 +35,11 @@ struct VertexInput {
 
 struct VertexOutput {
     @builtin(position) clip_position: vec4<f32>,
-    @location(0) light_pos: vec3<f32>,        // Sun position in camera space
-    @location(1) planet_pos: vec3<f32>,       // Planet center in camera space
-    @location(2) pixel_pos: vec3<f32>,        // Fragment position in camera space
-    @location(3) pixel_normal: vec3<f32>,     // Fragment surface normal
-    @location(4) tex_coords: vec2<f32>,       // Texture coordinates
-    @location(5) angle_incidence: f32,        // Light incidence angle
-    @location(6) atmosphere_color: vec4<f32>, // Computed atmosphere color
-    @location(7) light_direction: vec3<f32>,  // Light direction in camera space
+    @location(0) pixel_pos: vec3<f32>,        // Fragment position in camera space
+    @location(1) pixel_normal: vec3<f32>,     // Fragment surface normal
+    @location(2) tex_coords: vec2<f32>,       // Texture coordinates
+    @location(3) angle_incidence: f32,        // Light incidence angle
+    @location(4) atmosphere_color: vec4<f32>, // Computed atmosphere color
 };
 
 // Note: StandardMVPUniform is declared above at @group(0) @binding(0)
@@ -66,16 +63,23 @@ const PI: f32 = 3.14159265;
 const TRANSITION_WIDTH: f32 = 0.1;  // How prominent the atmosphere is
 const FRESNEL_EXPONENT: f32 = 20.0;
 
-// Step 7: Add point light function from full shader
-fn calc_point_light(
-    light: PointLight,
+// Calculate directional light contribution
+fn calc_directional_light(
+    light: DirectionalLight,
     normal: vec3<f32>,
     frag_pos: vec3<f32>,
     view_dir: vec3<f32>,
     tex_coords: vec2<f32>,
     min_diff: ptr<function, f32>
 ) -> vec4<f32> {
-    let light_dir = normalize(light.position - frag_pos);
+    // Transform world space light direction to view space
+    // Use the same normal matrix approach as in the vertex shader
+    let normal_matrix = mat3x3<f32>(
+        mvp.mv_matrix[0].xyz,
+        mvp.mv_matrix[1].xyz,
+        mvp.mv_matrix[2].xyz
+    );
+    let light_dir = normalize(normal_matrix * light.direction);
     
     // Diffuse shading
     let diff_before = dot(normal, light_dir);
@@ -127,26 +131,28 @@ fn vs_main(input: VertexInput) -> VertexOutput {
         mvp.far_plane_distance
     );
     
-    // Transform vertex to camera-relative space for atmospheric effects
-    // This puts the camera at origin and keeps coordinates manageable for f32 precision
-    out.pixel_pos = (mvp.camera_relative_transform * vertex_position).xyz;
-    out.pixel_normal = normalize(input.normal);
+    // Transform vertex to view space (camera space) - matching Java implementation
+    // In view space, the camera is at origin (0,0,0)
+    out.pixel_pos = (mvp.mv_matrix * vertex_position).xyz;
+    
+    // Transform normal to view space using normal matrix (transpose of inverse of modelView)
+    // For now, assuming uniform scale and no shear, we can use the upper 3x3 of modelView
+    let normal_matrix = mat3x3<f32>(
+        mvp.mv_matrix[0].xyz,
+        mvp.mv_matrix[1].xyz,
+        mvp.mv_matrix[2].xyz
+    );
+    out.pixel_normal = normalize(normal_matrix * input.normal);
     out.tex_coords = input.tex_coord;
-    
-    // Light direction is already in camera space and normalized
-    out.light_direction = mvp.light_direction_camera_space;
-    
-    // Planet center is at origin in camera-relative space (object space)
-    out.planet_pos = vec3<f32>(0.0, 0.0, 0.0);
-    
-    // Light position calculated from direction (approximate for atmospheric calculations)
-    out.light_pos = out.planet_pos + out.light_direction * 10.0; // Light "far away" in the direction
     
     // Calculate view direction in camera-relative space
     let view_dir = normalize(-out.pixel_pos);
     
+    // Transform world space light direction to view space for atmospheric calculations
+    let light_direction_view = normalize(normal_matrix * lighting.lights[0].direction);
+    
     // Calculate light incidence angle (EXACTLY like original Java implementation)
-    let dot_prod = clamp(dot(out.light_direction, out.pixel_normal), -1.0, 1.0);
+    let dot_prod = clamp(dot(light_direction_view, out.pixel_normal), -1.0, 1.0);
     out.angle_incidence = acos(dot_prod) / PI;
     
     // Calculate atmospheric shading factor (terminator transition) - EXACTLY like original
@@ -175,9 +181,9 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
     var result = vec4<f32>(0.0);
     var min_diff = 1.0;
     
-    // Calculate lighting from all point lights using the function approach
+    // Calculate lighting from all directional lights
     for (var i = 0; i < lighting.num_lights; i++) {
-        result += calc_point_light(
+        result += calc_directional_light(
             lighting.lights[i],
             norm,
             input.pixel_pos,

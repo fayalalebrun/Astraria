@@ -12,8 +12,8 @@ use crate::{
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct PointLight {
-    pub position: [f32; 3],
+pub struct DirectionalLight {
+    pub direction: [f32; 3], // Normalized direction from object to light (WORLD SPACE)
     pub _padding1: f32,
     pub ambient: [f32; 3],
     pub _padding2: f32,
@@ -26,7 +26,7 @@ pub struct PointLight {
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct LightingUniforms {
-    pub lights: [PointLight; 8],
+    pub lights: [DirectionalLight; 8],
     pub num_lights: i32,
     pub _padding: [f32; 3],
 }

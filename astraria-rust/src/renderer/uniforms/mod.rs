@@ -46,7 +46,7 @@ pub struct ObjectUniform {
     pub model_matrix: [[f32; 4]; 4], // 64 bytes
 
     /// Camera-relative model transform (transforms model vertices to camera-relative space)
-    pub camera_relative_transform: [[f32; 4]; 4], // 64 bytes
+    pub mv_matrix: [[f32; 4]; 4], // 64 bytes
 
     /// Light direction in camera space for per-object lighting
     pub light_direction_camera_space: [f32; 3], // 12 bytes
@@ -66,7 +66,7 @@ pub struct StandardMVPUniform {
     pub far_plane_distance: f32,
     pub near_plane_distance: f32,
     pub fc_constant: f32,
-    pub camera_relative_transform: [[f32; 4]; 4],
+    pub mv_matrix: [[f32; 4]; 4],
     pub light_direction_camera_space: [f32; 3],
     pub _padding3: f32,
 } // Total: 240 bytes
@@ -107,7 +107,7 @@ impl Default for ObjectUniform {
                 matrix[3][3] = 1.0;
                 matrix
             },
-            camera_relative_transform: [[0.0; 4]; 4],
+            mv_matrix: [[0.0; 4]; 4],
             light_direction_camera_space: [0.0, 0.0, -1.0], // Default light direction
             _padding: 0.0,
         }
@@ -126,7 +126,7 @@ impl Default for StandardMVPUniform {
             far_plane_distance: 1e11,
             near_plane_distance: 1e3,
             fc_constant: 1.0,
-            camera_relative_transform: [[0.0; 4]; 4],
+            mv_matrix: [[0.0; 4]; 4],
             light_direction_camera_space: [0.0, 0.0, -1.0],
             _padding3: 0.0,
         }

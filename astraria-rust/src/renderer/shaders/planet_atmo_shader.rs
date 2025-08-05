@@ -13,11 +13,11 @@ use crate::{
 
 // CameraUniform and TransformUniform are now imported from core.rs to eliminate duplication
 
-// Point light structure
+// Directional light structure
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct PointLight {
-    pub position: [f32; 3],
+pub struct DirectionalLight {
+    pub direction: [f32; 3], // Normalized direction from object to light (WORLD SPACE)
     pub _padding1: f32,
     pub ambient: [f32; 3],
     pub _padding2: f32,
@@ -31,9 +31,9 @@ pub struct PointLight {
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct LightingUniform {
-    pub lights: [PointLight; 8], // 8 * 64 = 512 bytes
-    pub num_lights: i32,         // 4 bytes
-    pub _padding: [i32; 7],      // 28 bytes to reach 544 total (512 + 4 + 28 = 544)
+    pub lights: [DirectionalLight; 8], // 8 * 64 = 512 bytes
+    pub num_lights: i32,               // 4 bytes
+    pub _padding: [i32; 7],            // 28 bytes to reach 544 total (512 + 4 + 28 = 544)
 }
 
 // Atmosphere specific uniforms
@@ -357,7 +357,7 @@ impl PlanetAtmoShader {
         view_matrix: Mat4,
         projection_matrix: Mat4,
         model_matrix: Mat4,
-        light_position: Vec3,
+        light_direction: Vec3,
         _light_color: Vec3,
         _atmosphere_color_mod: Vec4,
         _overglow: f32,
@@ -398,8 +398,8 @@ impl PlanetAtmoShader {
         };
 
         // Lighting uniforms - using proper star lighting values from Java
-        let point_light = PointLight {
-            position: light_position.to_array(),
+        let directional_light = DirectionalLight {
+            direction: light_direction.to_array(),
             _padding1: 0.0,
             ambient: [0.0, 0.0, 0.0], // Stars have no ambient light
             _padding2: 0.0,
@@ -409,8 +409,8 @@ impl PlanetAtmoShader {
             _padding4: 0.0,
         };
 
-        let mut lights = [PointLight {
-            position: [0.0; 3],
+        let mut lights = [DirectionalLight {
+            direction: [0.0, 0.0, -1.0],
             _padding1: 0.0,
             ambient: [0.0; 3],
             _padding2: 0.0,
@@ -419,7 +419,7 @@ impl PlanetAtmoShader {
             specular: [0.0; 3],
             _padding4: 0.0,
         }; 8];
-        lights[0] = point_light;
+        lights[0] = directional_light;
 
         let lighting_uniforms = LightingUniform {
             lights,

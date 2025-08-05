@@ -3,9 +3,9 @@
 
 //!include src/shaders/shared/uniforms.wgsl
 
-// Point light structure (matches original Java implementation)
-struct PointLight {
-    position: vec3<f32>,
+// Directional light structure (for astronomical scale lighting)
+struct DirectionalLight {
+    direction: vec3<f32>,  // Normalized direction from object to light (WORLD SPACE)
     ambient: vec3<f32>,
     diffuse: vec3<f32>,
     specular: vec3<f32>,
@@ -13,7 +13,7 @@ struct PointLight {
 
 // Lighting uniforms
 struct LightingUniforms {
-    lights: array<PointLight, 8>,
+    lights: array<DirectionalLight, 8>,
     num_lights: i32,
 }
 
@@ -84,9 +84,15 @@ fn vs_main(input: VertexInput) -> VertexOutput {
     return out;
 }
 
-// Calculate point light contribution (ported from original GLSL)
-fn calc_point_light(light: PointLight, normal: vec3<f32>, frag_pos: vec3<f32>, view_dir: vec3<f32>) -> vec3<f32> {
-    let light_dir = normalize(light.position - frag_pos);
+// Calculate directional light contribution
+fn calc_directional_light(light: DirectionalLight, normal: vec3<f32>, frag_pos: vec3<f32>, view_dir: vec3<f32>) -> vec3<f32> {
+    // Transform world space light direction to view space
+    let normal_matrix = mat3x3<f32>(
+        mvp.mv_matrix[0].xyz,
+        mvp.mv_matrix[1].xyz,
+        mvp.mv_matrix[2].xyz
+    );
+    let light_dir = normalize(normal_matrix * light.direction);
     
     // Diffuse shading
     let diff = max(dot(normal, light_dir), 0.0);
@@ -95,16 +101,12 @@ fn calc_point_light(light: PointLight, normal: vec3<f32>, frag_pos: vec3<f32>, v
     let halfway_dir = normalize(light_dir + view_dir);
     let spec = pow(max(dot(normal, halfway_dir), 0.0), 32.0);
     
-    // Attenuation (basic distance-based for now)
-    let distance = length(light.position - frag_pos);
-    let attenuation = 1.0 / (1.0 + 0.09 * distance + 0.032 * distance * distance);
-    
-    // Combine results
+    // Combine results (no attenuation for directional lights)
     let ambient = light.ambient;
     let diffuse = light.diffuse * diff;
     let specular = light.specular * spec;
     
-    return (ambient + diffuse + specular) * attenuation;
+    return ambient + diffuse + specular;
 }
 
 // Fragment shader
@@ -122,7 +124,7 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
     
     for (var i = 0; i < lighting.num_lights; i++) {
         if (i >= 8) { break; } // Safety check
-        result += calc_point_light(lighting.lights[i], normal, input.world_position, view_dir);
+        result += calc_directional_light(lighting.lights[i], normal, input.world_position, view_dir);
     }
     
     // If no lights, use ambient lighting

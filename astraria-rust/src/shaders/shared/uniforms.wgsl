@@ -13,7 +13,7 @@ struct StandardMVPUniform {
     far_plane_distance: f32,
     near_plane_distance: f32,
     fc_constant: f32,
-    camera_relative_transform: mat4x4<f32>,
+    mv_matrix: mat4x4<f32>,
     light_direction_camera_space: vec3<f32>,
     _padding3: f32,
 };

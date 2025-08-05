@@ -440,10 +440,11 @@ impl MainRenderer {
         });
 
         // Create default shader lighting bind group
-        use crate::renderer::shaders::default_shader::{LightingUniforms, PointLight};
+        use crate::renderer::shaders::default_shader::{DirectionalLight, LightingUniforms};
         let default_lighting = LightingUniforms {
-            lights: [PointLight {
-                position: [5.0, 5.0, 5.0],
+            lights: [DirectionalLight {
+                // Default sun direction: coming from upper right (WORLD SPACE)
+                direction: [1.0, 1.0, -1.0], // Will be normalized in shader
                 _padding1: 0.0,
                 ambient: [0.1, 0.1, 0.1],
                 _padding2: 0.0,
@@ -488,8 +489,10 @@ impl MainRenderer {
         // Create planet atmosphere shader bind groups
         use crate::renderer::shaders::planet_atmo_shader::{AtmosphereUniform, LightingUniform};
         let planet_lighting = LightingUniform {
-            lights: [crate::renderer::shaders::planet_atmo_shader::PointLight {
-                position: [5.0, 5.0, 5.0],
+            lights: [crate::renderer::shaders::planet_atmo_shader::DirectionalLight {
+                // Sun direction in WORLD SPACE - should be computed from actual sun position
+                // For now using a default direction
+                direction: [1.0, 0.0, 0.0], // Light coming from +X direction
                 _padding1: 0.0,
                 ambient: [0.1, 0.1, 0.1],
                 _padding2: 0.0,
@@ -541,11 +544,11 @@ impl MainRenderer {
             entries: &[
                 wgpu::BindGroupEntry {
                     binding: 0,
-                    resource: wgpu::BindingResource::TextureView(&earth_day_texture.view),
+                    resource: wgpu::BindingResource::TextureView(&earth_night_texture.view),
                 },
                 wgpu::BindGroupEntry {
                     binding: 1,
-                    resource: wgpu::BindingResource::TextureView(&earth_night_texture.view),
+                    resource: wgpu::BindingResource::TextureView(&earth_day_texture.view),
                 },
                 wgpu::BindGroupEntry {
                     binding: 2,
@@ -682,14 +685,14 @@ impl MainRenderer {
             far_plane_distance: self.max_view_distance,
             near_plane_distance: 1.0,
             fc_constant: 2.0 / (self.max_view_distance + 1.0).ln(),
-            camera_relative_transform: camera_relative_transform.to_cols_array_2d(),
+            mv_matrix: camera_relative_transform.to_cols_array_2d(),
             light_direction_camera_space: light_direction_camera_space.to_array(),
             _padding3: 0.0,
         };
 
         // Special case overrides for skybox
         if is_skybox {
-            uniform.camera_relative_transform = Mat4::IDENTITY.to_cols_array_2d();
+            uniform.mv_matrix = Mat4::IDENTITY.to_cols_array_2d();
             uniform.light_direction_camera_space = [0.0, 0.0, -1.0]; // Not used for skybox
         }
 
@@ -772,7 +775,20 @@ impl MainRenderer {
             RenderCommand::AtmosphericPlanet { .. } => {
                 let (scale, _rotation, translation) = transform.to_scale_rotation_translation();
                 let final_planet_position = translation.as_dvec3();
-                // For atmospheric planets, use sun at origin as light source
+
+                // TODO: CRITICAL - ATMOSPHERIC RENDERING BROKEN!
+                // The Java version expects actual star position to calculate light direction
+                // for atmospheric scattering effects. We're currently passing DVec3::ZERO
+                // which breaks the atmosphere rendering completely.
+                //
+                // SOLUTION NEEDED: We need to pass the actual star position, but in a
+                // magnitude-reduced form to avoid f32 precision issues. Options:
+                // 1. Pass star position relative to planet (star_pos - planet_pos)
+                // 2. Use camera-relative coordinates for both positions
+                // 3. Add star position to RenderCommand::AtmosphericPlanet
+                // 4. Implement a scene graph to track star-planet relationships
+                //
+                // For now using origin as star position which is WRONG!
                 let final_star_position = DVec3::ZERO;
                 self.compute_uniform_atmospheric(
                     final_planet_position,

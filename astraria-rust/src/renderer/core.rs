@@ -372,9 +372,9 @@ impl RenderSetup {
             _padding: [0.0; 4],
         };
 
-        use crate::renderer::buffers::PointLight;
-        let default_light = PointLight {
-            position: [2.0, 2.0, 2.0],
+        use crate::renderer::buffers::DirectionalLight;
+        let default_light = DirectionalLight {
+            direction: [1.0, 1.0, -1.0], // Light from upper right
             _padding1: 0.0,
             ambient: [0.1, 0.1, 0.1],
             _padding2: 0.0,
@@ -384,8 +384,8 @@ impl RenderSetup {
             _padding4: 0.0,
         };
 
-        let mut lights = [PointLight {
-            position: [0.0; 3],
+        let mut lights = [DirectionalLight {
+            direction: [0.0, 0.0, -1.0],
             _padding1: 0.0,
             ambient: [0.0; 3],
             _padding2: 0.0,

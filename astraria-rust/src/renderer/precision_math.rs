@@ -46,11 +46,11 @@ pub fn calculate_mvp_matrix_64bit_with_atmosphere(
     // Compute final MVP in 64-bit precision
     let mvp_matrix_64 = camera.projection_matrix() * final_view_matrix * model_matrix;
 
-    // Calculate proper camera-relative transform for atmospheric effects
-    // This transforms model-space vertices to camera-relative space where camera is at origin
-    // Only translation is needed - scale is handled by the model matrix
-    let camera_relative_object_pos = object_pos - camera.position();
-    let camera_relative_transform_64 = DMat4::from_translation(camera_relative_object_pos);
+    // Calculate modelView transform for atmospheric effects (matching Java implementation)
+    // This is model matrix * view matrix, which transforms vertices to view/camera space
+    // In view space, the camera is at origin (0,0,0)
+    let model_view_64 = final_view_matrix * model_matrix;
+    let camera_relative_transform_64 = model_view_64;
 
     // Calculate light direction in camera space (normalized, avoids large coordinates)
     let light_direction_camera_space = if let Some(light_world_pos) = light_pos {
