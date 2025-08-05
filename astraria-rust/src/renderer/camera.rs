@@ -298,41 +298,17 @@ impl Camera {
         self.position = position;
     }
 
-    pub fn look_at(&mut self, target: DVec3) {
-        // Calculate direction from camera to target
-        let direction = target - self.position;
+    pub fn look_at(&mut self, target: DVec3, distance: f64) {
+        // Reset to default rotation (looking down -Z)
+        self.rotation = Quat::IDENTITY;
 
-        // Check if target is at the same position as camera
-        if direction.length_squared() < 1e-10 {
-            log::warn!("Camera look_at: target is at the same position as camera, ignoring");
-            return;
-        }
-
-        let forward = direction.normalize().as_vec3();
-        let world_up = Vec3::Y;
-
-        // Create a look-at rotation quaternion
-        // Handle the case where we're looking straight up or down
-        let right = if forward.dot(world_up).abs() > 0.9999 {
-            Vec3::X // Use X as right when looking straight up/down
-        } else {
-            forward.cross(world_up).normalize()
-        };
-        let up = right.cross(forward).normalize();
-
-        // Create rotation quaternion from look-at matrix
-        // Note: we want -forward as the Z axis since camera looks down -Z
-        let rotation_matrix = glam::Mat3::from_cols(right, up, -forward);
-        self.rotation = Quat::from_mat3(&rotation_matrix);
+        // Position camera at specified distance along default direction
+        // Default direction is -Z, so we offset in +Z to look back at target
+        self.position = target + DVec3::new(0.0, 0.0, distance);
 
         log::debug!(
-            "Camera look_at: position=({:.2e}, {:.2e}, {:.2e}), target=({:.2e}, {:.2e}, {:.2e})",
-            self.position.x,
-            self.position.y,
-            self.position.z,
-            target.x,
-            target.y,
-            target.z
+            "Camera look_at: positioned at distance {:.2e} from target",
+            distance
         );
     }
 }

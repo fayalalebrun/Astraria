@@ -169,22 +169,14 @@ impl AstrariaApp {
                 };
 
                 // Position camera at 3x radius distance for good view
-                let camera_distance = (radius * 3.0) as f64;
+                let camera_distance = radius * 3.0;
                 let body_position = focus_body.position;
 
-                // Place camera slightly above and back from the body
-                let camera_position = glam::DVec3::new(
-                    body_position.x,
-                    body_position.y + camera_distance * 0.5,
-                    body_position.z + camera_distance,
-                );
+                // Use simplified look_at with distance parameter
+                renderer.set_camera_look_at(body_position, camera_distance as f64);
 
-                // Set camera position and look at the body
-                renderer.set_camera_position(camera_position);
-                renderer.set_camera_look_at(body_position);
-
-                log::info!("Camera positioned at ({:.2e}, {:.2e}, {:.2e}) looking at '{}' at ({:.2e}, {:.2e}, {:.2e})",
-                    camera_position.x, camera_position.y, camera_position.z,
+                log::info!("Camera positioned at distance {:.2e} looking at '{}' at ({:.2e}, {:.2e}, {:.2e})",
+                    camera_distance,
                     focus_body.name,
                     body_position.x, body_position.y, body_position.z);
             } else {

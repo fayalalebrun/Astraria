@@ -452,8 +452,8 @@ impl Renderer {
         self.main_renderer.camera.set_position(position);
     }
 
-    pub fn set_camera_look_at(&mut self, target: glam::DVec3) {
-        self.main_renderer.camera.look_at(target);
+    pub fn set_camera_look_at(&mut self, target: glam::DVec3, distance: f64) {
+        self.main_renderer.camera.look_at(target, distance);
     }
 
     pub fn device(&self) -> &Device {
