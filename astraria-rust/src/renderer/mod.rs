@@ -101,8 +101,7 @@ impl Renderer {
         };
 
         // Create MainRenderer with the surface and adapter to ensure device compatibility
-        let (main_renderer, surface) =
-            MainRenderer::with_surface(&instance, surface).await?;
+        let (main_renderer, surface) = MainRenderer::with_surface(&instance, surface).await?;
 
         // Get device and queue from MainRenderer
         let device = main_renderer.device();
@@ -211,7 +210,6 @@ impl Renderer {
                 .create_command_encoder(&wgpu::CommandEncoderDescriptor {
                     label: Some("Render Encoder"),
                 });
-
 
         self.lights.update(self.main_renderer.queue(), physics)?;
 
@@ -474,21 +472,38 @@ impl Renderer {
     pub fn handle_camera_input(
         &mut self,
         input: &mut crate::input::InputHandler,
+        delta_time: f32,
     ) -> AstrariaResult<()> {
-        use winit::event::VirtualKeyCode;
         use crate::renderer::camera::CameraMovement;
-        
-        // Handle WASD movement - only update when key state is pressed
+        use winit::event::VirtualKeyCode;
+
+        // Handle WASD movement - process movement when keys are pressed
         let camera = &mut self.main_renderer.camera;
-        
-        camera.process_keyboard(CameraMovement::Forward, input.is_key_pressed(&VirtualKeyCode::W));
-        camera.process_keyboard(CameraMovement::Backward, input.is_key_pressed(&VirtualKeyCode::S));
-        camera.process_keyboard(CameraMovement::Left, input.is_key_pressed(&VirtualKeyCode::A));
-        camera.process_keyboard(CameraMovement::Right, input.is_key_pressed(&VirtualKeyCode::D));
-        camera.process_keyboard(CameraMovement::Up, input.is_key_pressed(&VirtualKeyCode::Space));
-        camera.process_keyboard(CameraMovement::Down, input.is_key_pressed(&VirtualKeyCode::LShift));
-        camera.process_keyboard(CameraMovement::RollLeft, input.is_key_pressed(&VirtualKeyCode::Q));
-        camera.process_keyboard(CameraMovement::RollRight, input.is_key_pressed(&VirtualKeyCode::E));
+
+        if input.is_key_pressed(&VirtualKeyCode::W) {
+            camera.process_movement(CameraMovement::Forward, delta_time);
+        }
+        if input.is_key_pressed(&VirtualKeyCode::S) {
+            camera.process_movement(CameraMovement::Backward, delta_time);
+        }
+        if input.is_key_pressed(&VirtualKeyCode::A) {
+            camera.process_movement(CameraMovement::Left, delta_time);
+        }
+        if input.is_key_pressed(&VirtualKeyCode::D) {
+            camera.process_movement(CameraMovement::Right, delta_time);
+        }
+        if input.is_key_pressed(&VirtualKeyCode::Space) {
+            camera.process_movement(CameraMovement::Up, delta_time);
+        }
+        if input.is_key_pressed(&VirtualKeyCode::LShift) {
+            camera.process_movement(CameraMovement::Down, delta_time);
+        }
+        if input.is_key_pressed(&VirtualKeyCode::Q) {
+            camera.process_movement(CameraMovement::RollLeft, delta_time);
+        }
+        if input.is_key_pressed(&VirtualKeyCode::E) {
+            camera.process_movement(CameraMovement::RollRight, delta_time);
+        }
 
         // Handle mouse look
         if let Some((delta_x, delta_y)) = input.take_mouse_delta() {

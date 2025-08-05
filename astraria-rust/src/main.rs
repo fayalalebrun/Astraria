@@ -14,7 +14,7 @@ fn main() -> Result<()> {
     } else {
         "Solar_System_2K.txt".to_string()
     };
-    
+
     let focus_index = if args.len() > 2 {
         args[2].parse::<usize>().unwrap_or(0)
     } else {

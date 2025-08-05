@@ -10,7 +10,7 @@ const MAX_OBJECTS_PER_FRAME: u32 = 64; // Support up to 64 objects per frame
 use wgpu::{Device, Queue, RenderPass};
 
 use crate::{
-    assets::{AssetManager, CubemapAsset, TextureAsset, ModelAsset},
+    assets::{AssetManager, CubemapAsset, ModelAsset, TextureAsset},
     graphics::Mesh,
     renderer::{
         camera::Camera,
@@ -93,7 +93,7 @@ pub struct MainRenderer {
 
     // Geometry meshes for testing
     cube_mesh: Mesh,
-    sphere_model: Arc<ModelAsset>,  // Use loaded OBJ model for sphere
+    sphere_model: Arc<ModelAsset>, // Use loaded OBJ model for sphere
     quad_mesh: Mesh,
     line_mesh: Mesh,
     point_mesh: Mesh,
@@ -124,7 +124,9 @@ impl MainRenderer {
                 force_fallback_adapter: false,
             })
             .await
-            .ok_or_else(|| AstrariaError::Graphics("Failed to find a suitable graphics adapter".to_string()))?;
+            .ok_or_else(|| {
+                AstrariaError::Graphics("Failed to find a suitable graphics adapter".to_string())
+            })?;
 
         let (device, queue) = adapter
             .request_device(
@@ -152,7 +154,9 @@ impl MainRenderer {
                 force_fallback_adapter: false,
             })
             .await
-            .ok_or_else(|| AstrariaError::Graphics("Failed to find a suitable graphics adapter".to_string()))?;
+            .ok_or_else(|| {
+                AstrariaError::Graphics("Failed to find a suitable graphics adapter".to_string())
+            })?;
 
         let (device, queue) = adapter
             .request_device(
@@ -193,23 +197,52 @@ impl MainRenderer {
         let mut asset_manager = AssetManager::new().await?;
 
         // Load all required textures (using actual asset paths)
-        let earth_day_texture = asset_manager.load_texture(&device, &queue, "assets/Planet Textures/8k_earth_with_clouds.jpg").await?;
-        let earth_night_texture = asset_manager.load_texture(&device, &queue, "assets/Planet Textures/8k_earth_nightmap.jpg").await?;
-        let sun_texture = asset_manager.load_texture(&device, &queue, "assets/Planet Textures/8k_sun.jpg").await?;
-        let skybox_cubemap = asset_manager.load_cubemap(&device, &queue, "milkyway", &[
-            "assets/skybox/MilkyWayXP.png",  // +X (right)
-            "assets/skybox/MilkyWayXN.png",  // -X (left)
-            "assets/skybox/MilkyWayYP.png",  // +Y (top)
-            "assets/skybox/MilkyWayYN.png",  // -Y (bottom)
-            "assets/skybox/MilkyWayZP.png",  // +Z (front)
-            "assets/skybox/MilkyWayZN.png",  // -Z (back)
-        ]).await?;
-        let atmo_gradient_texture = asset_manager.load_texture(&device, &queue, "assets/atmoGradient.png").await?;
-        let star_glow_texture = asset_manager.load_texture(&device, &queue, "assets/star_glow.png").await?;
-        let star_spectrum_texture = asset_manager.load_texture(&device, &queue, "assets/star_spectrum_1D.png").await?;
-        
+        let earth_day_texture = asset_manager
+            .load_texture(
+                &device,
+                &queue,
+                "assets/Planet Textures/8k_earth_with_clouds.jpg",
+            )
+            .await?;
+        let earth_night_texture = asset_manager
+            .load_texture(
+                &device,
+                &queue,
+                "assets/Planet Textures/8k_earth_nightmap.jpg",
+            )
+            .await?;
+        let sun_texture = asset_manager
+            .load_texture(&device, &queue, "assets/Planet Textures/8k_sun.jpg")
+            .await?;
+        let skybox_cubemap = asset_manager
+            .load_cubemap(
+                &device,
+                &queue,
+                "milkyway",
+                &[
+                    "assets/skybox/MilkyWayXP.png", // +X (right)
+                    "assets/skybox/MilkyWayXN.png", // -X (left)
+                    "assets/skybox/MilkyWayYP.png", // +Y (top)
+                    "assets/skybox/MilkyWayYN.png", // -Y (bottom)
+                    "assets/skybox/MilkyWayZP.png", // +Z (front)
+                    "assets/skybox/MilkyWayZN.png", // -Z (back)
+                ],
+            )
+            .await?;
+        let atmo_gradient_texture = asset_manager
+            .load_texture(&device, &queue, "assets/atmoGradient.png")
+            .await?;
+        let star_glow_texture = asset_manager
+            .load_texture(&device, &queue, "assets/star_glow.png")
+            .await?;
+        let star_spectrum_texture = asset_manager
+            .load_texture(&device, &queue, "assets/star_spectrum_1D.png")
+            .await?;
+
         // Load sphere.obj model
-        let sphere_model = asset_manager.load_model(&device, "assets/models/sphere.obj").await?;
+        let sphere_model = asset_manager
+            .load_model(&device, "assets/models/sphere.obj")
+            .await?;
 
         // Initialize camera
         let mut camera = Camera::new(800.0 / 600.0); // aspect ratio
@@ -217,27 +250,27 @@ impl MainRenderer {
 
         // Create geometry meshes using test geometry
         use crate::graphics::test_geometry::{
-            create_test_cube, create_test_quad, 
-            create_test_line, create_test_point
+            create_test_cube, create_test_line, create_test_point, create_test_quad,
         };
-        
+
         let (cube_vertices, cube_indices) = create_test_cube();
         let cube_mesh = Mesh::new(&device, &cube_vertices, &cube_indices);
-        
+
         // Keep the Arc reference to the sphere model
-        
+
         let (quad_vertices, quad_indices) = create_test_quad();
         let quad_mesh = Mesh::new(&device, &quad_vertices, &quad_indices);
-        
+
         let (line_vertices, line_indices) = create_test_line();
         let line_mesh = Mesh::new(&device, &line_vertices, &line_indices);
-        
+
         let (point_vertices, point_indices) = create_test_point();
         let point_mesh = Mesh::new(&device, &point_vertices, &point_indices);
 
         // Create dynamic MVP bind group layout first
         use crate::renderer::uniforms::buffer_helpers::*;
-        let mvp_bind_group_layout = create_mvp_bind_group_layout_dynamic(&device, Some("Dynamic MVP Bind Group Layout"));
+        let mvp_bind_group_layout =
+            create_mvp_bind_group_layout_dynamic(&device, Some("Dynamic MVP Bind Group Layout"));
 
         // Create shaders
         let default_shader = DefaultShader::new(&device)?;
@@ -266,7 +299,12 @@ impl MainRenderer {
         });
 
         // Create dynamic MVP bind group using the already-created layout
-        let mvp_bind_group = create_dynamic_mvp_bind_group(&device, &mvp_bind_group_layout, &mvp_uniform_buffer, Some("Dynamic MVP Bind Group"));
+        let mvp_bind_group = create_dynamic_mvp_bind_group(
+            &device,
+            &mvp_bind_group_layout,
+            &mvp_uniform_buffer,
+            Some("Dynamic MVP Bind Group"),
+        );
 
         // Create default sampler
         let default_sampler = device.create_sampler(&wgpu::SamplerDescriptor {
@@ -335,11 +373,12 @@ impl MainRenderer {
             hole_position: [0.0, 0.0, 0.0],
             _padding: 0.0,
         };
-        let black_hole_uniform_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Black Hole Uniform Buffer"),
-            contents: bytemuck::cast_slice(&[black_hole_uniform]),
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-        });
+        let black_hole_uniform_buffer =
+            device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Black Hole Uniform Buffer"),
+                contents: bytemuck::cast_slice(&[black_hole_uniform]),
+                usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            });
         let black_hole_uniform_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: Some("Black Hole Uniform Bind Group"),
             layout: &black_hole_shader.uniform_bind_group_layout,
@@ -376,19 +415,20 @@ impl MainRenderer {
             mapped_at_creation: false,
         });
 
-        let transform_bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-            label: Some("Transform Bind Group Layout"),
-            entries: &[wgpu::BindGroupLayoutEntry {
-                binding: 0,
-                visibility: wgpu::ShaderStages::all(),
-                ty: wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Uniform,
-                    has_dynamic_offset: false,
-                    min_binding_size: None,
-                },
-                count: None,
-            }],
-        });
+        let transform_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: Some("Transform Bind Group Layout"),
+                entries: &[wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::all(),
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                }],
+            });
 
         let transform_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: Some("Transform Bind Group"),
@@ -415,11 +455,12 @@ impl MainRenderer {
             num_lights: 1,
             _padding: [0.0, 0.0, 0.0],
         };
-        let default_lighting_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Default Lighting Buffer"),
-            contents: bytemuck::cast_slice(&[default_lighting]),
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-        });
+        let default_lighting_buffer =
+            device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Default Lighting Buffer"),
+                contents: bytemuck::cast_slice(&[default_lighting]),
+                usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            });
         let default_lighting_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: Some("Default Lighting Bind Group"),
             layout: &default_shader.lighting_bind_group_layout,
@@ -610,14 +651,18 @@ impl MainRenderer {
     }
 
     /// Update camera with movement and GPU uniforms
-    pub fn update_camera(&mut self, delta_time: f32) {
-        self.camera.update_movement(delta_time);
-        self.camera.update(&self.queue);
+    pub fn update_camera(&mut self, _delta_time: f32) {
+        // Camera movement is now handled directly through process_movement calls
+        // GPU uniforms are calculated on-demand via get_uniform()
     }
 
     /// Compute MVP matrix using 64-bit precision to eliminate NaN issues at astronomical distances
     /// This function takes object position and scale in double precision and returns 32-bit uniform
-    fn compute_mvp_matrix(&self, object_position: DVec3, object_scale: DVec3) -> StandardMVPUniform {
+    fn compute_mvp_matrix(
+        &self,
+        object_position: DVec3,
+        object_scale: DVec3,
+    ) -> StandardMVPUniform {
         let mvp_matrix = calculate_mvp_matrix_64bit(
             self.camera.position(),
             self.camera.direction(),
@@ -639,7 +684,7 @@ impl MainRenderer {
             near_plane_distance: 1.0,
             fc_constant: 2.0 / (self.max_view_distance + 1.0).ln(),
             camera_to_object_transform: Mat4::IDENTITY.to_cols_array_2d(), // Default
-            light_direction_camera_space: [0.0, 0.0, -1.0], // Default
+            light_direction_camera_space: [0.0, 0.0, -1.0],                // Default
             _padding3: 0.0,
         }
     }
@@ -652,16 +697,17 @@ impl MainRenderer {
         planet_scale: DVec3,
         star_position: DVec3,
     ) -> StandardMVPUniform {
-        let (mvp_matrix, camera_to_object_transform, light_direction_camera_space) = calculate_mvp_matrix_64bit_with_atmosphere(
-            self.camera.position(),
-            self.camera.direction(),
-            self.camera.up(), // Use camera's actual up vector
-            planet_position,
-            planet_scale,
-            self.camera.projection_matrix(),
-            false, // Not skybox
-            Some(star_position),
-        );
+        let (mvp_matrix, camera_to_object_transform, light_direction_camera_space) =
+            calculate_mvp_matrix_64bit_with_atmosphere(
+                self.camera.position(),
+                self.camera.direction(),
+                self.camera.up(), // Use camera's actual up vector
+                planet_position,
+                planet_scale,
+                self.camera.projection_matrix(),
+                false, // Not skybox
+                Some(star_position),
+            );
 
         StandardMVPUniform {
             mvp_matrix: mvp_matrix.to_cols_array_2d(),
@@ -686,12 +732,12 @@ impl MainRenderer {
             self.camera.position(),
             self.camera.direction(),
             self.camera.up(), // Use camera's actual up vector
-            DVec3::ZERO, // Skybox doesn't need translation
-            DVec3::ONE,  // Default scale
+            DVec3::ZERO,      // Skybox doesn't need translation
+            DVec3::ONE,       // Default scale
             self.camera.projection_matrix(),
             true, // Is skybox - removes translation
         );
-        
+
         StandardMVPUniform {
             mvp_matrix: mvp_matrix.to_cols_array_2d(),
             camera_position: self.camera.position().as_vec3().to_array(),
@@ -703,7 +749,7 @@ impl MainRenderer {
             near_plane_distance: 1.0,
             fc_constant: 2.0 / (self.max_view_distance + 1.0).ln(),
             camera_to_object_transform: Mat4::IDENTITY.to_cols_array_2d(), // No transform for skybox
-            light_direction_camera_space: [0.0, 0.0, -1.0], // Not used for skybox
+            light_direction_camera_space: [0.0, 0.0, -1.0],                // Not used for skybox
             _padding3: 0.0,
         }
     }
@@ -729,14 +775,14 @@ impl MainRenderer {
         let uniform_array = [uniform];
         let uniform_bytes = bytemuck::cast_slice(&uniform_array);
         let mut padded_data = vec![0u8; MVP_UNIFORM_ALIGNED_SIZE as usize];
-        
+
         // Copy the actual uniform data (first 240 bytes)
         let copy_size = uniform_bytes.len().min(padded_data.len());
         padded_data[..copy_size].copy_from_slice(&uniform_bytes[..copy_size]);
-        
+
         // Append to frame data
         self.frame_mvp_data.extend_from_slice(&padded_data);
-        
+
         // Update offset for next allocation
         self.current_mvp_offset += MVP_UNIFORM_ALIGNED_SIZE;
 

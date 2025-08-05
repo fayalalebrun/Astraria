@@ -60,7 +60,11 @@ async fn save_render(
                     light_color: Vec3::new(1.0, 1.0, 1.0),
                 };
                 renderer.begin_frame();
-                renderer.prepare_render_command(command, Mat4::from_translation(Vec3::new(0.0, 0.0, -2.0)) * Mat4::from_scale(Vec3::splat(1.5)));
+                renderer.prepare_render_command(
+                    command,
+                    Mat4::from_translation(Vec3::new(0.0, 0.0, -2.0))
+                        * Mat4::from_scale(Vec3::splat(1.5)),
+                );
                 renderer.upload_frame_mvp_data();
                 renderer.execute_prepared_commands(&mut rp);
             }
@@ -71,7 +75,11 @@ async fn save_render(
                     light_color: Vec3::new(1.0, 1.0, 1.0),
                 };
                 renderer.begin_frame();
-                renderer.prepare_render_command(command, Mat4::from_translation(Vec3::new(0.0, 0.0, -2.0)) * Mat4::from_scale(Vec3::splat(1.5)));
+                renderer.prepare_render_command(
+                    command,
+                    Mat4::from_translation(Vec3::new(0.0, 0.0, -2.0))
+                        * Mat4::from_scale(Vec3::splat(1.5)),
+                );
                 renderer.upload_frame_mvp_data();
                 renderer.execute_prepared_commands(&mut rp);
             }
@@ -84,7 +92,11 @@ async fn save_render(
                     use_ambient_texture: true,
                 };
                 renderer.begin_frame();
-                renderer.prepare_render_command(command, Mat4::from_translation(Vec3::new(0.0, 0.0, -2.5)) * Mat4::from_scale(Vec3::splat(1.8)));
+                renderer.prepare_render_command(
+                    command,
+                    Mat4::from_translation(Vec3::new(0.0, 0.0, -2.5))
+                        * Mat4::from_scale(Vec3::splat(1.8)),
+                );
                 renderer.upload_frame_mvp_data();
                 renderer.execute_prepared_commands(&mut rp);
             }
@@ -95,7 +107,11 @@ async fn save_render(
                     camera_position: Vec3::new(0.0, 0.0, 3.0),
                 };
                 renderer.begin_frame();
-                renderer.prepare_render_command(command, Mat4::from_translation(Vec3::new(0.0, 0.0, -2.5)) * Mat4::from_scale(Vec3::splat(1.8)));
+                renderer.prepare_render_command(
+                    command,
+                    Mat4::from_translation(Vec3::new(0.0, 0.0, -2.5))
+                        * Mat4::from_scale(Vec3::splat(1.8)),
+                );
                 renderer.upload_frame_mvp_data();
                 renderer.execute_prepared_commands(&mut rp);
             }
@@ -132,32 +148,49 @@ async fn save_render(
                     color: Vec4::new(0.0, 1.0, 0.0, 1.0), // Green lines
                 };
                 renderer.begin_frame();
-                renderer.prepare_render_command(command, Mat4::from_translation(Vec3::new(0.0, 0.0, -2.0)) * Mat4::from_scale(Vec3::splat(5.0)));
+                renderer.prepare_render_command(
+                    command,
+                    Mat4::from_translation(Vec3::new(0.0, 0.0, -2.0))
+                        * Mat4::from_scale(Vec3::splat(5.0)),
+                );
                 renderer.upload_frame_mvp_data();
                 renderer.execute_prepared_commands(&mut rp);
             }
             9 => {
                 let command = RenderCommand::Point;
                 renderer.begin_frame();
-                renderer.prepare_render_command(command, Mat4::from_translation(Vec3::new(0.0, 0.0, -2.0)) * Mat4::from_scale(Vec3::splat(5.0)));
+                renderer.prepare_render_command(
+                    command,
+                    Mat4::from_translation(Vec3::new(0.0, 0.0, -2.0))
+                        * Mat4::from_scale(Vec3::splat(5.0)),
+                );
                 renderer.upload_frame_mvp_data();
                 renderer.execute_prepared_commands(&mut rp);
             }
             10 => {
                 // Near objects test (0.5, 1.0, 2.0 units from camera) - prepare all commands first
                 renderer.begin_frame();
-                
+
                 let command = RenderCommand::Default {
                     mesh_type: MeshType::Sphere,
                     light_position: Vec3::new(2.0, 2.0, 2.0),
                     light_color: Vec3::new(1.0, 1.0, 1.0),
                 };
-                
+
                 // Prepare all three spheres
-                renderer.prepare_render_command(command.clone(), Mat4::from_translation(Vec3::new(-2.0, 0.0, -0.5)));
-                renderer.prepare_render_command(command.clone(), Mat4::from_translation(Vec3::new(0.0, 0.0, -1.0)));
-                renderer.prepare_render_command(command.clone(), Mat4::from_translation(Vec3::new(2.0, 0.0, -2.0)));
-                
+                renderer.prepare_render_command(
+                    command.clone(),
+                    Mat4::from_translation(Vec3::new(-2.0, 0.0, -0.5)),
+                );
+                renderer.prepare_render_command(
+                    command.clone(),
+                    Mat4::from_translation(Vec3::new(0.0, 0.0, -1.0)),
+                );
+                renderer.prepare_render_command(
+                    command.clone(),
+                    Mat4::from_translation(Vec3::new(2.0, 0.0, -2.0)),
+                );
+
                 // Upload once and execute all
                 renderer.upload_frame_mvp_data();
                 renderer.execute_prepared_commands(&mut rp);
@@ -165,18 +198,27 @@ async fn save_render(
             11 => {
                 // Medium distance test (10, 50, 100 units)
                 renderer.begin_frame();
-                
+
                 let command = RenderCommand::Default {
                     mesh_type: MeshType::Cube,
                     light_position: Vec3::new(2.0, 2.0, 2.0),
                     light_color: Vec3::new(1.0, 1.0, 1.0),
                 };
-                
+
                 // Prepare all three cubes
-                renderer.prepare_render_command(command.clone(), Mat4::from_translation(Vec3::new(-20.0, 0.0, -10.0)));
-                renderer.prepare_render_command(command.clone(), Mat4::from_translation(Vec3::new(0.0, 0.0, -50.0)));
-                renderer.prepare_render_command(command.clone(), Mat4::from_translation(Vec3::new(20.0, 0.0, -100.0)));
-                
+                renderer.prepare_render_command(
+                    command.clone(),
+                    Mat4::from_translation(Vec3::new(-20.0, 0.0, -10.0)),
+                );
+                renderer.prepare_render_command(
+                    command.clone(),
+                    Mat4::from_translation(Vec3::new(0.0, 0.0, -50.0)),
+                );
+                renderer.prepare_render_command(
+                    command.clone(),
+                    Mat4::from_translation(Vec3::new(20.0, 0.0, -100.0)),
+                );
+
                 // Upload once and execute all
                 renderer.upload_frame_mvp_data();
                 renderer.execute_prepared_commands(&mut rp);
@@ -184,18 +226,30 @@ async fn save_render(
             12 => {
                 // Far distance test - keep objects reasonable but scale them up
                 renderer.begin_frame();
-                
+
                 let command = RenderCommand::Default {
                     mesh_type: MeshType::Sphere,
                     light_position: Vec3::new(200.0, 200.0, 200.0),
                     light_color: Vec3::new(1.0, 1.0, 1.0),
                 };
-                
+
                 // Prepare three different sized spheres at far distances
-                renderer.prepare_render_command(command.clone(), Mat4::from_translation(Vec3::new(-200.0, 0.0, -100.0)) * Mat4::from_scale(Vec3::splat(20.0)));
-                renderer.prepare_render_command(command.clone(), Mat4::from_translation(Vec3::new(0.0, 0.0, -500.0)) * Mat4::from_scale(Vec3::splat(80.0)));
-                renderer.prepare_render_command(command.clone(), Mat4::from_translation(Vec3::new(200.0, 0.0, -1000.0)) * Mat4::from_scale(Vec3::splat(200.0)));
-                
+                renderer.prepare_render_command(
+                    command.clone(),
+                    Mat4::from_translation(Vec3::new(-200.0, 0.0, -100.0))
+                        * Mat4::from_scale(Vec3::splat(20.0)),
+                );
+                renderer.prepare_render_command(
+                    command.clone(),
+                    Mat4::from_translation(Vec3::new(0.0, 0.0, -500.0))
+                        * Mat4::from_scale(Vec3::splat(80.0)),
+                );
+                renderer.prepare_render_command(
+                    command.clone(),
+                    Mat4::from_translation(Vec3::new(200.0, 0.0, -1000.0))
+                        * Mat4::from_scale(Vec3::splat(200.0)),
+                );
+
                 // Upload once and execute all
                 renderer.upload_frame_mvp_data();
                 renderer.execute_prepared_commands(&mut rp);
@@ -203,18 +257,30 @@ async fn save_render(
             13 => {
                 // Large scale test - test the logarithmic depth precision
                 renderer.begin_frame();
-                
+
                 let command = RenderCommand::Default {
                     mesh_type: MeshType::Cube,
                     light_position: Vec3::new(5000.0, 5000.0, 5000.0),
                     light_color: Vec3::new(1.0, 1.0, 1.0),
                 };
-                
+
                 // Prepare large objects at progressively farther distances
-                renderer.prepare_render_command(command.clone(), Mat4::from_translation(Vec3::new(-10000.0, 0.0, -10000.0)) * Mat4::from_scale(Vec3::splat(2000.0)));
-                renderer.prepare_render_command(command.clone(), Mat4::from_translation(Vec3::new(0.0, 0.0, -100000.0)) * Mat4::from_scale(Vec3::splat(20000.0)));
-                renderer.prepare_render_command(command.clone(), Mat4::from_translation(Vec3::new(10000.0, 0.0, -500000.0)) * Mat4::from_scale(Vec3::splat(100000.0)));
-                
+                renderer.prepare_render_command(
+                    command.clone(),
+                    Mat4::from_translation(Vec3::new(-10000.0, 0.0, -10000.0))
+                        * Mat4::from_scale(Vec3::splat(2000.0)),
+                );
+                renderer.prepare_render_command(
+                    command.clone(),
+                    Mat4::from_translation(Vec3::new(0.0, 0.0, -100000.0))
+                        * Mat4::from_scale(Vec3::splat(20000.0)),
+                );
+                renderer.prepare_render_command(
+                    command.clone(),
+                    Mat4::from_translation(Vec3::new(10000.0, 0.0, -500000.0))
+                        * Mat4::from_scale(Vec3::splat(100000.0)),
+                );
+
                 // Upload once and execute all
                 renderer.upload_frame_mvp_data();
                 renderer.execute_prepared_commands(&mut rp);
