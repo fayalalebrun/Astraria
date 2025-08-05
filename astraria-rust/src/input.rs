@@ -134,7 +134,7 @@ impl InputHandler {
         // Only store mouse delta for camera look when right mouse button is pressed (like Java)
         if self.mouse_pressed && (delta_x.abs() > 0.1 || delta_y.abs() > 0.1) {
             // Pass raw pixel deltas to camera (Java behavior - no scaling here)
-            let mouse_delta = (delta_x, -delta_y);
+            let mouse_delta = (-delta_x, delta_y);
             log::debug!(
                 "Mouse movement: delta=({:.2}, {:.2}) -> camera_delta=({:.2}, {:.2})",
                 delta_x,
