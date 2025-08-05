@@ -1,9 +1,13 @@
 /// Default shader for planet and object rendering with PBR lighting
 /// Equivalent to the Java DefaultShader class
+use std::path::Path;
 use wgpu::{Buffer, Device, Queue, RenderPass, RenderPipeline};
 
 use crate::{
-    assets::ModelAsset, graphics::Vertex, renderer::uniforms::StandardMVPUniform, AstrariaResult,
+    assets::ModelAsset,
+    graphics::Vertex,
+    renderer::{shader_utils::load_preprocessed_wgsl, uniforms::StandardMVPUniform},
+    AstrariaResult,
 };
 
 #[repr(C)]
@@ -37,9 +41,12 @@ pub struct DefaultShader {
 
 impl DefaultShader {
     pub fn new(device: &Device) -> AstrariaResult<Self> {
+        let shader_path = Path::new("src/shaders/default.wgsl");
+        let shader_source = load_preprocessed_wgsl(shader_path)
+            .map_err(|e| crate::AstrariaError::Graphics(format!("Failed to load shader: {}", e)))?;
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Default Shader"),
-            source: wgpu::ShaderSource::Wgsl(include_str!("../../shaders/default.wgsl").into()),
+            source: wgpu::ShaderSource::Wgsl(shader_source.into()),
         });
 
         // MVP bind group layout (group 0) - use dynamic layout for compatibility with MainRenderer

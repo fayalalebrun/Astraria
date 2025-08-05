@@ -1,5 +1,7 @@
+use crate::renderer::shader_utils::load_preprocessed_wgsl;
 use crate::{graphics::Vertex, AstrariaResult};
 use glam::Vec3;
+use std::path::Path;
 /// Sun shader for stellar temperature rendering (800K-30000K)
 /// Based on Java SunShader class implementation
 use wgpu::{BindGroup, BindGroupLayout, Buffer, Device, Queue, RenderPass, RenderPipeline};
@@ -9,12 +11,13 @@ use wgpu::{BindGroup, BindGroupLayout, Buffer, Device, Queue, RenderPass, Render
 pub struct SunUniform {
     pub temperature: f32, // Star temperature in Kelvin (800-30000)
     pub _padding1: f32,
-    pub camera_to_sun_direction: [f32; 3], // Direction from camera to sun
     pub _padding2: f32,
-    pub sun_position: [f32; 3], // Sun position in world coordinates
     pub _padding3: f32,
+    pub camera_to_sun_direction: [f32; 3], // Direction from camera to sun (16-byte aligned)
     pub _padding4: f32,
+    pub sun_position: [f32; 3], // Sun position relative to camera (16-byte aligned)
     pub _padding5: f32,
+    pub _padding6: [f32; 16], // Additional padding to reach 112 bytes (64 bytes = 16 f32s)
 }
 
 pub struct SunShader {
@@ -31,9 +34,12 @@ impl SunShader {
         camera_bind_group_layout: &BindGroupLayout,
     ) -> AstrariaResult<Self> {
         // Load shader
+        let shader_path = Path::new("src/shaders/sun_shader.wgsl");
+        let shader_source = load_preprocessed_wgsl(shader_path)
+            .map_err(|e| crate::AstrariaError::Graphics(format!("Failed to load shader: {}", e)))?;
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Sun Shader"),
-            source: wgpu::ShaderSource::Wgsl(include_str!("../../shaders/sun_shader.wgsl").into()),
+            source: wgpu::ShaderSource::Wgsl(shader_source.into()),
         });
 
         // Create sun-specific bind group layout
@@ -181,12 +187,13 @@ impl SunShader {
         let uniforms = SunUniform {
             temperature,
             _padding1: 0.0,
-            camera_to_sun_direction: camera_to_sun.to_array(),
             _padding2: 0.0,
-            sun_position: sun_position.to_array(),
             _padding3: 0.0,
+            camera_to_sun_direction: camera_to_sun.to_array(),
             _padding4: 0.0,
+            sun_position: sun_position.to_array(),
             _padding5: 0.0,
+            _padding6: [0.0; 16],
         };
 
         queue.write_buffer(&self.uniform_buffer, 0, bytemuck::cast_slice(&[uniforms]));

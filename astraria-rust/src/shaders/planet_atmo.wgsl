@@ -1,25 +1,7 @@
 // Atmospheric planet shader with Fresnel effects and scattering
-// Refactored to use standardized MVP matrix approach with 64-bit precision calculations
+// Uses shared uniform definitions for consistency
 
-// Standardized MVP uniform structure (shared across all shaders)
-struct StandardMVPUniform {
-    mvp_matrix: mat4x4<f32>,
-    camera_position: vec3<f32>,
-    _padding1: f32,
-    camera_direction: vec3<f32>,
-    _padding2: f32,
-    log_depth_constant: f32,
-    far_plane_distance: f32,
-    near_plane_distance: f32,
-    fc_constant: f32,
-    // Relative transforms for atmospheric effects (avoiding large coordinate precision issues)
-    camera_to_object_transform: mat4x4<f32>,  // Relative transform from camera to object
-    light_direction_camera_space: vec3<f32>,  // Light direction in camera space (normalized)
-    _padding3: f32,
-};
-
-@group(0) @binding(0)
-var<uniform> mvp: StandardMVPUniform;
+//!include src/shaders/shared/uniforms.wgsl
 
 struct PointLight {
     position: vec3<f32>,
@@ -39,14 +21,10 @@ struct LightingUniform {
 };
 
 struct AtmosphereUniform {
-    star_position: vec3<f32>,
-    _padding1: f32,
-    planet_position: vec3<f32>,
-    _padding2: f32,
     atmosphere_color_mod: vec4<f32>,
     overglow: f32,
     use_ambient_texture: i32,
-    _padding3: vec2<f32>,
+    _padding: vec2<f32>,
 };
 
 struct VertexInput {
@@ -149,9 +127,9 @@ fn vs_main(input: VertexInput) -> VertexOutput {
         mvp.far_plane_distance
     );
     
-    // Use relative coordinates for atmospheric effects (avoids large coordinate precision issues)
-    // Transform vertex to camera-relative space using the precomputed transform
-    out.pixel_pos = (mvp.camera_to_object_transform * vertex_position).xyz;
+    // Transform vertex to camera-relative space for atmospheric effects
+    // This puts the camera at origin and keeps coordinates manageable for f32 precision
+    out.pixel_pos = (mvp.camera_relative_transform * vertex_position).xyz;
     out.pixel_normal = normalize(input.normal);
     out.tex_coords = input.tex_coord;
     

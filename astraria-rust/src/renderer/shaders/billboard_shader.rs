@@ -1,6 +1,8 @@
+use crate::renderer::shader_utils::load_preprocessed_wgsl;
 /// Billboard shader for screen-aligned sprite rendering
 /// Now uses shared uniform buffers from MainRenderer
 use bytemuck::{Pod, Zeroable};
+use std::path::Path;
 use wgpu::{Device, Queue, RenderPipeline};
 
 use crate::{graphics::Vertex, AstrariaResult};
@@ -25,9 +27,12 @@ pub struct BillboardShader {
 
 impl BillboardShader {
     pub fn new(device: &Device, _queue: &Queue) -> AstrariaResult<Self> {
+        let shader_path = Path::new("src/shaders/billboard.wgsl");
+        let shader_source = load_preprocessed_wgsl(shader_path)
+            .map_err(|e| crate::AstrariaError::Graphics(format!("Failed to load shader: {}", e)))?;
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Billboard Shader"),
-            source: wgpu::ShaderSource::Wgsl(include_str!("../../shaders/billboard.wgsl").into()),
+            source: wgpu::ShaderSource::Wgsl(shader_source.into()),
         });
 
         // Use shared bind group layouts from MainRenderer

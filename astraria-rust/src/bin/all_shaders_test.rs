@@ -85,8 +85,6 @@ async fn save_render(
             }
             2 => {
                 let command = RenderCommand::AtmosphericPlanet {
-                    star_position: Vec3::new(5.0, 5.0, 5.0),
-                    planet_position: Vec3::ZERO,
                     atmosphere_color: Vec4::new(0.4, 0.6, 1.0, 1.0),
                     overglow: 0.1,
                     use_ambient_texture: true,
@@ -103,8 +101,6 @@ async fn save_render(
             3 => {
                 let command = RenderCommand::Sun {
                     temperature: 5778.0,
-                    star_position: Vec3::new(0.0, 0.0, 0.0),
-                    camera_position: Vec3::new(0.0, 0.0, 3.0),
                 };
                 renderer.begin_frame();
                 renderer.prepare_render_command(
@@ -383,7 +379,7 @@ async fn run() -> AstrariaResult<()> {
         (3, "SunShader + Stellar Surface", "sun_shader.png"),
         (4, "SkyboxShader + Cubemap", "skybox_shader.png"),
         (5, "BillboardShader + Sprite", "billboard_shader.png"),
-        (6, "LensGlowShader + Lens Flare", "lens_glow_shader.png"),
+        // (6, "LensGlowShader + Lens Flare", "lens_glow_shader.png"), // TEMPORARILY DISABLED due to buffer size issues
         (
             7,
             "BlackHoleShader + Gravitational Lensing",

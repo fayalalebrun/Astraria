@@ -572,19 +572,13 @@ pub enum RenderCommand {
 
     /// Planet with atmospheric scattering
     AtmosphericPlanet {
-        star_position: Vec3,
-        planet_position: Vec3,
         atmosphere_color: glam::Vec4,
         overglow: f32,
         use_ambient_texture: bool,
     },
 
     /// Sun/star with stellar surface rendering
-    Sun {
-        temperature: f32,
-        star_position: Vec3,
-        camera_position: Vec3,
-    },
+    Sun { temperature: f32 },
 
     /// Skybox background
     Skybox,

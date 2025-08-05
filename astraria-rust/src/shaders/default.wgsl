@@ -1,21 +1,7 @@
 // Default shader for basic 3D object rendering
-// Refactored to use standardized MVP matrix approach with 64-bit precision calculations
+// Uses shared uniform definitions for consistency
 
-// Standardized MVP uniform structure (shared across all shaders)
-struct StandardMVPUniform {
-    mvp_matrix: mat4x4<f32>,
-    camera_position: vec3<f32>,
-    _padding1: f32,
-    camera_direction: vec3<f32>,
-    _padding2: f32,
-    log_depth_constant: f32,
-    far_plane_distance: f32,
-    near_plane_distance: f32,
-    fc_constant: f32,
-};
-
-@group(0) @binding(0)
-var<uniform> mvp: StandardMVPUniform;
+//!include src/shaders/shared/uniforms.wgsl
 
 // Point light structure (matches original Java implementation)
 struct PointLight {
@@ -79,13 +65,10 @@ fn vs_main(input: VertexInput) -> VertexOutput {
     // Use pre-computed MVP matrix (calculated with 64-bit precision on CPU)
     let vertex_position = vec4<f32>(input.position, 1.0);
     
-    // For world position, we need to extract just the model transform part
-    // Since MVP = P * V * M, we approximate world position for lighting
-    // Note: This is a simplification - for precise lighting, we'd need separate model matrix
-    out.world_position = input.position; // Approximate for basic lighting
+    // Use vertex position as approximate world position (simplified)
+    out.world_position = input.position;
     
-    // Transform normal (for basic lighting, use vertex normal as-is)
-    // Note: For precise lighting, we'd need a separate normal matrix
+    // Use vertex normal as world normal (simplified - no transformation)
     out.world_normal = normalize(input.normal);
     
     // Use logarithmic depth buffer with pre-computed MVP matrix

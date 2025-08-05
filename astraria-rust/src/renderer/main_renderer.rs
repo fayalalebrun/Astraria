@@ -15,7 +15,7 @@ use crate::{
     renderer::{
         camera::Camera,
         core::{MeshType, RenderCommand, *},
-        precision_math::{calculate_mvp_matrix_64bit, calculate_mvp_matrix_64bit_with_atmosphere},
+        precision_math::calculate_mvp_matrix_64bit_with_atmosphere,
         shaders::{
             BillboardShader, BlackHoleShader, DefaultShader, LensGlowShader, LineShader,
             PlanetAtmoShader, PointShader, SkyboxShader, SunShader,
@@ -502,14 +502,10 @@ impl MainRenderer {
             _padding: [0, 0, 0, 0, 0, 0, 0],
         };
         let planet_atmosphere = AtmosphereUniform {
-            planet_position: [0.0, 0.0, 0.0],
-            _padding1: 0.0,
-            star_position: [5.0, 5.0, 5.0],
-            _padding2: 0.0,
             atmosphere_color_mod: [0.4, 0.6, 1.0, 1.0],
             overglow: 0.1,
             use_ambient_texture: 1,
-            _padding3: [0.0, 0.0],
+            _padding: [0.0, 0.0],
         };
 
         let planet_lighting_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
@@ -656,24 +652,27 @@ impl MainRenderer {
         // GPU uniforms are calculated on-demand via get_uniform()
     }
 
-    /// Compute MVP matrix using 64-bit precision to eliminate NaN issues at astronomical distances
-    /// This function takes object position and scale in double precision and returns 32-bit uniform
-    fn compute_mvp_matrix(
+    /// Unified uniform computation method that handles all rendering cases
+    /// Uses 64-bit precision for astronomical coordinates and converts to 32-bit for GPU
+    pub fn compute_uniform(
         &self,
         object_position: DVec3,
         object_scale: DVec3,
+        light_position: Option<DVec3>,
+        is_skybox: bool,
     ) -> StandardMVPUniform {
-        let mvp_matrix = calculate_mvp_matrix_64bit(
-            self.camera.position(),
-            self.camera.direction(),
-            self.camera.up(), // Use camera's actual up vector
-            object_position,
-            object_scale,
-            self.camera.projection_matrix(),
-            false, // Not skybox
-        );
+        // Use the unified atmospheric computation for all cases
+        let (mvp_matrix, camera_relative_transform, light_direction_camera_space) =
+            calculate_mvp_matrix_64bit_with_atmosphere(
+                &self.camera,
+                object_position,
+                object_scale,
+                is_skybox,
+                light_position, // None for basic objects, Some(pos) for atmospheric
+            );
 
-        StandardMVPUniform {
+        // Create the unified uniform
+        let mut uniform = StandardMVPUniform {
             mvp_matrix: mvp_matrix.to_cols_array_2d(),
             camera_position: self.camera.position().as_vec3().to_array(),
             _padding1: 0.0,
@@ -683,75 +682,42 @@ impl MainRenderer {
             far_plane_distance: self.max_view_distance,
             near_plane_distance: 1.0,
             fc_constant: 2.0 / (self.max_view_distance + 1.0).ln(),
-            camera_to_object_transform: Mat4::IDENTITY.to_cols_array_2d(), // Default
-            light_direction_camera_space: [0.0, 0.0, -1.0],                // Default
+            camera_relative_transform: camera_relative_transform.to_cols_array_2d(),
+            light_direction_camera_space: light_direction_camera_space.to_array(),
             _padding3: 0.0,
+        };
+
+        // Special case overrides for skybox
+        if is_skybox {
+            uniform.camera_relative_transform = Mat4::IDENTITY.to_cols_array_2d();
+            uniform.light_direction_camera_space = [0.0, 0.0, -1.0]; // Not used for skybox
         }
+
+        uniform
     }
 
-    /// Compute MVP matrix with atmospheric data for planetary rendering
-    /// Includes relative coordinates between star and planet for atmospheric scattering
-    fn compute_mvp_matrix_with_atmosphere(
+    /// Convenience method for basic object rendering (no atmospheric effects)
+    pub fn compute_uniform_basic(
+        &self,
+        object_position: DVec3,
+        object_scale: DVec3,
+    ) -> StandardMVPUniform {
+        self.compute_uniform(object_position, object_scale, None, false)
+    }
+
+    /// Convenience method for atmospheric planet rendering
+    pub fn compute_uniform_atmospheric(
         &self,
         planet_position: DVec3,
         planet_scale: DVec3,
         star_position: DVec3,
     ) -> StandardMVPUniform {
-        let (mvp_matrix, camera_to_object_transform, light_direction_camera_space) =
-            calculate_mvp_matrix_64bit_with_atmosphere(
-                self.camera.position(),
-                self.camera.direction(),
-                self.camera.up(), // Use camera's actual up vector
-                planet_position,
-                planet_scale,
-                self.camera.projection_matrix(),
-                false, // Not skybox
-                Some(star_position),
-            );
-
-        StandardMVPUniform {
-            mvp_matrix: mvp_matrix.to_cols_array_2d(),
-            camera_position: self.camera.position().as_vec3().to_array(),
-            _padding1: 0.0,
-            camera_direction: self.camera.direction().to_array(),
-            _padding2: 0.0,
-            log_depth_constant: self.log_depth_constant,
-            far_plane_distance: self.max_view_distance,
-            near_plane_distance: 1.0,
-            fc_constant: 2.0 / (self.max_view_distance + 1.0).ln(),
-            camera_to_object_transform: camera_to_object_transform.to_cols_array_2d(),
-            light_direction_camera_space: light_direction_camera_space.to_array(),
-            _padding3: 0.0,
-        }
+        self.compute_uniform(planet_position, planet_scale, Some(star_position), false)
     }
 
-    /// Compute MVP matrix for skybox (with translation completely removed) using 64-bit precision
-    /// This ensures the skybox always appears infinitely far away
-    fn compute_skybox_mvp_matrix(&self) -> StandardMVPUniform {
-        let mvp_matrix = calculate_mvp_matrix_64bit(
-            self.camera.position(),
-            self.camera.direction(),
-            self.camera.up(), // Use camera's actual up vector
-            DVec3::ZERO,      // Skybox doesn't need translation
-            DVec3::ONE,       // Default scale
-            self.camera.projection_matrix(),
-            true, // Is skybox - removes translation
-        );
-
-        StandardMVPUniform {
-            mvp_matrix: mvp_matrix.to_cols_array_2d(),
-            camera_position: self.camera.position().as_vec3().to_array(),
-            _padding1: 0.0,
-            camera_direction: self.camera.direction().to_array(),
-            _padding2: 0.0,
-            log_depth_constant: self.log_depth_constant,
-            far_plane_distance: self.max_view_distance,
-            near_plane_distance: 1.0,
-            fc_constant: 2.0 / (self.max_view_distance + 1.0).ln(),
-            camera_to_object_transform: Mat4::IDENTITY.to_cols_array_2d(), // No transform for skybox
-            light_direction_camera_space: [0.0, 0.0, -1.0],                // Not used for skybox
-            _padding3: 0.0,
-        }
+    /// Convenience method for skybox rendering
+    pub fn compute_uniform_skybox(&self) -> StandardMVPUniform {
+        self.compute_uniform(DVec3::ZERO, DVec3::ONE, None, true)
     }
 
     /// Reset frame MVP data at the start of each frame
@@ -802,32 +768,26 @@ impl MainRenderer {
     pub fn prepare_render_command(&mut self, command: RenderCommand, transform: Mat4) {
         // Compute the appropriate MVP uniform based on command type
         let mvp_uniform = match &command {
-            RenderCommand::Skybox => self.compute_skybox_mvp_matrix(),
-            RenderCommand::AtmosphericPlanet {
-                star_position,
-                planet_position,
-                ..
-            } => {
+            RenderCommand::Skybox => self.compute_uniform_skybox(),
+            RenderCommand::AtmosphericPlanet { .. } => {
                 let (scale, _rotation, translation) = transform.to_scale_rotation_translation();
-                let final_planet_position = planet_position.as_dvec3() + translation.as_dvec3();
-                let final_star_position = star_position.as_dvec3();
-                self.compute_mvp_matrix_with_atmosphere(
+                let final_planet_position = translation.as_dvec3();
+                // For atmospheric planets, use sun at origin as light source
+                let final_star_position = DVec3::ZERO;
+                self.compute_uniform_atmospheric(
                     final_planet_position,
                     scale.as_dvec3(),
                     final_star_position,
                 )
             }
-            RenderCommand::Sun { star_position, .. } => {
+            RenderCommand::Sun { .. } => {
                 let (scale, _rotation, translation) = transform.to_scale_rotation_translation();
-                self.compute_mvp_matrix(
-                    star_position.as_dvec3() + translation.as_dvec3(),
-                    scale.as_dvec3(),
-                )
+                self.compute_uniform_basic(translation.as_dvec3(), scale.as_dvec3())
             }
             _ => {
                 // Default case for other render commands
                 let (scale, _rotation, translation) = transform.to_scale_rotation_translation();
-                self.compute_mvp_matrix(translation.as_dvec3(), scale.as_dvec3())
+                self.compute_uniform_basic(translation.as_dvec3(), scale.as_dvec3())
             }
         };
 
@@ -936,16 +896,16 @@ impl MainRenderer {
                 render_pass.draw_indexed(0..self.sphere_model.num_indices, 0, 0..1);
             }
 
-            RenderCommand::Sun {
-                temperature,
-                star_position,
-                camera_position,
-            } => {
+            RenderCommand::Sun { temperature } => {
+                // Position is now embedded in the MVP matrix, so we derive it from the camera and the fact
+                // that we're looking at the sun (which is at the MVP matrix's transform position)
+                let star_position = glam::Vec3::ZERO; // Placeholder, position is handled by transform matrix
+                let camera_position = self.camera.position().as_vec3();
                 self.sun_shader.update_uniforms(
                     &self.queue,
                     *temperature,
-                    *star_position,
-                    *camera_position,
+                    star_position,
+                    camera_position,
                 );
 
                 render_pass.set_pipeline(&self.sun_shader.pipeline);

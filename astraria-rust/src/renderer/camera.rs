@@ -230,8 +230,12 @@ impl Camera {
 
     /// Get view matrix with translation removed (rotation only) - for skybox rendering
     pub fn view_matrix_rotation_only(&self) -> DMat4 {
-        use crate::renderer::precision_math::remove_translation_64bit;
-        remove_translation_64bit(self.calculate_view_matrix())
+        let mut view_matrix = self.calculate_view_matrix();
+        // Remove translation component (set translation column to zero but keep w=1)
+        view_matrix.w_axis.x = 0.0;
+        view_matrix.w_axis.y = 0.0;
+        view_matrix.w_axis.z = 0.0;
+        view_matrix
     }
 
     /// Get the projection matrix converted to f32 for legacy GPU usage

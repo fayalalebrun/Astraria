@@ -1,7 +1,9 @@
+use crate::renderer::shader_utils::load_preprocessed_wgsl;
 use crate::{
     graphics::Vertex, renderer::uniforms::buffer_helpers::create_mvp_bind_group_layout_dynamic,
     AstrariaResult,
 };
+use std::path::Path;
 /// Skybox shader for cubemap background rendering
 /// Refactored to use standardized MVP matrix approach with 64-bit precision calculations
 use wgpu::{BindGroup, BindGroupLayout, Buffer, Device, RenderPass, RenderPipeline};
@@ -14,9 +16,12 @@ pub struct SkyboxShader {
 impl SkyboxShader {
     pub fn new(device: &Device) -> AstrariaResult<Self> {
         // Load shader
+        let shader_path = Path::new("src/shaders/skybox.wgsl");
+        let shader_source = load_preprocessed_wgsl(shader_path)
+            .map_err(|e| crate::AstrariaError::Graphics(format!("Failed to load shader: {}", e)))?;
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Skybox Shader"),
-            source: wgpu::ShaderSource::Wgsl(include_str!("../../shaders/skybox.wgsl").into()),
+            source: wgpu::ShaderSource::Wgsl(shader_source.into()),
         });
 
         // Create standardized MVP bind group layout

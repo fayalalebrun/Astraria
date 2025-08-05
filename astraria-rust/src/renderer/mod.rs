@@ -7,6 +7,7 @@ pub mod lighting;
 pub mod main_renderer;
 pub mod pipeline;
 pub mod precision_math;
+pub mod shader_utils;
 pub mod shaders;
 pub mod uniforms;
 
@@ -351,13 +352,9 @@ impl Renderer {
                     let command = match &body.body_type {
                         BodyType::Star { temperature, .. } => RenderCommand::Sun {
                             temperature: *temperature,
-                            star_position: position,
-                            camera_position: self.main_renderer.camera.position().as_vec3(),
                         },
                         BodyType::PlanetAtmo { atmo_color, .. } => {
                             RenderCommand::AtmosphericPlanet {
-                                star_position: Vec3::new(0.0, 0.0, 0.0), // Assume Sun at origin for now
-                                planet_position: position,
                                 atmosphere_color: Vec4::new(
                                     atmo_color[0],
                                     atmo_color[1],

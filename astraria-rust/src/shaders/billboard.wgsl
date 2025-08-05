@@ -1,21 +1,7 @@
-// Billboard shader for screen-aligned sprite rendering  
-// Refactored to use standardized MVP matrix approach with 64-bit precision calculations
+// Billboard shader for screen-aligned sprite rendering
+// Uses shared uniform definitions for consistency
 
-// Standardized MVP uniform structure (shared across all shaders)
-struct StandardMVPUniform {
-    mvp_matrix: mat4x4<f32>,
-    camera_position: vec3<f32>,
-    _padding1: f32,
-    camera_direction: vec3<f32>,
-    _padding2: f32,
-    log_depth_constant: f32,
-    far_plane_distance: f32,
-    near_plane_distance: f32,
-    fc_constant: f32,
-};
-
-@group(0) @binding(0)
-var<uniform> mvp: StandardMVPUniform;
+//!include src/shaders/shared/uniforms.wgsl
 
 // Billboard-specific uniforms
 struct BillboardUniform {

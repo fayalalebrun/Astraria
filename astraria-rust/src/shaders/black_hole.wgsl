@@ -1,21 +1,7 @@
 // Black hole shader with gravitational lensing effects
-// Direct port from the original Astraria GLSL blackHole shaders
+// Uses shared uniform definitions for consistency
 
-// Standardized MVP uniform structure (shared across all shaders)
-struct StandardMVPUniform {
-    mvp_matrix: mat4x4<f32>,
-    camera_position: vec3<f32>,
-    _padding1: f32,
-    camera_direction: vec3<f32>,
-    _padding2: f32,
-    log_depth_constant: f32,
-    far_plane_distance: f32,
-    near_plane_distance: f32,
-    fc_constant: f32,
-};
-
-@group(0) @binding(0)
-var<uniform> mvp: StandardMVPUniform;
+//!include src/shaders/shared/uniforms.wgsl
 
 // Legacy structures removed - now using StandardMVPUniform exclusively
 

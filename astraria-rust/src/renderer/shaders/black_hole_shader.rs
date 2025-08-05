@@ -1,4 +1,6 @@
+use crate::renderer::shader_utils::load_preprocessed_wgsl;
 use bytemuck::{Pod, Zeroable};
+use std::path::Path;
 /// Black hole shader for gravitational lensing simulation
 /// Simulates gravitational lensing effects using refraction shaders and skybox sampling
 use wgpu::{Device, Queue, RenderPipeline};
@@ -22,9 +24,12 @@ pub struct BlackHoleShader {
 
 impl BlackHoleShader {
     pub fn new(device: &Device, _queue: &Queue) -> AstrariaResult<Self> {
+        let shader_path = Path::new("src/shaders/black_hole.wgsl");
+        let shader_source = load_preprocessed_wgsl(shader_path)
+            .map_err(|e| crate::AstrariaError::Graphics(format!("Failed to load shader: {}", e)))?;
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Black Hole Shader"),
-            source: wgpu::ShaderSource::Wgsl(include_str!("../../shaders/black_hole.wgsl").into()),
+            source: wgpu::ShaderSource::Wgsl(shader_source.into()),
         });
 
         // Camera bind group layout (group 0) - shared with other shaders

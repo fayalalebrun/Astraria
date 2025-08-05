@@ -1,4 +1,6 @@
+use crate::renderer::shader_utils::load_preprocessed_wgsl;
 use bytemuck::{Pod, Zeroable};
+use std::path::Path;
 /// Lens glow shader for stellar lens flare effects
 /// Renders lens flares with temperature-based colors and occlusion testing
 use wgpu::{Device, Queue, RenderPipeline};
@@ -17,7 +19,7 @@ pub struct LensGlowUniform {
     pub camera_direction: [f32; 3], // Camera forward direction (12 bytes)
     pub _padding2: f32,      // (4 bytes) = 16 bytes, total 48 bytes
     pub temperature: f32,    // Star temperature for spectrum mapping (4 bytes)
-    pub _padding3: [f32; 7], // (28 bytes) = 32 bytes, total 80 bytes
+    pub _padding3: [f32; 19], // (76 bytes) = 80 bytes, total 128 bytes
 }
 
 pub struct LensGlowShader {
@@ -29,9 +31,12 @@ pub struct LensGlowShader {
 
 impl LensGlowShader {
     pub fn new(device: &Device, queue: &Queue) -> AstrariaResult<Self> {
+        let shader_path = Path::new("src/shaders/lens_glow.wgsl");
+        let shader_source = load_preprocessed_wgsl(shader_path)
+            .map_err(|e| crate::AstrariaError::Graphics(format!("Failed to load shader: {}", e)))?;
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Lens Glow Shader"),
-            source: wgpu::ShaderSource::Wgsl(include_str!("../../shaders/lens_glow.wgsl").into()),
+            source: wgpu::ShaderSource::Wgsl(shader_source.into()),
         });
 
         // Camera bind group layout (group 0) - shared with other shaders
@@ -159,7 +164,7 @@ impl LensGlowShader {
             camera_direction: [0.0, 0.0, 1.0],
             _padding2: 0.0,
             temperature: 5778.0, // Sun temperature
-            _padding3: [0.0; 7],
+            _padding3: [0.0; 19],
         };
         queue.write_buffer(
             &lens_glow_buffer,

@@ -1,4 +1,6 @@
+use crate::renderer::shader_utils::load_preprocessed_wgsl;
 use bytemuck::{Pod, Zeroable};
+use std::path::Path;
 /// Line shader for orbital path rendering
 /// Renders line geometry with logarithmic depth buffer support
 use wgpu::{Device, Queue, RenderPipeline};
@@ -21,9 +23,12 @@ pub struct LineShader {
 
 impl LineShader {
     pub fn new(device: &Device, queue: &Queue) -> AstrariaResult<Self> {
+        let shader_path = Path::new("src/shaders/line.wgsl");
+        let shader_source = load_preprocessed_wgsl(shader_path)
+            .map_err(|e| crate::AstrariaError::Graphics(format!("Failed to load shader: {}", e)))?;
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Line Shader"),
-            source: wgpu::ShaderSource::Wgsl(include_str!("../../shaders/line.wgsl").into()),
+            source: wgpu::ShaderSource::Wgsl(shader_source.into()),
         });
 
         // Camera bind group layout (group 0) - shared with other shaders

@@ -1,9 +1,15 @@
 use glam::{Mat3, Mat4, Vec3, Vec4};
+use std::path::Path;
 /// Planet atmosphere shader using the complete WGSL implementation
 /// Matches the original Java atmospheric scattering with full feature set
 use wgpu::{BindGroup, Buffer, Device, Queue, RenderPass, RenderPipeline};
 
-use crate::{assets::ModelAsset, graphics::Vertex, renderer::core::*, AstrariaResult};
+use crate::{
+    assets::ModelAsset,
+    graphics::Vertex,
+    renderer::{core::*, shader_utils::load_preprocessed_wgsl},
+    AstrariaResult,
+};
 
 // CameraUniform and TransformUniform are now imported from core.rs to eliminate duplication
 
@@ -34,14 +40,10 @@ pub struct LightingUniform {
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct AtmosphereUniform {
-    pub star_position: [f32; 3],
-    pub _padding1: f32,
-    pub planet_position: [f32; 3],
-    pub _padding2: f32,
     pub atmosphere_color_mod: [f32; 4],
     pub overglow: f32,
     pub use_ambient_texture: i32,
-    pub _padding3: [f32; 2],
+    pub _padding: [f32; 2],
 }
 
 pub struct PlanetAtmoShader {
@@ -69,9 +71,12 @@ impl PlanetAtmoShader {
         night_texture: &wgpu::Texture,
         atmosphere_texture: &wgpu::Texture,
     ) -> AstrariaResult<Self> {
+        let shader_path = Path::new("src/shaders/planet_atmo.wgsl");
+        let shader_source = load_preprocessed_wgsl(shader_path)
+            .map_err(|e| crate::AstrariaError::Graphics(format!("Failed to load shader: {}", e)))?;
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Planet Atmosphere Shader"),
-            source: wgpu::ShaderSource::Wgsl(include_str!("../../shaders/planet_atmo.wgsl").into()),
+            source: wgpu::ShaderSource::Wgsl(shader_source.into()),
         });
 
         // Camera bind group layout (group 0) - use dynamic layout for compatibility
@@ -354,8 +359,6 @@ impl PlanetAtmoShader {
         model_matrix: Mat4,
         light_position: Vec3,
         _light_color: Vec3,
-        star_position: Vec3,
-        planet_position: Vec3,
         _atmosphere_color_mod: Vec4,
         _overglow: f32,
         use_ambient_texture: bool,
@@ -426,14 +429,10 @@ impl PlanetAtmoShader {
 
         // Atmosphere uniforms - using Venus-like atmosphere parameters
         let atmosphere_uniforms = AtmosphereUniform {
-            star_position: star_position.to_array(),
-            _padding1: 0.0,
-            planet_position: planet_position.to_array(),
-            _padding2: 0.0,
             atmosphere_color_mod: [0.984, 0.843, 0.616, 1.0], // Venus atmosphere color (yellow/orange)
             overglow: 0.1,                                    // Standard terminator transition
             use_ambient_texture: if use_ambient_texture { 1 } else { 0 },
-            _padding3: [0.0; 2],
+            _padding: [0.0; 2],
         };
 
         // Write buffers
