@@ -3,7 +3,7 @@
 /// This module provides 64-bit precision matrix calculations to prevent the NaN issues
 /// that occur when using f32 matrices at astronomical distances. All calculations are
 /// performed in 64-bit precision and only converted to f32 at the final step for GPU usage.
-use glam::{DMat4, DQuat, DVec3, Mat4, Vec3};
+use glam::{DMat4, DQuat, DVec3, Mat4};
 
 use super::camera::Camera;
 
@@ -25,14 +25,14 @@ use super::camera::Camera;
 /// * `light_pos` - Light position in world coordinates (None for basic rendering, Some for atmospheric effects)
 ///
 /// # Returns
-/// Tuple of (MVP matrix, camera-relative transform, light direction in camera space)
+/// Tuple of (MVP matrix, camera-relative transform)
 pub fn calculate_mvp_matrix_64bit_with_atmosphere(
     camera: &Camera,
     object_pos: DVec3,
     object_scale: DVec3,
     is_skybox: bool,
-    light_pos: Option<DVec3>,
-) -> (Mat4, Mat4, Vec3) {
+    _light_pos: Option<DVec3>,
+) -> (Mat4, Mat4) {
     // Use camera's existing view matrix methods
     let final_view_matrix = if is_skybox {
         camera.view_matrix_rotation_only() // Camera already provides rotation-only matrix for skybox
@@ -52,24 +52,10 @@ pub fn calculate_mvp_matrix_64bit_with_atmosphere(
     let model_view_64 = final_view_matrix * model_matrix;
     let camera_relative_transform_64 = model_view_64;
 
-    // Calculate light direction in camera space (normalized, avoids large coordinates)
-    let light_direction_camera_space = if let Some(light_world_pos) = light_pos {
-        // Transform light position to camera space, then calculate direction to object
-        let view_matrix = camera.view_matrix(); // Use camera's view matrix
-        let light_camera_space = (view_matrix * light_world_pos.extend(1.0)).truncate();
-        let object_camera_space = (view_matrix * object_pos.extend(1.0)).truncate();
-        (light_camera_space - object_camera_space)
-            .normalize()
-            .as_vec3()
-    } else {
-        Vec3::new(0.0, 0.0, -1.0) // Default light direction
-    };
-
     // Convert to f32 for GPU (safe after 64-bit calculations)
     (
         mvp_matrix_64.as_mat4(),
         camera_relative_transform_64.as_mat4(),
-        light_direction_camera_space,
     )
 }
 

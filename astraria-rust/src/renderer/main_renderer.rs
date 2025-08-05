@@ -665,7 +665,7 @@ impl MainRenderer {
         is_skybox: bool,
     ) -> StandardMVPUniform {
         // Use the unified atmospheric computation for all cases
-        let (mvp_matrix, camera_relative_transform, light_direction_camera_space) =
+        let (mvp_matrix, camera_relative_transform) =
             calculate_mvp_matrix_64bit_with_atmosphere(
                 &self.camera,
                 object_position,
@@ -686,14 +686,13 @@ impl MainRenderer {
             near_plane_distance: 1.0,
             fc_constant: 2.0 / (self.max_view_distance + 1.0).ln(),
             mv_matrix: camera_relative_transform.to_cols_array_2d(),
-            light_direction_camera_space: light_direction_camera_space.to_array(),
             _padding3: 0.0,
+            _padding4: 0.0,
         };
 
         // Special case overrides for skybox
         if is_skybox {
             uniform.mv_matrix = Mat4::IDENTITY.to_cols_array_2d();
-            uniform.light_direction_camera_space = [0.0, 0.0, -1.0]; // Not used for skybox
         }
 
         uniform
