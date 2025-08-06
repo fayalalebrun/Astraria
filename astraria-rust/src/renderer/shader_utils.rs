@@ -1,32 +1,86 @@
 use anyhow::Result;
 /// WGSL shader preprocessing utilities
-/// Uses wgsl_preprocessor crate to handle #include directives and other preprocessing
+/// Lightweight preprocessor that handles //!include directives
 use std::path::Path;
+use std::collections::HashSet;
+
+/// Lightweight WGSL preprocessor that handles //!include directives
+pub struct LightweightPreprocessor {
+    processed_files: HashSet<std::path::PathBuf>,
+}
+
+impl Default for LightweightPreprocessor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl LightweightPreprocessor {
+    pub fn new() -> Self {
+        Self {
+            processed_files: HashSet::new(),
+        }
+    }
+
+    pub fn process_shader(&mut self, shader_path: &Path, source: &str) -> Result<String> {
+        // Prevent infinite recursion
+        let canonical_path = shader_path.canonicalize()
+            .unwrap_or_else(|_| shader_path.to_path_buf());
+        
+        if self.processed_files.contains(&canonical_path) {
+            return Ok(String::new()); // Already processed, return empty
+        }
+        self.processed_files.insert(canonical_path);
+
+        let mut processed = String::new();
+        
+        for line in source.lines() {
+            let trimmed = line.trim();
+            if trimmed.starts_with("//!include") {
+                // Extract the include path
+                let include_path = trimmed
+                    .strip_prefix("//!include")
+                    .ok_or_else(|| anyhow::anyhow!("Invalid include directive: {}", trimmed))?
+                    .trim()
+                    .trim_matches('"');
+
+                // Resolve the include path relative to current shader
+                let base_dir = shader_path.parent().unwrap_or(Path::new("."));
+                let mut full_include_path = base_dir.join(include_path);
+                
+                // If file doesn't exist, try relative to project root
+                if !full_include_path.exists() && include_path.starts_with("src/") {
+                    full_include_path = Path::new(".").join(include_path);
+                }
+
+                // Read and process the included file
+                let include_source = std::fs::read_to_string(&full_include_path)
+                    .map_err(|e| anyhow::anyhow!("Failed to read include file {:?}: {}", full_include_path, e))?;
+
+                let processed_include = self.process_shader(&full_include_path, &include_source)?;
+                processed.push_str(&processed_include);
+                processed.push('\n');
+            } else {
+                processed.push_str(line);
+                processed.push('\n');
+            }
+        }
+
+        Ok(processed)
+    }
+}
 
 /// Process WGSL shader source with preprocessing
-/// Handles #include directives and other preprocessing features
+/// Handles //!include directives
 pub fn preprocess_wgsl(source: &str, shader_path: &Path) -> Result<String> {
     // For files that don't use includes, just return the source as-is
-    if !source.contains("#include") && !source.contains("//!include") {
+    if !source.contains("//!include") {
         return Ok(source.to_string());
     }
 
-    // Use wgsl_preprocessor to handle includes
-    let shader_path_str = shader_path
-        .to_str()
-        .ok_or_else(|| anyhow::anyhow!("Invalid shader path"))?;
-
-    let shader_builder = wgsl_preprocessor::ShaderBuilder::new(shader_path_str)
-        .map_err(|e| anyhow::anyhow!("Failed to create ShaderBuilder: {}", e))?;
-    let shader_desc = shader_builder.build();
-
-    // Convert ShaderSource to String
-    let source_str = match shader_desc.source {
-        wgpu::ShaderSource::Wgsl(cow) => cow.into_owned(),
-        _ => return Err(anyhow::anyhow!("Unsupported shader source type")),
-    };
-
-    Ok(source_str)
+    // Use our lightweight preprocessor
+    let mut preprocessor = LightweightPreprocessor::new();
+    preprocessor.process_shader(shader_path, source)
 }
 
 /// Load and preprocess a WGSL shader file

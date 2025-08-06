@@ -21,6 +21,12 @@ pub struct VelocityVerlet {
     thread_handle: Option<JoinHandle<()>>,
 }
 
+impl Default for VelocityVerlet {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl VelocityVerlet {
     pub fn new() -> Self {
         Self {
@@ -60,7 +66,7 @@ impl VelocityVerlet {
 
                 // Run the integration step
                 if let Err(e) = Self::integration_step(&bodies, delta_time) {
-                    log::error!("Physics integration error: {}", e);
+                    log::error!("Physics integration error: {e}");
                     break;
                 }
 
@@ -185,7 +191,7 @@ impl VelocityVerlet {
 
         if let Some(handle) = self.thread_handle.take() {
             if let Err(e) = handle.join() {
-                log::error!("Failed to join physics thread: {:?}", e);
+                log::error!("Failed to join physics thread: {e:?}");
             }
         }
     }

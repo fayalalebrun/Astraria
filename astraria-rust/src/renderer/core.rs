@@ -443,18 +443,18 @@ pub fn copy_texture_to_buffer_aligned(
     let bytes_per_pixel = 4; // RGBA8
     let unpadded_bytes_per_row = bytes_per_pixel * width;
     let align = wgpu::COPY_BYTES_PER_ROW_ALIGNMENT;
-    let padded_bytes_per_row = (unpadded_bytes_per_row + align - 1) / align * align;
+    let padded_bytes_per_row = unpadded_bytes_per_row.div_ceil(align) * align;
 
     encoder.copy_texture_to_buffer(
-        wgpu::ImageCopyTexture {
+        wgpu::TexelCopyTextureInfo {
             aspect: wgpu::TextureAspect::All,
             texture,
             mip_level: 0,
             origin: wgpu::Origin3d::ZERO,
         },
-        wgpu::ImageCopyBuffer {
+        wgpu::TexelCopyBufferInfo {
             buffer: output_buffer,
-            layout: wgpu::ImageDataLayout {
+            layout: wgpu::TexelCopyBufferLayout {
                 offset: 0,
                 bytes_per_row: Some(padded_bytes_per_row),
                 rows_per_image: Some(height),
@@ -469,7 +469,7 @@ pub fn calculate_aligned_buffer_size(width: u32, height: u32) -> wgpu::BufferAdd
     let bytes_per_pixel = 4; // RGBA8
     let unpadded_bytes_per_row = bytes_per_pixel * width;
     let align = wgpu::COPY_BYTES_PER_ROW_ALIGNMENT;
-    let padded_bytes_per_row = (unpadded_bytes_per_row + align - 1) / align * align;
+    let padded_bytes_per_row = unpadded_bytes_per_row.div_ceil(align) * align;
     (padded_bytes_per_row * height) as wgpu::BufferAddress
 }
 
@@ -478,7 +478,7 @@ pub fn remove_padding_from_buffer_data(data: &[u8], width: u32, height: u32) -> 
     let bytes_per_pixel = 4; // RGBA8
     let unpadded_bytes_per_row = bytes_per_pixel * width;
     let align = wgpu::COPY_BYTES_PER_ROW_ALIGNMENT;
-    let padded_bytes_per_row = (unpadded_bytes_per_row + align - 1) / align * align;
+    let padded_bytes_per_row = unpadded_bytes_per_row.div_ceil(align) * align;
 
     if padded_bytes_per_row != unpadded_bytes_per_row {
         let mut unpadded_data = Vec::with_capacity((unpadded_bytes_per_row * height) as usize);

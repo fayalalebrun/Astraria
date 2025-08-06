@@ -1,6 +1,7 @@
 /// Input handling system
 /// Processes keyboard and mouse input for camera controls and UI interaction
-use winit::event::{ElementState, MouseButton, VirtualKeyCode, WindowEvent};
+use winit::event::{ElementState, MouseButton, WindowEvent};
+use winit::keyboard::{KeyCode, PhysicalKey};
 // Note: KeyEvent and keyboard module don't exist in winit 0.28
 use std::collections::HashMap;
 
@@ -10,7 +11,7 @@ pub struct InputHandler {
     mouse_pressed: bool,
     last_mouse_pos: (f32, f32),
     _mouse_sensitivity: f32,
-    keys_pressed: HashMap<VirtualKeyCode, bool>,
+    keys_pressed: HashMap<KeyCode, bool>,
     mouse_delta: Option<(f32, f32)>,
     scroll_delta: Option<f32>,
 }
@@ -29,7 +30,7 @@ impl InputHandler {
 
     pub fn handle_event(&mut self, event: &WindowEvent) -> AstrariaResult<bool> {
         match event {
-            WindowEvent::KeyboardInput { input, .. } => self.handle_keyboard_input(input),
+            WindowEvent::KeyboardInput { event, .. } => self.handle_keyboard_input(event),
             WindowEvent::MouseInput { state, button, .. } => {
                 self.handle_mouse_input(*state, *button)
             }
@@ -43,54 +44,54 @@ impl InputHandler {
 
     fn handle_keyboard_input(
         &mut self,
-        input: &winit::event::KeyboardInput,
+        event: &winit::event::KeyEvent,
     ) -> AstrariaResult<bool> {
-        let pressed = input.state == ElementState::Pressed;
+        let pressed = event.state == ElementState::Pressed;
 
-        if let Some(keycode) = input.virtual_keycode {
+        if let PhysicalKey::Code(keycode) = event.physical_key {
             // Store key state
             self.keys_pressed.insert(keycode, pressed);
 
             match keycode {
-                VirtualKeyCode::W
-                | VirtualKeyCode::S
-                | VirtualKeyCode::A
-                | VirtualKeyCode::D
-                | VirtualKeyCode::Space
-                | VirtualKeyCode::LShift => {
+                KeyCode::KeyW
+                | KeyCode::KeyS
+                | KeyCode::KeyA
+                | KeyCode::KeyD
+                | KeyCode::Space
+                | KeyCode::ShiftLeft => {
                     Ok(true) // Camera movement keys handled
                 }
-                VirtualKeyCode::E => {
+                KeyCode::KeyE => {
                     // Roll right (handled in renderer)
                     Ok(true)
                 }
-                VirtualKeyCode::Q => {
+                KeyCode::KeyQ => {
                     // Roll left (handled in renderer)
                     Ok(true)
                 }
-                VirtualKeyCode::Up => {
+                KeyCode::ArrowUp => {
                     if pressed {
                         // Increase camera speed (simulate scroll up)
                         self.scroll_delta = Some(1.0);
                     }
                     Ok(true)
                 }
-                VirtualKeyCode::Down => {
+                KeyCode::ArrowDown => {
                     if pressed {
                         // Decrease camera speed (simulate scroll down)
                         self.scroll_delta = Some(-1.0);
                     }
                     Ok(true)
                 }
-                VirtualKeyCode::Left => {
+                KeyCode::ArrowLeft => {
                     // TODO: Decrease simulation speed
                     Ok(true)
                 }
-                VirtualKeyCode::Right => {
+                KeyCode::ArrowRight => {
                     // TODO: Increase simulation speed
                     Ok(true)
                 }
-                VirtualKeyCode::H => {
+                KeyCode::KeyH => {
                     if pressed {
                         // TODO: Toggle UI visibility
                     }
@@ -167,7 +168,7 @@ impl InputHandler {
     }
 
     /// Check if a key is currently pressed
-    pub fn is_key_pressed(&self, key: &VirtualKeyCode) -> bool {
+    pub fn is_key_pressed(&self, key: &KeyCode) -> bool {
         self.keys_pressed.get(key).copied().unwrap_or(false)
     }
 

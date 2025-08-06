@@ -81,14 +81,14 @@ impl AssetManager {
         // Write white pixel data
         let white_pixel = [255u8, 255u8, 255u8, 255u8];
         queue.write_texture(
-            wgpu::ImageCopyTexture {
+            wgpu::TexelCopyTextureInfo {
                 aspect: wgpu::TextureAspect::All,
                 texture: &texture,
                 mip_level: 0,
                 origin: wgpu::Origin3d::ZERO,
             },
             &white_pixel,
-            wgpu::ImageDataLayout {
+            wgpu::TexelCopyBufferLayout {
                 offset: 0,
                 bytes_per_row: Some(4),
                 rows_per_image: Some(1),
@@ -161,14 +161,14 @@ impl AssetManager {
         });
 
         queue.write_texture(
-            wgpu::ImageCopyTexture {
+            wgpu::TexelCopyTextureInfo {
                 aspect: wgpu::TextureAspect::All,
                 texture: &texture,
                 mip_level: 0,
                 origin: wgpu::Origin3d::ZERO,
             },
             &rgba,
-            wgpu::ImageDataLayout {
+            wgpu::TexelCopyBufferLayout {
                 offset: 0,
                 bytes_per_row: Some(4 * dimensions.0),
                 rows_per_image: Some(dimensions.1),
@@ -443,7 +443,7 @@ impl AssetManager {
         // Upload each face
         for (i, face_data) in face_images.iter().enumerate() {
             queue.write_texture(
-                wgpu::ImageCopyTexture {
+                wgpu::TexelCopyTextureInfo {
                     aspect: wgpu::TextureAspect::All,
                     texture: &texture,
                     mip_level: 0,
@@ -454,7 +454,7 @@ impl AssetManager {
                     },
                 },
                 face_data,
-                wgpu::ImageDataLayout {
+                wgpu::TexelCopyBufferLayout {
                     offset: 0,
                     bytes_per_row: Some(4 * cubemap_size),
                     rows_per_image: Some(cubemap_size),
@@ -477,6 +477,7 @@ impl AssetManager {
             mip_level_count: None,
             base_array_layer: 0,
             array_layer_count: None,
+            usage: Some(wgpu::TextureUsages::TEXTURE_BINDING),
         });
 
         let cubemap_asset = CubemapAsset {

@@ -374,9 +374,7 @@ impl BufferManager {
         }; 8];
 
         let num_lights = lights.len().min(8);
-        for i in 0..num_lights {
-            lighting_lights[i] = lights[i];
-        }
+        lighting_lights[..num_lights].copy_from_slice(&lights[..num_lights]);
 
         let lighting_uniform = LightingUniform {
             lights: lighting_lights,

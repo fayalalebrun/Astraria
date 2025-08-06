@@ -40,17 +40,19 @@ async fn save_render(
                         b: 0.0,
                         a: 1.0,
                     }),
-                    store: true,
+                    store: wgpu::StoreOp::Store,
                 },
             })],
             depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
                 view: &depth_view,
                 depth_ops: Some(wgpu::Operations {
                     load: wgpu::LoadOp::Clear(1.0),
-                    store: true,
+                    store: wgpu::StoreOp::Store,
                 }),
                 stencil_ops: None,
             }),
+            occlusion_query_set: None,
+            timestamp_writes: None,
         });
         match test_type {
             0 => {
@@ -296,7 +298,7 @@ async fn save_render(
     // Save color image
     let slice = buffer.slice(..);
     slice.map_async(wgpu::MapMode::Read, |_| {});
-    renderer.device().poll(wgpu::Maintain::Wait);
+    let _ = renderer.device().poll(wgpu::MaintainBase::Wait);
 
     let final_data = {
         let data = slice.get_mapped_range();

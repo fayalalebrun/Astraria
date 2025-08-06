@@ -152,7 +152,7 @@ pub fn format_astronomical_distance(distance: f64) -> String {
     const LIGHT_YEAR: f64 = 9_460_730_472_580_800.0; // 1 Light Year in meters
 
     if distance.abs() < 1_000.0 {
-        format!("{:.1} m", distance)
+        format!("{distance:.1} m")
     } else if distance.abs() < 1_000_000.0 {
         format!("{:.1} km", distance / 1_000.0)
     } else if distance.abs() < AU {

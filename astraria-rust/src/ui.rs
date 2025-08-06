@@ -19,13 +19,22 @@ pub struct UserInterface {
 impl UserInterface {
     pub fn new(window: &winit::window::Window, renderer: &Renderer) -> AstrariaResult<Self> {
         let egui_ctx = egui::Context::default();
-        let egui_winit = egui_winit::State::new(window);
+        let viewport_id = egui_winit::egui::ViewportId::ROOT;
+        let egui_winit = egui_winit::State::new(
+            egui_ctx.clone(),
+            viewport_id,
+            window,
+            Some(window.scale_factor() as f32),
+            None,
+            None,
+        );
 
         let _egui_renderer = egui_wgpu::Renderer::new(
             renderer.device(),
             wgpu::TextureFormat::Bgra8UnormSrgb, // Adjust format as needed
             None,
             1,
+            false,
         );
 
         Ok(Self {
@@ -38,8 +47,8 @@ impl UserInterface {
         })
     }
 
-    pub fn handle_event(&mut self, event: &winit::event::WindowEvent) -> AstrariaResult<bool> {
-        let response = self.egui_winit.on_event(&self.egui_ctx, event);
+    pub fn handle_event(&mut self, event: &winit::event::WindowEvent, window: &winit::window::Window) -> AstrariaResult<bool> {
+        let response = self.egui_winit.on_window_event(window, event);
         Ok(response.consumed)
     }
 
@@ -167,7 +176,7 @@ impl UserInterface {
 
         // Top menu bar
         egui::TopBottomPanel::top("menu_bar").show(ctx, |ui| {
-            egui::menu::bar(ui, |ui| {
+            egui::MenuBar::new().ui(ui, |ui| {
                 ui.menu_button("File", |ui| {
                     if ui.button("Load Scenario...").clicked() {
                         // TODO: Open file dialog

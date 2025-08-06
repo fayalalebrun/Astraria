@@ -212,7 +212,7 @@ impl BodyCollection {
     /// Process pending additions and removals
     pub fn update_collection(&mut self) {
         // Add new bodies
-        self.bodies.extend(self.pending_additions.drain(..));
+        self.bodies.append(&mut self.pending_additions);
 
         // Remove bodies (sort indices in reverse order to avoid invalidation)
         self.pending_removals.sort_by(|a, b| b.cmp(a));

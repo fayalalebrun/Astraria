@@ -25,7 +25,7 @@ pub use pipeline::PipelineManager;
 pub use shaders::ShaderManager;
 
 pub struct Renderer {
-    surface: Surface,
+    surface: Surface<'static>,
     surface_config: SurfaceConfiguration,
     _buffers: BufferManager,
     lights: LightManager,
@@ -44,14 +44,15 @@ impl Renderer {
         log::info!("Initializing wgpu renderer...");
 
         // Create wgpu instance with all available backends for better compatibility
-        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
+        let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
             backends: wgpu::Backends::all(),
             ..Default::default()
         });
 
-        // Create surface
-        let surface = unsafe { instance.create_surface(window) }
+        // Create surface with transmuted lifetime - safe because window lives for entire app
+        let surface = instance.create_surface(window)
             .map_err(|e| AstrariaError::Graphics(format!("Failed to create surface: {}", e)))?;
+        let surface: Surface<'static> = unsafe { std::mem::transmute(surface) };
 
         // Request adapter with fallback support
         let adapter = instance
@@ -63,22 +64,20 @@ impl Renderer {
             .await;
 
         // If no adapter found, try with fallback
-        let adapter = if adapter.is_none() {
-            log::warn!("No primary adapter found, trying fallback");
-            instance
-                .request_adapter(&wgpu::RequestAdapterOptions {
-                    power_preference: wgpu::PowerPreference::default(),
-                    compatible_surface: Some(&surface),
-                    force_fallback_adapter: true,
-                })
-                .await
-        } else {
-            adapter
+        let adapter = match adapter {
+            Ok(adapter) => adapter,
+            Err(_) => {
+                log::warn!("No primary adapter found, trying fallback");
+                instance
+                    .request_adapter(&wgpu::RequestAdapterOptions {
+                        power_preference: wgpu::PowerPreference::default(),
+                        compatible_surface: Some(&surface),
+                        force_fallback_adapter: true,
+                    })
+                    .await
+                    .map_err(|e| AstrariaError::Graphics(format!("Failed to find any suitable GPU adapter: {}", e)))?
+            }
         };
-
-        let adapter = adapter.ok_or_else(|| {
-            AstrariaError::Graphics("Failed to find any suitable GPU adapter".to_string())
-        })?;
 
         log::info!("Using GPU: {}", adapter.get_info().name);
 
@@ -99,6 +98,7 @@ impl Renderer {
             present_mode: surface_caps.present_modes[0],
             alpha_mode: surface_caps.alpha_modes[0],
             view_formats: vec![],
+            desired_maximum_frame_latency: 2,
         };
 
         // Create MainRenderer with the surface and adapter to ensure device compatibility
@@ -255,17 +255,19 @@ impl Renderer {
                             b: 0.0,
                             a: 1.0,
                         }),
-                        store: true,
+                        store: wgpu::StoreOp::Store,
                     },
                 })],
                 depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
                     view: &self.depth_view,
                     depth_ops: Some(wgpu::Operations {
                         load: wgpu::LoadOp::Clear(1.0),
-                        store: true,
+                        store: wgpu::StoreOp::Store,
                     }),
                     stencil_ops: None,
                 }),
+                occlusion_query_set: None,
+                timestamp_writes: None,
             });
 
             // Execute all prepared render commands with dynamic MVP offsets
@@ -472,33 +474,33 @@ impl Renderer {
         delta_time: f32,
     ) -> AstrariaResult<()> {
         use crate::renderer::camera::CameraMovement;
-        use winit::event::VirtualKeyCode;
+        use winit::keyboard::KeyCode;
 
         // Handle WASD movement - process movement when keys are pressed
         let camera = &mut self.main_renderer.camera;
 
-        if input.is_key_pressed(&VirtualKeyCode::W) {
+        if input.is_key_pressed(&KeyCode::KeyW) {
             camera.process_movement(CameraMovement::Forward, delta_time);
         }
-        if input.is_key_pressed(&VirtualKeyCode::S) {
+        if input.is_key_pressed(&KeyCode::KeyS) {
             camera.process_movement(CameraMovement::Backward, delta_time);
         }
-        if input.is_key_pressed(&VirtualKeyCode::A) {
+        if input.is_key_pressed(&KeyCode::KeyA) {
             camera.process_movement(CameraMovement::Left, delta_time);
         }
-        if input.is_key_pressed(&VirtualKeyCode::D) {
+        if input.is_key_pressed(&KeyCode::KeyD) {
             camera.process_movement(CameraMovement::Right, delta_time);
         }
-        if input.is_key_pressed(&VirtualKeyCode::Space) {
+        if input.is_key_pressed(&KeyCode::Space) {
             camera.process_movement(CameraMovement::Up, delta_time);
         }
-        if input.is_key_pressed(&VirtualKeyCode::LShift) {
+        if input.is_key_pressed(&KeyCode::ShiftLeft) {
             camera.process_movement(CameraMovement::Down, delta_time);
         }
-        if input.is_key_pressed(&VirtualKeyCode::Q) {
+        if input.is_key_pressed(&KeyCode::KeyQ) {
             camera.process_movement(CameraMovement::RollLeft, delta_time);
         }
-        if input.is_key_pressed(&VirtualKeyCode::E) {
+        if input.is_key_pressed(&KeyCode::KeyE) {
             camera.process_movement(CameraMovement::RollRight, delta_time);
         }
 

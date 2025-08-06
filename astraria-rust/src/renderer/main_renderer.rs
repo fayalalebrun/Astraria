@@ -112,7 +112,7 @@ pub struct MainRenderer {
 
 impl MainRenderer {
     pub async fn new() -> AstrariaResult<Self> {
-        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
+        let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
             backends: wgpu::Backends::all(),
             ..Default::default()
         });
@@ -124,29 +124,30 @@ impl MainRenderer {
                 force_fallback_adapter: false,
             })
             .await
-            .ok_or_else(|| {
-                AstrariaError::Graphics("Failed to find a suitable graphics adapter".to_string())
-            })?;
+            .map_err(|e| 
+                AstrariaError::Graphics(format!("Failed to find a suitable graphics adapter: {e}"))
+            )?;
 
         let (device, queue) = adapter
             .request_device(
                 &wgpu::DeviceDescriptor {
                     label: None,
-                    features: wgpu::Features::empty(),
-                    limits: wgpu::Limits::default(),
-                },
-                None,
+                    required_features: wgpu::Features::empty(),
+                    required_limits: wgpu::Limits::default(),
+                    memory_hints: wgpu::MemoryHints::default(),
+                    trace: wgpu::Trace::default(),
+                }
             )
             .await
-            .map_err(|e| AstrariaError::Graphics(format!("Failed to create device: {}", e)))?;
+            .map_err(|e| AstrariaError::Graphics(format!("Failed to create device: {e}")))?;
 
         Self::with_device(device, queue).await
     }
 
-    pub async fn with_surface(
-        instance: &wgpu::Instance,
-        surface: wgpu::Surface,
-    ) -> AstrariaResult<(Self, wgpu::Surface)> {
+    pub async fn with_surface<'a>(
+        instance: &'a wgpu::Instance,
+        surface: wgpu::Surface<'a>,
+    ) -> AstrariaResult<(Self, wgpu::Surface<'static>)> {
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
                 power_preference: wgpu::PowerPreference::default(),
@@ -154,23 +155,25 @@ impl MainRenderer {
                 force_fallback_adapter: false,
             })
             .await
-            .ok_or_else(|| {
-                AstrariaError::Graphics("Failed to find a suitable graphics adapter".to_string())
-            })?;
+            .map_err(|e|
+                AstrariaError::Graphics(format!("Failed to find a suitable graphics adapter: {e}"))
+            )?;
 
         let (device, queue) = adapter
             .request_device(
                 &wgpu::DeviceDescriptor {
                     label: None,
-                    features: wgpu::Features::empty(),
-                    limits: wgpu::Limits::default(),
-                },
-                None,
+                    required_features: wgpu::Features::empty(),
+                    required_limits: wgpu::Limits::default(),
+                    memory_hints: wgpu::MemoryHints::default(),
+                    trace: wgpu::Trace::default(),
+                }
             )
             .await
-            .map_err(|e| AstrariaError::Graphics(format!("Failed to create device: {}", e)))?;
+            .map_err(|e| AstrariaError::Graphics(format!("Failed to create device: {e}")))?;
 
         let main_renderer = Self::with_device(device, queue).await?;
+        let surface: wgpu::Surface<'static> = unsafe { std::mem::transmute(surface) };
         Ok((main_renderer, surface))
     }
 

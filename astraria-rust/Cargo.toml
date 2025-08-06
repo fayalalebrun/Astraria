@@ -1,46 +1,44 @@
 [package]
 name = "astraria-rust"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 authors = ["Astraria Rust Port"]
 description = "3D Orbital Mechanics Simulator - Rust port of Astraria"
 license = "MIT"
 
 [dependencies]
 # Graphics and windowing
-wgpu = "0.17"
-winit = "0.28"
-pollster = "0.3"
+wgpu = "25.0"
+winit = "0.30"
+pollster = "0.4"
 
 # Math
-glam = { version = "0.24", features = ["bytemuck", "mint"] }
-bytemuck = { version = "1.14", features = ["derive"] }
+glam = { version = "0.30", features = ["bytemuck", "mint"] }
+bytemuck = { version = "1.23", features = ["derive"] }
 
-# WGSL preprocessing for shared shader definitions
-wgsl_preprocessor = "1.1.4"
 
 # Asset loading
-image = { version = "0.24", features = ["png", "jpeg"], default-features = false }
+image = { version = "0.25", features = ["png", "jpeg"], default-features = false }
 tobj = "4.0"
 
 # UI
-egui = "0.23"
-egui-winit = "0.23"
-egui-wgpu = "0.23"
+egui = "0.32"
+egui-winit = "0.32"
+egui-wgpu = "0.32"
 
 # Utilities
 anyhow = "1.0"
-thiserror = "1.0"
+thiserror = "2.0"
 log = "0.4"
-env_logger = "0.10"
+env_logger = "0.11"
 
 # Async/threading
-tokio = { version = "1.0", features = ["full"] }
+tokio = { version = "1.47", features = ["full"] }
 futures = "0.3"
 
 # Serialization
 serde = { version = "1.0", features = ["derive"] }
-ron = "0.8"
+ron = "0.10"
 
 [lib]
 name = "astraria_rust"
