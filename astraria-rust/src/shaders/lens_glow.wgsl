@@ -5,18 +5,12 @@
 
 
 struct LensGlowUniform {
-    screen_dimensions: vec2<f32>,   // Screen width and height
-    glow_size: vec2<f32>,          // Width and height of the glow effect  
-    star_position: vec3<f32>,      // Star position in world coordinates
-    _padding1: f32,
-    camera_direction: vec3<f32>,   // Camera forward direction
-    _padding2: f32,
-    temperature: f32,              // Star temperature for spectrum mapping
-    _padding3: vec3<f32>,          // Additional padding to reach 128 bytes
-    _padding4: vec4<f32>,
-    _padding5: vec4<f32>,
-    _padding6: vec4<f32>,
-    _padding7: vec4<f32>,
+    screen_dimensions: vec2<f32>,   // Screen width and height (8 bytes)
+    glow_size: vec2<f32>,          // Width and height of the glow effect (8 bytes, total: 16)  
+    star_position: vec3<f32>,      // Star position in world coordinates (12 bytes)
+    _padding1: f32,                // Align to 16-byte boundary (4 bytes, total: 32)
+    camera_direction: vec3<f32>,   // Camera forward direction (12 bytes)
+    temperature: f32,              // Star temperature for spectrum mapping (4 bytes, total: 48)
 };
 
 struct VertexInput {

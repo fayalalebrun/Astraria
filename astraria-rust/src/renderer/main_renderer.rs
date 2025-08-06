@@ -10,6 +10,7 @@ const MAX_OBJECTS_PER_FRAME: u32 = 64; // Support up to 64 objects per frame
 use wgpu::{Device, Queue, RenderPass};
 
 use crate::{
+    AstrariaError, AstrariaResult,
     assets::{AssetManager, CubemapAsset, ModelAsset, TextureAsset},
     graphics::Mesh,
     renderer::{
@@ -22,7 +23,6 @@ use crate::{
         },
         uniforms::StandardMVPUniform,
     },
-    AstrariaError, AstrariaResult,
 };
 
 /// Main rendering coordinator that manages all specialized shaders
@@ -124,20 +124,18 @@ impl MainRenderer {
                 force_fallback_adapter: false,
             })
             .await
-            .map_err(|e| 
+            .map_err(|e| {
                 AstrariaError::Graphics(format!("Failed to find a suitable graphics adapter: {e}"))
-            )?;
+            })?;
 
         let (device, queue) = adapter
-            .request_device(
-                &wgpu::DeviceDescriptor {
-                    label: None,
-                    required_features: wgpu::Features::empty(),
-                    required_limits: wgpu::Limits::default(),
-                    memory_hints: wgpu::MemoryHints::default(),
-                    trace: wgpu::Trace::default(),
-                }
-            )
+            .request_device(&wgpu::DeviceDescriptor {
+                label: None,
+                required_features: wgpu::Features::empty(),
+                required_limits: wgpu::Limits::default(),
+                memory_hints: wgpu::MemoryHints::default(),
+                trace: wgpu::Trace::default(),
+            })
             .await
             .map_err(|e| AstrariaError::Graphics(format!("Failed to create device: {e}")))?;
 
@@ -155,20 +153,18 @@ impl MainRenderer {
                 force_fallback_adapter: false,
             })
             .await
-            .map_err(|e|
+            .map_err(|e| {
                 AstrariaError::Graphics(format!("Failed to find a suitable graphics adapter: {e}"))
-            )?;
+            })?;
 
         let (device, queue) = adapter
-            .request_device(
-                &wgpu::DeviceDescriptor {
-                    label: None,
-                    required_features: wgpu::Features::empty(),
-                    required_limits: wgpu::Limits::default(),
-                    memory_hints: wgpu::MemoryHints::default(),
-                    trace: wgpu::Trace::default(),
-                }
-            )
+            .request_device(&wgpu::DeviceDescriptor {
+                label: None,
+                required_features: wgpu::Features::empty(),
+                required_limits: wgpu::Limits::default(),
+                memory_hints: wgpu::MemoryHints::default(),
+                trace: wgpu::Trace::default(),
+            })
             .await
             .map_err(|e| AstrariaError::Graphics(format!("Failed to create device: {e}")))?;
 
@@ -668,14 +664,13 @@ impl MainRenderer {
         is_skybox: bool,
     ) -> StandardMVPUniform {
         // Use the unified atmospheric computation for all cases
-        let (mvp_matrix, camera_relative_transform) =
-            calculate_mvp_matrix_64bit_with_atmosphere(
-                &self.camera,
-                object_position,
-                object_scale,
-                is_skybox,
-                light_position, // None for basic objects, Some(pos) for atmospheric
-            );
+        let (mvp_matrix, camera_relative_transform) = calculate_mvp_matrix_64bit_with_atmosphere(
+            &self.camera,
+            object_position,
+            object_scale,
+            is_skybox,
+            light_position, // None for basic objects, Some(pos) for atmospheric
+        );
 
         // Create the unified uniform
         let mut uniform = StandardMVPUniform {

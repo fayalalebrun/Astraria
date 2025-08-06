@@ -42,10 +42,7 @@ impl InputHandler {
         }
     }
 
-    fn handle_keyboard_input(
-        &mut self,
-        event: &winit::event::KeyEvent,
-    ) -> AstrariaResult<bool> {
+    fn handle_keyboard_input(&mut self, event: &winit::event::KeyEvent) -> AstrariaResult<bool> {
         let pressed = event.state == ElementState::Pressed;
 
         if let PhysicalKey::Code(keycode) = event.physical_key {

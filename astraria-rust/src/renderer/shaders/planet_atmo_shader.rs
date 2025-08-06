@@ -5,10 +5,10 @@ use std::path::Path;
 use wgpu::{BindGroup, Buffer, Device, Queue, RenderPass, RenderPipeline};
 
 use crate::{
+    AstrariaResult,
     assets::ModelAsset,
     graphics::Vertex,
     renderer::{core::*, shader_utils::load_preprocessed_wgsl},
-    AstrariaResult,
 };
 
 // CameraUniform and TransformUniform are now imported from core.rs to eliminate duplication

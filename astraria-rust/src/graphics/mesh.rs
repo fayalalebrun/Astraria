@@ -1,6 +1,6 @@
 use super::vertex::Vertex;
 /// Mesh data structures and utilities
-use wgpu::{util::DeviceExt, Buffer, Device};
+use wgpu::{Buffer, Device, util::DeviceExt};
 
 pub struct Mesh {
     pub vertex_buffer: Buffer,

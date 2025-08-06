@@ -5,16 +5,22 @@
 
 // Directional light structure (for astronomical scale lighting)
 struct DirectionalLight {
-    direction: vec3<f32>,  // Normalized direction from object to light (WORLD SPACE)
-    ambient: vec3<f32>,
-    diffuse: vec3<f32>,
-    specular: vec3<f32>,
+    direction: vec3<f32>,  // Normalized direction from object to light (WORLD SPACE, 12 bytes)
+    _padding1: f32,        // Align to 16 bytes (4 bytes, total: 16)
+    ambient: vec3<f32>,    // 12 bytes
+    _padding2: f32,        // Align to 16 bytes (4 bytes, total: 32) 
+    diffuse: vec3<f32>,    // 12 bytes
+    _padding3: f32,        // Align to 16 bytes (4 bytes, total: 48)
+    specular: vec3<f32>,   // 12 bytes  
+    _padding4: f32,        // Align to 16 bytes (4 bytes, total: 64)
 }
 
-// Lighting uniforms
+// Lighting uniforms with explicit padding for WGSL alignment  
 struct LightingUniforms {
-    lights: array<DirectionalLight, 8>,
-    num_lights: i32,
+    lights: array<DirectionalLight, 8>,  // 0-511 (8 * 64 = 512 bytes)
+    num_lights: i32,                     // 512-515 (4 bytes)
+    _padding: vec3<f32>,                 // 516-527 (12 bytes)
+    _padding2: vec4<f32>,                // 528-543 (16 bytes to reach 544)
 }
 
 // Vertex input

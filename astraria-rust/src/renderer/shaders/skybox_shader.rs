@@ -1,7 +1,7 @@
 use crate::renderer::shader_utils::load_preprocessed_wgsl;
 use crate::{
-    graphics::Vertex, renderer::uniforms::buffer_helpers::create_mvp_bind_group_layout_dynamic,
-    AstrariaResult,
+    AstrariaResult, graphics::Vertex,
+    renderer::uniforms::buffer_helpers::create_mvp_bind_group_layout_dynamic,
 };
 use std::path::Path;
 /// Skybox shader for cubemap background rendering

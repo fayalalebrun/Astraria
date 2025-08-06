@@ -2,8 +2,8 @@ use std::collections::HashMap;
 /// Render pipeline management for different object types
 use wgpu::{Device, RenderPipeline, TextureFormat};
 
-use super::{shaders::ShaderType, ShaderManager};
-use crate::{graphics::Vertex, AstrariaResult};
+use super::{ShaderManager, shaders::ShaderType};
+use crate::{AstrariaResult, graphics::Vertex};
 
 pub struct PipelineManager {
     pipelines: HashMap<ShaderType, RenderPipeline>,

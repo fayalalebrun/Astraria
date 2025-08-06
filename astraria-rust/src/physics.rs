@@ -1,15 +1,15 @@
 /// Physics simulation system
 /// Ported from the original Java N-body simulation with enhanced threading
 use std::sync::{
-    atomic::{AtomicBool, Ordering},
     Arc, RwLock,
+    atomic::{AtomicBool, Ordering},
 };
 use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
 
 use crate::{
-    math::{Body, BodyCollection, GRAVITATIONAL_CONSTANT},
     AstrariaError, AstrariaResult,
+    math::{Body, BodyCollection, GRAVITATIONAL_CONSTANT},
 };
 
 /// Velocity-Verlet integration algorithm for N-body simulation

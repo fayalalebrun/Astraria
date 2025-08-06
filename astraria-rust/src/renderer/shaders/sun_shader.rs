@@ -1,5 +1,5 @@
 use crate::renderer::shader_utils::load_preprocessed_wgsl;
-use crate::{graphics::Vertex, AstrariaResult};
+use crate::{AstrariaResult, graphics::Vertex};
 use glam::Vec3;
 use std::path::Path;
 /// Sun shader for stellar temperature rendering (800K-30000K)

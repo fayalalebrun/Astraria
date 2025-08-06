@@ -4,10 +4,10 @@ use std::path::Path;
 use wgpu::{Buffer, Device, Queue, RenderPass, RenderPipeline};
 
 use crate::{
+    AstrariaResult,
     assets::ModelAsset,
     graphics::Vertex,
     renderer::{shader_utils::load_preprocessed_wgsl, uniforms::StandardMVPUniform},
-    AstrariaResult,
 };
 
 #[repr(C)]

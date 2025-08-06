@@ -3,7 +3,7 @@
 use egui_winit::winit;
 use winit::dpi::PhysicalSize;
 
-use crate::{physics::PhysicsSimulation, renderer::Renderer, AstrariaResult};
+use crate::{AstrariaResult, physics::PhysicsSimulation, renderer::Renderer};
 
 pub struct UserInterface {
     egui_ctx: egui::Context,
@@ -47,7 +47,11 @@ impl UserInterface {
         })
     }
 
-    pub fn handle_event(&mut self, event: &winit::event::WindowEvent, window: &winit::window::Window) -> AstrariaResult<bool> {
+    pub fn handle_event(
+        &mut self,
+        event: &winit::event::WindowEvent,
+        window: &winit::window::Window,
+    ) -> AstrariaResult<bool> {
         let response = self.egui_winit.on_window_event(window, event);
         Ok(response.consumed)
     }

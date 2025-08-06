@@ -1,5 +1,6 @@
 pub mod app;
 pub mod assets;
+pub mod generated_shaders;
 pub mod graphics;
 pub mod input;
 pub mod math;

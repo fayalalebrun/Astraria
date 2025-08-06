@@ -10,8 +10,8 @@ use winit::{
 };
 
 use crate::{
-    assets::AssetManager, input::InputHandler, physics::PhysicsSimulation, renderer::Renderer,
-    scenario::BodyType, ui::UserInterface, AstrariaResult,
+    AstrariaResult, assets::AssetManager, input::InputHandler, physics::PhysicsSimulation,
+    renderer::Renderer, scenario::BodyType, ui::UserInterface,
 };
 
 pub struct AstrariaApp {
@@ -131,10 +131,14 @@ impl AstrariaApp {
                 // Use simplified look_at with distance parameter
                 renderer.set_camera_look_at(body_position, camera_distance as f64);
 
-                log::info!("Camera positioned at distance {:.2e} looking at '{}' at ({:.2e}, {:.2e}, {:.2e})",
+                log::info!(
+                    "Camera positioned at distance {:.2e} looking at '{}' at ({:.2e}, {:.2e}, {:.2e})",
                     camera_distance,
                     focus_body.name,
-                    body_position.x, body_position.y, body_position.z);
+                    body_position.x,
+                    body_position.y,
+                    body_position.z
+                );
             } else {
                 log::warn!(
                     "Focus body index {} is out of range, using default camera position",
@@ -188,7 +192,11 @@ impl AstrariaApp {
         Ok(())
     }
 
-    fn handle_window_event(&mut self, event: &WindowEvent, window: &Window) -> AstrariaResult<bool> {
+    fn handle_window_event(
+        &mut self,
+        event: &WindowEvent,
+        window: &Window,
+    ) -> AstrariaResult<bool> {
         // Let input handler process camera-related events first
         if let Some(input_handler) = &mut self.input_handler {
             // Give input handler priority for mouse events (needed for camera controls)
@@ -270,11 +278,21 @@ impl ApplicationHandler for AstrariaApp {
         }
     }
 
-    fn device_event(&mut self, _event_loop: &ActiveEventLoop, _device_id: winit::event::DeviceId, _event: winit::event::DeviceEvent) {
+    fn device_event(
+        &mut self,
+        _event_loop: &ActiveEventLoop,
+        _device_id: winit::event::DeviceId,
+        _event: winit::event::DeviceEvent,
+    ) {
         // Handle device events if needed
     }
-    
-    fn window_event(&mut self, event_loop: &ActiveEventLoop, window_id: WindowId, event: WindowEvent) {
+
+    fn window_event(
+        &mut self,
+        event_loop: &ActiveEventLoop,
+        window_id: WindowId,
+        event: WindowEvent,
+    ) {
         if let Some(window) = &self.window {
             if window.id() != window_id {
                 return;
@@ -303,7 +321,7 @@ impl ApplicationHandler for AstrariaApp {
         if let Some(window) = self.window.take() {
             let result = self.handle_window_event(&event, &window);
             self.window = Some(window); // Put it back
-            
+
             match result {
                 Ok(true) => {
                     if let Some(ref window) = self.window {

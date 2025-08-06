@@ -5,7 +5,7 @@ use std::path::Path;
 /// Simulates gravitational lensing effects using refraction shaders and skybox sampling
 use wgpu::{Device, Queue, RenderPipeline};
 
-use crate::{graphics::Vertex, AstrariaResult};
+use crate::{AstrariaResult, graphics::Vertex};
 
 // CameraUniform and TransformUniform are now imported from core.rs to eliminate duplication
 

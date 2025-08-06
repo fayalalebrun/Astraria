@@ -5,7 +5,7 @@ use std::path::Path;
 /// Renders lens flares with temperature-based colors and occlusion testing
 use wgpu::{Device, Queue, RenderPipeline};
 
-use crate::{graphics::Vertex, AstrariaResult};
+use crate::{AstrariaResult, graphics::Vertex};
 
 // CameraUniform and TransformUniform are now imported from core.rs to eliminate duplication
 

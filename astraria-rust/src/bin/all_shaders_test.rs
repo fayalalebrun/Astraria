@@ -1,11 +1,11 @@
 /// Complete test for ALL shaders in the new architecture
 /// Tests every shader type and generates screenshots for verification
 use astraria_rust::{
-    renderer::{
-        core::{MeshType, RenderCommand, *},
-        MainRenderer,
-    },
     AstrariaError, AstrariaResult,
+    renderer::{
+        MainRenderer,
+        core::{MeshType, RenderCommand, *},
+    },
 };
 use glam::{Mat4, Vec3, Vec4};
 use image::{ImageBuffer, Rgba};

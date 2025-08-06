@@ -40,6 +40,13 @@ futures = "0.3"
 serde = { version = "1.0", features = ["derive"] }
 ron = "0.10"
 
+# Shader processing
+wgsl_to_wgpu = "=0.15.0"
+
+[build-dependencies]
+wgsl_to_wgpu = "=0.15.0"
+termcolor = "1.4"
+
 [lib]
 name = "astraria_rust"
 path = "src/lib.rs"

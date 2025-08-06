@@ -4,7 +4,7 @@ use glam::Vec3;
 /// Ported from the original LightSourceManager.java
 use wgpu::{Device, Queue};
 
-use crate::{physics::PhysicsSimulation, AstrariaResult};
+use crate::{AstrariaResult, physics::PhysicsSimulation};
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy, Pod, Zeroable)]

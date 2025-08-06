@@ -14,7 +14,7 @@ pub mod uniforms;
 use wgpu::{Device, Queue, Surface, SurfaceConfiguration};
 use winit::{dpi::PhysicalSize, window::Window};
 
-use crate::{assets::AssetManager, physics::PhysicsSimulation, AstrariaError, AstrariaResult};
+use crate::{AstrariaError, AstrariaResult, assets::AssetManager, physics::PhysicsSimulation};
 
 pub use buffers::BufferManager;
 pub use camera::Camera;
@@ -50,7 +50,8 @@ impl Renderer {
         });
 
         // Create surface with transmuted lifetime - safe because window lives for entire app
-        let surface = instance.create_surface(window)
+        let surface = instance
+            .create_surface(window)
             .map_err(|e| AstrariaError::Graphics(format!("Failed to create surface: {}", e)))?;
         let surface: Surface<'static> = unsafe { std::mem::transmute(surface) };
 
@@ -75,7 +76,12 @@ impl Renderer {
                         force_fallback_adapter: true,
                     })
                     .await
-                    .map_err(|e| AstrariaError::Graphics(format!("Failed to find any suitable GPU adapter: {}", e)))?
+                    .map_err(|e| {
+                        AstrariaError::Graphics(format!(
+                            "Failed to find any suitable GPU adapter: {}",
+                            e
+                        ))
+                    })?
             }
         };
 

@@ -1,7 +1,7 @@
-use crate::{assets::AssetManager, renderer::core::*, AstrariaResult};
+use crate::{AstrariaResult, assets::AssetManager, renderer::core::*};
 use glam::{Mat4, Vec3};
 /// Buffer management for vertex data, uniforms, and other GPU resources
-use wgpu::{util::DeviceExt, BindGroup, Buffer, Device, Queue, Sampler};
+use wgpu::{BindGroup, Buffer, Device, Queue, Sampler, util::DeviceExt};
 
 // CameraUniform and TransformUniform are now imported from core.rs to eliminate duplication
 

@@ -1,8 +1,8 @@
 use anyhow::Result;
+use std::collections::HashSet;
 /// WGSL shader preprocessing utilities
 /// Lightweight preprocessor that handles //!include directives
 use std::path::Path;
-use std::collections::HashSet;
 
 /// Lightweight WGSL preprocessor that handles //!include directives
 pub struct LightweightPreprocessor {
@@ -24,16 +24,17 @@ impl LightweightPreprocessor {
 
     pub fn process_shader(&mut self, shader_path: &Path, source: &str) -> Result<String> {
         // Prevent infinite recursion
-        let canonical_path = shader_path.canonicalize()
+        let canonical_path = shader_path
+            .canonicalize()
             .unwrap_or_else(|_| shader_path.to_path_buf());
-        
+
         if self.processed_files.contains(&canonical_path) {
             return Ok(String::new()); // Already processed, return empty
         }
         self.processed_files.insert(canonical_path);
 
         let mut processed = String::new();
-        
+
         for line in source.lines() {
             let trimmed = line.trim();
             if trimmed.starts_with("//!include") {
@@ -47,15 +48,16 @@ impl LightweightPreprocessor {
                 // Resolve the include path relative to current shader
                 let base_dir = shader_path.parent().unwrap_or(Path::new("."));
                 let mut full_include_path = base_dir.join(include_path);
-                
+
                 // If file doesn't exist, try relative to project root
                 if !full_include_path.exists() && include_path.starts_with("src/") {
                     full_include_path = Path::new(".").join(include_path);
                 }
 
                 // Read and process the included file
-                let include_source = std::fs::read_to_string(&full_include_path)
-                    .map_err(|e| anyhow::anyhow!("Failed to read include file {:?}: {}", full_include_path, e))?;
+                let include_source = std::fs::read_to_string(&full_include_path).map_err(|e| {
+                    anyhow::anyhow!("Failed to read include file {:?}: {}", full_include_path, e)
+                })?;
 
                 let processed_include = self.process_shader(&full_include_path, &include_source)?;
                 processed.push_str(&processed_include);

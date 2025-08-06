@@ -3,9 +3,9 @@ use image::{DynamicImage, GenericImageView};
 /// Replaces LibGDX AssetManager with Rust-native implementation
 use std::collections::HashMap;
 use std::sync::{Arc, Weak};
-use wgpu::{util::DeviceExt, Buffer, Device, Queue, Texture, TextureView};
+use wgpu::{Buffer, Device, Queue, Texture, TextureView, util::DeviceExt};
 
-use crate::{graphics::Vertex, AstrariaError, AstrariaResult};
+use crate::{AstrariaError, AstrariaResult, graphics::Vertex};
 
 pub struct AssetManager {
     textures: HashMap<String, Arc<TextureAsset>>,

@@ -5,7 +5,7 @@ use bytemuck::{Pod, Zeroable};
 use std::path::Path;
 use wgpu::{Device, Queue, RenderPipeline};
 
-use crate::{graphics::Vertex, AstrariaResult};
+use crate::{AstrariaResult, graphics::Vertex};
 
 // CameraUniform and TransformUniform are now imported from core.rs to eliminate duplication
 
