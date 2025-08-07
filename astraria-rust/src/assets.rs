@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::sync::{Arc, Weak};
 use wgpu::{Buffer, Device, Queue, Texture, TextureView, util::DeviceExt};
 
-use crate::{AstrariaError, AstrariaResult, graphics::Vertex};
+use crate::{AstrariaError, AstrariaResult, generated_shaders::common::VertexInput};
 
 pub struct AssetManager {
     textures: HashMap<String, Arc<TextureAsset>>,
@@ -261,25 +261,25 @@ impl AssetManager {
             let pos_idx = (index as usize) * 3;
             let tex_idx = (index as usize) * 2;
 
-            let vertex = Vertex {
+            let vertex = VertexInput {
                 position: if pos_idx + 2 < positions.len() {
-                    [
+                    glam::Vec3::new(
                         positions[pos_idx],
                         positions[pos_idx + 1],
                         positions[pos_idx + 2],
-                    ]
+                    )
                 } else {
-                    [0.0, 0.0, 0.0]
+                    glam::Vec3::ZERO
                 },
                 tex_coord: if tex_idx + 1 < texcoords.len() {
-                    [texcoords[tex_idx], texcoords[tex_idx + 1]]
+                    glam::Vec2::new(texcoords[tex_idx], texcoords[tex_idx + 1])
                 } else {
-                    [0.0, 0.0]
+                    glam::Vec2::ZERO
                 },
                 normal: if pos_idx + 2 < normals.len() {
-                    [normals[pos_idx], normals[pos_idx + 1], normals[pos_idx + 2]]
+                    glam::Vec3::new(normals[pos_idx], normals[pos_idx + 1], normals[pos_idx + 2])
                 } else {
-                    [0.0, 1.0, 0.0] // Default up normal
+                    glam::Vec3::Y // Default up normal
                 },
             };
             vertices.push(vertex);

@@ -1,135 +1,44 @@
-use crate::renderer::shader_utils::load_preprocessed_wgsl;
-use bytemuck::{Pod, Zeroable};
-use std::path::Path;
 /// Lens glow shader for stellar lens flare effects
 /// Renders lens flares with temperature-based colors and occlusion testing
 use wgpu::{Device, Queue, RenderPipeline};
 
-use crate::{AstrariaResult, graphics::Vertex};
-
-// CameraUniform and TransformUniform are now imported from core.rs to eliminate duplication
-
-#[repr(C)]
-#[derive(Copy, Clone, Debug, Pod, Zeroable)]
-pub struct LensGlowUniform {
-    pub screen_dimensions: [f32; 2], // Screen width and height  (8 bytes)
-    pub glow_size: [f32; 2], // Width and height of the glow effect (8 bytes) = 16 bytes so far
-    pub star_position: [f32; 3], // Star position in world coordinates (12 bytes)
-    pub _padding1: f32,      // (4 bytes) = 16 bytes, total 32 bytes
-    pub camera_direction: [f32; 3], // Camera forward direction (12 bytes)
-    pub _padding2: f32,      // (4 bytes) = 16 bytes, total 48 bytes
-    pub temperature: f32,    // Star temperature for spectrum mapping (4 bytes)
-    pub _padding3: [f32; 19], // (76 bytes) = 80 bytes, total 128 bytes
-}
+use crate::{AstrariaResult, generated_shaders};
 
 pub struct LensGlowShader {
     pub pipeline: RenderPipeline,
-    pub lens_glow_buffer: wgpu::Buffer,
-    pub uniform_bind_group: wgpu::BindGroup,
-    pub texture_bind_group_layout: wgpu::BindGroupLayout,
 }
 
 impl LensGlowShader {
-    pub fn new(device: &Device, queue: &Queue) -> AstrariaResult<Self> {
-        let shader_path = Path::new("src/shaders/lens_glow.wgsl");
-        let shader_source = load_preprocessed_wgsl(shader_path)
-            .map_err(|e| crate::AstrariaError::Graphics(format!("Failed to load shader: {}", e)))?;
-        let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
-            label: Some("Lens Glow Shader"),
-            source: wgpu::ShaderSource::Wgsl(shader_source.into()),
-        });
+    pub fn new(device: &Device, _queue: &Queue) -> AstrariaResult<Self> {
+        // Use generated shader module
+        let shader = generated_shaders::lens_glow::create_shader_module(device);
 
-        // Camera bind group layout (group 0) - shared with other shaders
-        let camera_bind_group_layout =
-            crate::renderer::uniforms::buffer_helpers::create_mvp_bind_group_layout_dynamic(
-                device,
-                Some("LensGlow MVP Bind Group Layout"),
-            );
+        // Use generated pipeline layout
+        let pipeline_layout = generated_shaders::lens_glow::create_pipeline_layout(device);
 
-        // Lens glow specific bind group layout (group 1) - lens_glow uniform only
-        let uniform_bind_group_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                label: Some("Lens Glow Uniform Bind Group Layout"),
-                entries: &[wgpu::BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: wgpu::ShaderStages::VERTEX | wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Uniform,
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
-                    },
-                    count: None,
-                }],
-            });
-
-        // Texture bind group layout (group 2)
-        let texture_bind_group_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                label: Some("Lens Glow Texture Bind Group Layout"),
-                entries: &[
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 0,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Texture {
-                            multisampled: false,
-                            view_dimension: wgpu::TextureViewDimension::D2,
-                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
-                        },
-                        count: None,
-                    },
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 1,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Texture {
-                            multisampled: false,
-                            view_dimension: wgpu::TextureViewDimension::D2,
-                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
-                        },
-                        count: None,
-                    },
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 2,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
-                        count: None,
-                    },
-                ],
-            });
-
-        let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-            label: Some("Lens Glow Pipeline Layout"),
-            bind_group_layouts: &[
-                &camera_bind_group_layout,
-                &uniform_bind_group_layout,
-                &texture_bind_group_layout,
-            ],
-            push_constant_ranges: &[],
-        });
+        // Use generated vertex and fragment entries
+        let vertex_entry =
+            generated_shaders::lens_glow::vs_main_entry(wgpu::VertexStepMode::Vertex);
+        let fragment_entry =
+            generated_shaders::lens_glow::fs_main_entry([Some(wgpu::ColorTargetState {
+                format: wgpu::TextureFormat::Bgra8UnormSrgb,
+                blend: Some(wgpu::BlendState::ALPHA_BLENDING),
+                write_mask: wgpu::ColorWrites::ALL,
+            })]);
 
         let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: Some("Lens Glow Pipeline"),
             layout: Some(&pipeline_layout),
-            vertex: wgpu::VertexState {
-                module: &shader,
-                entry_point: Some("vs_main"),
-                buffers: &[Vertex::desc()],
-                compilation_options: wgpu::PipelineCompilationOptions::default(),
-            },
-            fragment: Some(wgpu::FragmentState {
-                module: &shader,
-                entry_point: Some("fs_main"),
-                targets: &[Some(wgpu::ColorTargetState {
-                    format: wgpu::TextureFormat::Bgra8UnormSrgb,
-                    blend: Some(wgpu::BlendState::ALPHA_BLENDING),
-                    write_mask: wgpu::ColorWrites::ALL,
-                })],
-                compilation_options: wgpu::PipelineCompilationOptions::default(),
-            }),
+            vertex: generated_shaders::lens_glow::vertex_state(&shader, &vertex_entry),
+            fragment: Some(generated_shaders::lens_glow::fragment_state(
+                &shader,
+                &fragment_entry,
+            )),
             primitive: wgpu::PrimitiveState {
                 topology: wgpu::PrimitiveTopology::TriangleList,
                 strip_index_format: None,
                 front_face: wgpu::FrontFace::Ccw,
-                cull_mode: None,
+                cull_mode: Some(wgpu::Face::Back),
                 polygon_mode: wgpu::PolygonMode::Fill,
                 unclipped_depth: false,
                 conservative: false,
@@ -140,7 +49,7 @@ impl LensGlowShader {
                 depth_compare: wgpu::CompareFunction::Less,
                 stencil: wgpu::StencilState::default(),
                 bias: wgpu::DepthBiasState::default(),
-            }), // No depth buffer for test mode
+            }),
             multisample: wgpu::MultisampleState {
                 count: 1,
                 mask: !0,
@@ -150,54 +59,6 @@ impl LensGlowShader {
             multiview: None,
         });
 
-        // Create lens glow uniform buffer
-        let lens_glow_buffer = device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("Lens Glow Uniform Buffer"),
-            size: std::mem::size_of::<LensGlowUniform>() as u64,
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-            mapped_at_creation: false,
-        });
-
-        // Initialize lens glow uniform
-        let lens_glow_uniform = LensGlowUniform {
-            screen_dimensions: [1920.0, 1080.0],
-            glow_size: [64.0, 64.0],
-            star_position: [0.0, 0.0, 0.0],
-            _padding1: 0.0,
-            camera_direction: [0.0, 0.0, 1.0],
-            _padding2: 0.0,
-            temperature: 5778.0, // Sun temperature
-            _padding3: [0.0; 19],
-        };
-        queue.write_buffer(
-            &lens_glow_buffer,
-            0,
-            bytemuck::cast_slice(&[lens_glow_uniform]),
-        );
-
-        // Create lens glow specific bind group (group 1)
-        let uniform_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("Lens Glow Uniform Bind Group"),
-            layout: &uniform_bind_group_layout,
-            entries: &[wgpu::BindGroupEntry {
-                binding: 0,
-                resource: lens_glow_buffer.as_entire_binding(),
-            }],
-        });
-
-        Ok(Self {
-            pipeline,
-            lens_glow_buffer,
-            uniform_bind_group,
-            texture_bind_group_layout,
-        })
-    }
-
-    pub fn update_lens_glow(&self, queue: &Queue, lens_glow: &LensGlowUniform) {
-        queue.write_buffer(
-            &self.lens_glow_buffer,
-            0,
-            bytemuck::cast_slice(&[*lens_glow]),
-        );
+        Ok(Self { pipeline })
     }
 }

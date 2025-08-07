@@ -244,8 +244,7 @@ impl Renderer {
                 .prepare_render_command(command.clone(), *transform);
         }
 
-        // Upload all MVP data to GPU buffer (single write operation per frame)
-        self.main_renderer.upload_frame_mvp_data();
+        // MVP data is uploaded per-object using generated bind groups (no bulk upload needed)
 
         // Create render pass
         {

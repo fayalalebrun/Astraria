@@ -1,68 +1,20 @@
-use crate::renderer::shader_utils::load_preprocessed_wgsl;
 /// Billboard shader for screen-aligned sprite rendering
 /// Now uses shared uniform buffers from MainRenderer
-use bytemuck::{Pod, Zeroable};
-use std::path::Path;
 use wgpu::{Device, Queue, RenderPipeline};
 
-use crate::{AstrariaResult, graphics::Vertex};
-
-// CameraUniform and TransformUniform are now imported from core.rs to eliminate duplication
-
-#[repr(C)]
-#[derive(Copy, Clone, Debug, Pod, Zeroable)]
-pub struct BillboardUniform {
-    pub billboard_width: f32,       // Width of billboard in pixels
-    pub billboard_height: f32,      // Height of billboard in pixels
-    pub screen_width: f32,          // Screen width in pixels
-    pub screen_height: f32,         // Screen height in pixels
-    pub billboard_origin: [f32; 3], // 3D world position of billboard center
-    pub _padding: f32,
-}
+use crate::{AstrariaResult, generated_shaders::billboard};
 
 pub struct BillboardShader {
     pub pipeline: RenderPipeline,
-    pub billboard_bind_group_layout: wgpu::BindGroupLayout,
 }
 
 impl BillboardShader {
     pub fn new(device: &Device, _queue: &Queue) -> AstrariaResult<Self> {
-        let shader_path = Path::new("src/shaders/billboard.wgsl");
-        let shader_source = load_preprocessed_wgsl(shader_path)
-            .map_err(|e| crate::AstrariaError::Graphics(format!("Failed to load shader: {}", e)))?;
-        let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
-            label: Some("Billboard Shader"),
-            source: wgpu::ShaderSource::Wgsl(shader_source.into()),
-        });
+        // Use the generated shader module and bind groups from wgsl_bindgen
+        let shader = billboard::create_shader_module(device);
 
-        // Use shared bind group layouts from MainRenderer
-        let camera_bind_group_layout =
-            crate::renderer::uniforms::buffer_helpers::create_mvp_bind_group_layout_dynamic(
-                device,
-                Some("Billboard MVP Bind Group Layout"),
-            );
-
-        // Create billboard-specific bind group layout
-        let billboard_bind_group_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                label: Some("Billboard Bind Group Layout"),
-                entries: &[wgpu::BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: wgpu::ShaderStages::VERTEX,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Uniform,
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
-                    },
-                    count: None,
-                }],
-            });
-
-        let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-            label: Some("Billboard Pipeline Layout"),
-            bind_group_layouts: &[&camera_bind_group_layout, &billboard_bind_group_layout],
-            push_constant_ranges: &[],
-        });
+        // Use the generated pipeline layout from wgsl_bindgen
+        let pipeline_layout = billboard::create_pipeline_layout(device);
 
         let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: Some("Billboard Pipeline"),
@@ -70,7 +22,9 @@ impl BillboardShader {
             vertex: wgpu::VertexState {
                 module: &shader,
                 entry_point: Some("vs_main"),
-                buffers: &[Vertex::desc()],
+                buffers: &[billboard::VertexInput::vertex_buffer_layout(
+                    wgpu::VertexStepMode::Vertex,
+                )],
                 compilation_options: wgpu::PipelineCompilationOptions::default(),
             },
             fragment: Some(wgpu::FragmentState {
@@ -108,9 +62,6 @@ impl BillboardShader {
             multiview: None,
         });
 
-        Ok(Self {
-            pipeline,
-            billboard_bind_group_layout,
-        })
+        Ok(Self { pipeline })
     }
 }

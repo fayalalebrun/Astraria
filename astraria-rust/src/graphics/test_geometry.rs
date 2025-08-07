@@ -1,134 +1,134 @@
 /// Test geometry for verifying the rendering pipeline
-use crate::graphics::Vertex;
+use crate::generated_shaders::common::{SkyboxVertexInput, VertexInput};
 
 /// Create a simple colored cube for testing
-pub fn create_test_cube() -> (Vec<Vertex>, Vec<u32>) {
+pub fn create_test_cube() -> (Vec<VertexInput>, Vec<u32>) {
     let vertices = vec![
         // Front face
-        Vertex {
-            position: [-1.0, -1.0, 1.0],
-            tex_coord: [0.0, 0.0],
-            normal: [0.0, 0.0, 1.0],
+        VertexInput {
+            position: glam::Vec3::new(-1.0, -1.0, 1.0),
+            tex_coord: glam::Vec2::new(0.0, 0.0),
+            normal: glam::Vec3::new(0.0, 0.0, 1.0),
         },
-        Vertex {
-            position: [1.0, -1.0, 1.0],
-            tex_coord: [1.0, 0.0],
-            normal: [0.0, 0.0, 1.0],
+        VertexInput {
+            position: glam::Vec3::new(1.0, -1.0, 1.0),
+            tex_coord: glam::Vec2::new(1.0, 0.0),
+            normal: glam::Vec3::new(0.0, 0.0, 1.0),
         },
-        Vertex {
-            position: [1.0, 1.0, 1.0],
-            tex_coord: [1.0, 1.0],
-            normal: [0.0, 0.0, 1.0],
+        VertexInput {
+            position: glam::Vec3::new(1.0, 1.0, 1.0),
+            tex_coord: glam::Vec2::new(1.0, 1.0),
+            normal: glam::Vec3::new(0.0, 0.0, 1.0),
         },
-        Vertex {
-            position: [-1.0, 1.0, 1.0],
-            tex_coord: [0.0, 1.0],
-            normal: [0.0, 0.0, 1.0],
+        VertexInput {
+            position: glam::Vec3::new(-1.0, 1.0, 1.0),
+            tex_coord: glam::Vec2::new(0.0, 1.0),
+            normal: glam::Vec3::new(0.0, 0.0, 1.0),
         },
         // Back face
-        Vertex {
-            position: [-1.0, -1.0, -1.0],
-            tex_coord: [1.0, 0.0],
-            normal: [0.0, 0.0, -1.0],
+        VertexInput {
+            position: glam::Vec3::new(-1.0, -1.0, -1.0),
+            tex_coord: glam::Vec2::new(1.0, 0.0),
+            normal: glam::Vec3::new(0.0, 0.0, -1.0),
         },
-        Vertex {
-            position: [-1.0, 1.0, -1.0],
-            tex_coord: [1.0, 1.0],
-            normal: [0.0, 0.0, -1.0],
+        VertexInput {
+            position: glam::Vec3::new(-1.0, 1.0, -1.0),
+            tex_coord: glam::Vec2::new(1.0, 1.0),
+            normal: glam::Vec3::new(0.0, 0.0, -1.0),
         },
-        Vertex {
-            position: [1.0, 1.0, -1.0],
-            tex_coord: [0.0, 1.0],
-            normal: [0.0, 0.0, -1.0],
+        VertexInput {
+            position: glam::Vec3::new(1.0, 1.0, -1.0),
+            tex_coord: glam::Vec2::new(0.0, 1.0),
+            normal: glam::Vec3::new(0.0, 0.0, -1.0),
         },
-        Vertex {
-            position: [1.0, -1.0, -1.0],
-            tex_coord: [0.0, 0.0],
-            normal: [0.0, 0.0, -1.0],
+        VertexInput {
+            position: glam::Vec3::new(1.0, -1.0, -1.0),
+            tex_coord: glam::Vec2::new(0.0, 0.0),
+            normal: glam::Vec3::new(0.0, 0.0, -1.0),
         },
         // Top face
-        Vertex {
-            position: [-1.0, 1.0, -1.0],
-            tex_coord: [0.0, 1.0],
-            normal: [0.0, 1.0, 0.0],
+        VertexInput {
+            position: glam::Vec3::new(-1.0, 1.0, -1.0),
+            tex_coord: glam::Vec2::new(0.0, 1.0),
+            normal: glam::Vec3::new(0.0, 1.0, 0.0),
         },
-        Vertex {
-            position: [-1.0, 1.0, 1.0],
-            tex_coord: [0.0, 0.0],
-            normal: [0.0, 1.0, 0.0],
+        VertexInput {
+            position: glam::Vec3::new(-1.0, 1.0, 1.0),
+            tex_coord: glam::Vec2::new(0.0, 0.0),
+            normal: glam::Vec3::new(0.0, 1.0, 0.0),
         },
-        Vertex {
-            position: [1.0, 1.0, 1.0],
-            tex_coord: [1.0, 0.0],
-            normal: [0.0, 1.0, 0.0],
+        VertexInput {
+            position: glam::Vec3::new(1.0, 1.0, 1.0),
+            tex_coord: glam::Vec2::new(1.0, 0.0),
+            normal: glam::Vec3::new(0.0, 1.0, 0.0),
         },
-        Vertex {
-            position: [1.0, 1.0, -1.0],
-            tex_coord: [1.0, 1.0],
-            normal: [0.0, 1.0, 0.0],
+        VertexInput {
+            position: glam::Vec3::new(1.0, 1.0, -1.0),
+            tex_coord: glam::Vec2::new(1.0, 1.0),
+            normal: glam::Vec3::new(0.0, 1.0, 0.0),
         },
         // Bottom face
-        Vertex {
-            position: [-1.0, -1.0, -1.0],
-            tex_coord: [1.0, 1.0],
-            normal: [0.0, -1.0, 0.0],
+        VertexInput {
+            position: glam::Vec3::new(-1.0, -1.0, -1.0),
+            tex_coord: glam::Vec2::new(1.0, 1.0),
+            normal: glam::Vec3::new(0.0, -1.0, 0.0),
         },
-        Vertex {
-            position: [1.0, -1.0, -1.0],
-            tex_coord: [0.0, 1.0],
-            normal: [0.0, -1.0, 0.0],
+        VertexInput {
+            position: glam::Vec3::new(1.0, -1.0, -1.0),
+            tex_coord: glam::Vec2::new(0.0, 1.0),
+            normal: glam::Vec3::new(0.0, -1.0, 0.0),
         },
-        Vertex {
-            position: [1.0, -1.0, 1.0],
-            tex_coord: [0.0, 0.0],
-            normal: [0.0, -1.0, 0.0],
+        VertexInput {
+            position: glam::Vec3::new(1.0, -1.0, 1.0),
+            tex_coord: glam::Vec2::new(0.0, 0.0),
+            normal: glam::Vec3::new(0.0, -1.0, 0.0),
         },
-        Vertex {
-            position: [-1.0, -1.0, 1.0],
-            tex_coord: [1.0, 0.0],
-            normal: [0.0, -1.0, 0.0],
+        VertexInput {
+            position: glam::Vec3::new(-1.0, -1.0, 1.0),
+            tex_coord: glam::Vec2::new(1.0, 0.0),
+            normal: glam::Vec3::new(0.0, -1.0, 0.0),
         },
         // Right face
-        Vertex {
-            position: [1.0, -1.0, -1.0],
-            tex_coord: [1.0, 0.0],
-            normal: [1.0, 0.0, 0.0],
+        VertexInput {
+            position: glam::Vec3::new(1.0, -1.0, -1.0),
+            tex_coord: glam::Vec2::new(1.0, 0.0),
+            normal: glam::Vec3::new(1.0, 0.0, 0.0),
         },
-        Vertex {
-            position: [1.0, 1.0, -1.0],
-            tex_coord: [1.0, 1.0],
-            normal: [1.0, 0.0, 0.0],
+        VertexInput {
+            position: glam::Vec3::new(1.0, 1.0, -1.0),
+            tex_coord: glam::Vec2::new(1.0, 1.0),
+            normal: glam::Vec3::new(1.0, 0.0, 0.0),
         },
-        Vertex {
-            position: [1.0, 1.0, 1.0],
-            tex_coord: [0.0, 1.0],
-            normal: [1.0, 0.0, 0.0],
+        VertexInput {
+            position: glam::Vec3::new(1.0, 1.0, 1.0),
+            tex_coord: glam::Vec2::new(0.0, 1.0),
+            normal: glam::Vec3::new(1.0, 0.0, 0.0),
         },
-        Vertex {
-            position: [1.0, -1.0, 1.0],
-            tex_coord: [0.0, 0.0],
-            normal: [1.0, 0.0, 0.0],
+        VertexInput {
+            position: glam::Vec3::new(1.0, -1.0, 1.0),
+            tex_coord: glam::Vec2::new(0.0, 0.0),
+            normal: glam::Vec3::new(1.0, 0.0, 0.0),
         },
         // Left face
-        Vertex {
-            position: [-1.0, -1.0, -1.0],
-            tex_coord: [0.0, 0.0],
-            normal: [-1.0, 0.0, 0.0],
+        VertexInput {
+            position: glam::Vec3::new(-1.0, -1.0, -1.0),
+            tex_coord: glam::Vec2::new(0.0, 0.0),
+            normal: glam::Vec3::new(-1.0, 0.0, 0.0),
         },
-        Vertex {
-            position: [-1.0, -1.0, 1.0],
-            tex_coord: [1.0, 0.0],
-            normal: [-1.0, 0.0, 0.0],
+        VertexInput {
+            position: glam::Vec3::new(-1.0, -1.0, 1.0),
+            tex_coord: glam::Vec2::new(1.0, 0.0),
+            normal: glam::Vec3::new(-1.0, 0.0, 0.0),
         },
-        Vertex {
-            position: [-1.0, 1.0, 1.0],
-            tex_coord: [1.0, 1.0],
-            normal: [-1.0, 0.0, 0.0],
+        VertexInput {
+            position: glam::Vec3::new(-1.0, 1.0, 1.0),
+            tex_coord: glam::Vec2::new(1.0, 1.0),
+            normal: glam::Vec3::new(-1.0, 0.0, 0.0),
         },
-        Vertex {
-            position: [-1.0, 1.0, -1.0],
-            tex_coord: [0.0, 1.0],
-            normal: [-1.0, 0.0, 0.0],
+        VertexInput {
+            position: glam::Vec3::new(-1.0, 1.0, -1.0),
+            tex_coord: glam::Vec2::new(0.0, 1.0),
+            normal: glam::Vec3::new(-1.0, 0.0, 0.0),
         },
     ];
 
@@ -144,33 +144,157 @@ pub fn create_test_cube() -> (Vec<Vertex>, Vec<u32>) {
     (vertices, indices)
 }
 
-/// Create a simple triangle for initial testing
-pub fn create_test_triangle() -> (Vec<Vertex>, Vec<u32>) {
+/// Create a cube for skybox rendering using the correct SkyboxVertexInput type
+pub fn create_skybox_cube() -> (Vec<SkyboxVertexInput>, Vec<u32>) {
+    let size = 1.0;
+
     let vertices = vec![
-        Vertex {
-            position: [0.0, 0.5, 0.0],
-            tex_coord: [0.5, 1.0],
-            normal: [0.0, 0.0, 1.0],
+        // Front face (z = +size) - 2 triangles
+        SkyboxVertexInput {
+            position: glam::Vec3::new(-size, size, size),
         },
-        Vertex {
-            position: [-0.5, -0.5, 0.0],
-            tex_coord: [0.0, 0.0],
-            normal: [0.0, 0.0, 1.0],
+        SkyboxVertexInput {
+            position: glam::Vec3::new(-size, -size, size),
         },
-        Vertex {
-            position: [0.5, -0.5, 0.0],
-            tex_coord: [1.0, 0.0],
-            normal: [0.0, 0.0, 1.0],
+        SkyboxVertexInput {
+            position: glam::Vec3::new(size, -size, size),
+        },
+        SkyboxVertexInput {
+            position: glam::Vec3::new(size, -size, size),
+        },
+        SkyboxVertexInput {
+            position: glam::Vec3::new(size, size, size),
+        },
+        SkyboxVertexInput {
+            position: glam::Vec3::new(-size, size, size),
+        },
+        // Back face (z = -size) - 2 triangles
+        SkyboxVertexInput {
+            position: glam::Vec3::new(-size, -size, -size),
+        },
+        SkyboxVertexInput {
+            position: glam::Vec3::new(-size, size, -size),
+        },
+        SkyboxVertexInput {
+            position: glam::Vec3::new(size, size, -size),
+        },
+        SkyboxVertexInput {
+            position: glam::Vec3::new(size, size, -size),
+        },
+        SkyboxVertexInput {
+            position: glam::Vec3::new(size, -size, -size),
+        },
+        SkyboxVertexInput {
+            position: glam::Vec3::new(-size, -size, -size),
+        },
+        // Left face (x = -size) - 2 triangles
+        SkyboxVertexInput {
+            position: glam::Vec3::new(-size, -size, size),
+        },
+        SkyboxVertexInput {
+            position: glam::Vec3::new(-size, size, size),
+        },
+        SkyboxVertexInput {
+            position: glam::Vec3::new(-size, size, -size),
+        },
+        SkyboxVertexInput {
+            position: glam::Vec3::new(-size, size, -size),
+        },
+        SkyboxVertexInput {
+            position: glam::Vec3::new(-size, -size, -size),
+        },
+        SkyboxVertexInput {
+            position: glam::Vec3::new(-size, -size, size),
+        },
+        // Right face (x = +size) - 2 triangles
+        SkyboxVertexInput {
+            position: glam::Vec3::new(size, -size, -size),
+        },
+        SkyboxVertexInput {
+            position: glam::Vec3::new(size, size, -size),
+        },
+        SkyboxVertexInput {
+            position: glam::Vec3::new(size, size, size),
+        },
+        SkyboxVertexInput {
+            position: glam::Vec3::new(size, size, size),
+        },
+        SkyboxVertexInput {
+            position: glam::Vec3::new(size, -size, size),
+        },
+        SkyboxVertexInput {
+            position: glam::Vec3::new(size, -size, -size),
+        },
+        // Top face (y = +size) - 2 triangles
+        SkyboxVertexInput {
+            position: glam::Vec3::new(-size, size, -size),
+        },
+        SkyboxVertexInput {
+            position: glam::Vec3::new(-size, size, size),
+        },
+        SkyboxVertexInput {
+            position: glam::Vec3::new(size, size, size),
+        },
+        SkyboxVertexInput {
+            position: glam::Vec3::new(size, size, size),
+        },
+        SkyboxVertexInput {
+            position: glam::Vec3::new(size, size, -size),
+        },
+        SkyboxVertexInput {
+            position: glam::Vec3::new(-size, size, -size),
+        },
+        // Bottom face (y = -size) - 2 triangles
+        SkyboxVertexInput {
+            position: glam::Vec3::new(-size, -size, -size),
+        },
+        SkyboxVertexInput {
+            position: glam::Vec3::new(size, -size, -size),
+        },
+        SkyboxVertexInput {
+            position: glam::Vec3::new(size, -size, size),
+        },
+        SkyboxVertexInput {
+            position: glam::Vec3::new(size, -size, size),
+        },
+        SkyboxVertexInput {
+            position: glam::Vec3::new(-size, -size, size),
+        },
+        SkyboxVertexInput {
+            position: glam::Vec3::new(-size, -size, -size),
         },
     ];
 
-    let indices = vec![0, 1, 2];
+    // Sequential indices for triangle list
+    let indices: Vec<u32> = (0..vertices.len() as u32).collect();
+    (vertices, indices)
+}
 
+/// Create a simple triangle for initial testing
+pub fn create_test_triangle() -> (Vec<VertexInput>, Vec<u32>) {
+    let vertices = vec![
+        VertexInput {
+            position: glam::Vec3::new(0.0, 0.5, 0.0),
+            tex_coord: glam::Vec2::new(0.5, 1.0),
+            normal: glam::Vec3::Z,
+        },
+        VertexInput {
+            position: glam::Vec3::new(-0.5, -0.5, 0.0),
+            tex_coord: glam::Vec2::new(0.0, 0.0),
+            normal: glam::Vec3::Z,
+        },
+        VertexInput {
+            position: glam::Vec3::new(0.5, -0.5, 0.0),
+            tex_coord: glam::Vec2::new(1.0, 0.0),
+            normal: glam::Vec3::Z,
+        },
+    ];
+    let indices = vec![0, 1, 2];
     (vertices, indices)
 }
 
 /// Create a UV sphere for spherical objects (planets, stars, etc.)
-pub fn create_test_sphere(radius: f32, stacks: u32, slices: u32) -> (Vec<Vertex>, Vec<u32>) {
+pub fn create_test_sphere(radius: f32, stacks: u32, slices: u32) -> (Vec<VertexInput>, Vec<u32>) {
     let mut vertices = Vec::new();
     let mut indices = Vec::new();
 
@@ -192,10 +316,10 @@ pub fn create_test_sphere(radius: f32, stacks: u32, slices: u32) -> (Vec<Vertex>
             let u = j as f32 / slices as f32;
             let v = i as f32 / stacks as f32;
 
-            vertices.push(Vertex {
-                position: [x, y, z],
-                tex_coord: [u, v],
-                normal: [x / radius, y / radius, z / radius], // Normalized position for sphere normals
+            vertices.push(VertexInput {
+                position: glam::Vec3::new(x, y, z),
+                tex_coord: glam::Vec2::new(u, v),
+                normal: glam::Vec3::new(x / radius, y / radius, z / radius), // Normalized position for sphere normals
             });
         }
     }
@@ -222,119 +346,58 @@ pub fn create_test_sphere(radius: f32, stacks: u32, slices: u32) -> (Vec<Vertex>
 }
 
 /// Create a quad for billboard and UI rendering
-pub fn create_test_quad() -> (Vec<Vertex>, Vec<u32>) {
+pub fn create_test_quad() -> (Vec<VertexInput>, Vec<u32>) {
     let vertices = vec![
-        Vertex {
-            position: [-1.0, -1.0, 0.0],
-            tex_coord: [0.0, 0.0],
-            normal: [0.0, 0.0, 1.0],
+        VertexInput {
+            position: glam::Vec3::new(-1.0, -1.0, 0.0),
+            tex_coord: glam::Vec2::new(0.0, 0.0),
+            normal: glam::Vec3::Z,
         },
-        Vertex {
-            position: [1.0, -1.0, 0.0],
-            tex_coord: [1.0, 0.0],
-            normal: [0.0, 0.0, 1.0],
+        VertexInput {
+            position: glam::Vec3::new(1.0, -1.0, 0.0),
+            tex_coord: glam::Vec2::new(1.0, 0.0),
+            normal: glam::Vec3::Z,
         },
-        Vertex {
-            position: [1.0, 1.0, 0.0],
-            tex_coord: [1.0, 1.0],
-            normal: [0.0, 0.0, 1.0],
+        VertexInput {
+            position: glam::Vec3::new(1.0, 1.0, 0.0),
+            tex_coord: glam::Vec2::new(1.0, 1.0),
+            normal: glam::Vec3::Z,
         },
-        Vertex {
-            position: [-1.0, 1.0, 0.0],
-            tex_coord: [0.0, 1.0],
-            normal: [0.0, 0.0, 1.0],
+        VertexInput {
+            position: glam::Vec3::new(-1.0, 1.0, 0.0),
+            tex_coord: glam::Vec2::new(0.0, 1.0),
+            normal: glam::Vec3::Z,
         },
     ];
-
     let indices = vec![0, 1, 2, 2, 3, 0];
-
     (vertices, indices)
 }
 
 /// Create a simple line for orbital path rendering
-pub fn create_test_line() -> (Vec<Vertex>, Vec<u32>) {
+pub fn create_test_line() -> (Vec<VertexInput>, Vec<u32>) {
     let vertices = vec![
-        Vertex {
-            position: [-0.5, -0.5, 0.0],
-            tex_coord: [0.0, 0.0],
-            normal: [0.0, 0.0, 1.0],
+        VertexInput {
+            position: glam::Vec3::new(-0.5, -0.5, 0.0),
+            tex_coord: glam::Vec2::ZERO,
+            normal: glam::Vec3::Z,
         },
-        Vertex {
-            position: [0.5, 0.5, 0.0],
-            tex_coord: [1.0, 1.0],
-            normal: [0.0, 0.0, 1.0],
+        VertexInput {
+            position: glam::Vec3::new(0.5, 0.5, 0.0),
+            tex_coord: glam::Vec2::ONE,
+            normal: glam::Vec3::Z,
         },
     ];
-
     let indices = vec![0, 1];
-
     (vertices, indices)
 }
 
 /// Create a single point for distant object rendering
-pub fn create_test_point() -> (Vec<Vertex>, Vec<u32>) {
-    let vertices = vec![Vertex {
-        position: [0.0, 0.0, 0.0],
-        tex_coord: [0.5, 0.5],
-        normal: [0.0, 0.0, 1.0],
+pub fn create_test_point() -> (Vec<VertexInput>, Vec<u32>) {
+    let vertices = vec![VertexInput {
+        position: glam::Vec3::ZERO,
+        tex_coord: glam::Vec2::new(0.5, 0.5),
+        normal: glam::Vec3::Z,
     }];
-
     let indices = vec![0];
-
-    (vertices, indices)
-}
-
-/// Create a skybox cube for background rendering
-/// Uses exact vertices from original Astraria skybox implementation
-pub fn create_skybox_cube() -> (Vec<[f32; 3]>, Vec<u32>) {
-    // Direct port from Astraria Skybox.java - vertices as triangles, not indexed
-    let vertices = vec![
-        // Face 1 (front)
-        [-10.0, 10.0, -10.0],
-        [-10.0, -10.0, -10.0],
-        [10.0, -10.0, -10.0],
-        [10.0, -10.0, -10.0],
-        [10.0, 10.0, -10.0],
-        [-10.0, 10.0, -10.0],
-        // Face 2 (left)
-        [-10.0, -10.0, 10.0],
-        [-10.0, -10.0, -10.0],
-        [-10.0, 10.0, -10.0],
-        [-10.0, 10.0, -10.0],
-        [-10.0, 10.0, 10.0],
-        [-10.0, -10.0, 10.0],
-        // Face 3 (right)
-        [10.0, -10.0, -10.0],
-        [10.0, -10.0, 10.0],
-        [10.0, 10.0, 10.0],
-        [10.0, 10.0, 10.0],
-        [10.0, 10.0, -10.0],
-        [10.0, -10.0, -10.0],
-        // Face 4 (back)
-        [-10.0, -10.0, 10.0],
-        [-10.0, 10.0, 10.0],
-        [10.0, 10.0, 10.0],
-        [10.0, 10.0, 10.0],
-        [10.0, -10.0, 10.0],
-        [-10.0, -10.0, 10.0],
-        // Face 5 (top)
-        [-10.0, 10.0, -10.0],
-        [10.0, 10.0, -10.0],
-        [10.0, 10.0, 10.0],
-        [10.0, 10.0, 10.0],
-        [-10.0, 10.0, 10.0],
-        [-10.0, 10.0, -10.0],
-        // Face 6 (bottom)
-        [-10.0, -10.0, -10.0],
-        [-10.0, -10.0, 10.0],
-        [10.0, -10.0, -10.0],
-        [10.0, -10.0, -10.0],
-        [-10.0, -10.0, 10.0],
-        [10.0, -10.0, 10.0],
-    ];
-
-    // Sequential indices since we're using triangle list directly
-    let indices: Vec<u32> = (0..vertices.len() as u32).collect();
-
     (vertices, indices)
 }

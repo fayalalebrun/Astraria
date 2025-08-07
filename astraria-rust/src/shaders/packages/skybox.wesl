@@ -1,18 +1,18 @@
-// Skybox shader for cubemap background rendering
+// Skybox shader package for cubemap background rendering
 // Uses shared uniform definitions for consistency
 
-//!include src/shaders/shared/uniforms.wgsl
+import shared::{StandardMVPUniform, mvp, model_to_clip_coordinates};
 
 struct VertexInput {
-    @location(0) position: vec3<f32>,
+    position: vec3<f32> @location(0),
 };
 
 struct VertexOutput {
-    @builtin(position) clip_position: vec4<f32>,
-    @location(0) tex_coords: vec3<f32>,
+    clip_position: vec4<f32> @builtin(position),
+    tex_coords: vec3<f32> @location(0),
 };
 
-// Note: StandardMVPUniform is declared in shared.wgsl at @group(0) @binding(0)
+// Note: StandardMVPUniform is declared in shared.wesl at @group(0) @binding(0)
 
 @group(1) @binding(0)
 var skybox_texture: texture_cube<f32>;

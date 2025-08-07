@@ -1,7 +1,7 @@
-// Sun shader for stellar temperature rendering (800K-30000K)
+// Sun shader package for stellar temperature rendering (800K-30000K)
 // Uses shared uniform definitions for consistency
 
-//!include src/shaders/shared/uniforms.wgsl
+import shared::{StandardMVPUniform, mvp, model_to_clip_coordinates};
 
 // Sun-specific uniforms
 struct SunUniform {
@@ -19,17 +19,17 @@ struct SunUniform {
 };
 
 struct VertexInput {
-    @location(0) position: vec3<f32>,
-    @location(1) tex_coord: vec2<f32>,
-    @location(2) normal: vec3<f32>,
+    position: vec3<f32> @location(0),
+    tex_coord: vec2<f32> @location(1),
+    normal: vec3<f32> @location(2),
 };
 
 struct VertexOutput {
-    @builtin(position) clip_position: vec4<f32>,
-    @location(0) tex_coords: vec2<f32>,
-    @location(1) normal: vec3<f32>,
-    @location(2) frag_pos: vec3<f32>,
-    @location(3) model_view_pos: vec3<f32>,
+    clip_position: vec4<f32> @builtin(position),
+    tex_coords: vec2<f32> @location(0),
+    normal: vec3<f32> @location(1),
+    frag_pos: vec3<f32> @location(2),
+    model_view_pos: vec3<f32> @location(3),
 };
 
 // Bind groups
@@ -44,24 +44,6 @@ var diffuse_texture: texture_2d<f32>;
 var sun_gradient_texture: texture_2d<f32>;  
 @group(2) @binding(2)
 var texture_sampler: sampler;
-
-// Logarithmic depth buffer transformation (from original implementation)
-fn model_to_clip_coordinates(
-    position: vec4<f32>,
-    model_view_perspective_matrix: mat4x4<f32>,
-    depth_constant: f32,
-    far_plane_distance: f32
-) -> vec4<f32> {
-    var clip = model_view_perspective_matrix * position;
-    
-    // WebGPU logarithmic depth: maps to [0,1] range instead of OpenGL's [-1,1]
-    // Formula: z = log2(max(1e-6, 1.0 + w)) * Fcoef
-    // where Fcoef = 1.0 / log2(farplane + 1.0) for [0,1] range
-    let fcoef = 1.0 / log2(far_plane_distance + 1.0);
-    clip.z = log2(max(1e-6, 1.0 + clip.w)) * fcoef * clip.w;
-    
-    return clip;
-}
 
 @vertex
 fn vs_main(input: VertexInput) -> VertexOutput {

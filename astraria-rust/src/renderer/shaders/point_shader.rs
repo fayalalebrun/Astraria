@@ -1,19 +1,8 @@
-use crate::renderer::shader_utils::load_preprocessed_wgsl;
-use bytemuck::{Pod, Zeroable};
-use std::path::Path;
 /// Point shader for distant object rendering
 /// Renders point primitives with logarithmic depth buffer support
 use wgpu::{Device, Queue, RenderPipeline};
 
-use crate::{AstrariaResult, graphics::Vertex};
-
-// CameraUniform and TransformUniform are now imported from core.rs to eliminate duplication
-
-#[repr(C)]
-#[derive(Copy, Clone, Debug, Pod, Zeroable)]
-pub struct PointUniform {
-    pub color: [f32; 4], // Point color with alpha
-}
+use crate::{AstrariaResult, generated_shaders};
 
 pub struct PointShader {
     pub pipeline: RenderPipeline,
@@ -21,68 +10,35 @@ pub struct PointShader {
 
 impl PointShader {
     pub fn new(device: &Device, _queue: &Queue) -> AstrariaResult<Self> {
-        let shader_path = Path::new("src/shaders/point.wgsl");
-        let shader_source = load_preprocessed_wgsl(shader_path)
-            .map_err(|e| crate::AstrariaError::Graphics(format!("Failed to load shader: {}", e)))?;
-        let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
-            label: Some("Point Shader"),
-            source: wgpu::ShaderSource::Wgsl(shader_source.into()),
-        });
+        // Use generated shader module
+        let shader = generated_shaders::point::create_shader_module(device);
 
-        // Use standardized MVP bind group layout (shared across all shaders)
-        let mvp_bind_group_layout =
-            crate::renderer::uniforms::buffer_helpers::create_mvp_bind_group_layout_dynamic(
-                device,
-                Some("Point MVP Bind Group Layout"),
-            );
+        // Use generated bind group layouts
+        let _mvp_bind_group_layout =
+            generated_shaders::point::bind_groups::BindGroup0::get_bind_group_layout(device);
+        let _point_bind_group_layout =
+            generated_shaders::point::bind_groups::BindGroup1::get_bind_group_layout(device);
 
-        let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-            label: Some("Point Pipeline Layout"),
-            bind_group_layouts: &[&mvp_bind_group_layout],
-            push_constant_ranges: &[],
-        });
+        // Use generated pipeline layout
+        let pipeline_layout = generated_shaders::point::create_pipeline_layout(device);
+
+        // Use generated vertex and fragment entries
+        let vertex_entry = generated_shaders::point::vs_main_entry(wgpu::VertexStepMode::Vertex);
+        let fragment_entry =
+            generated_shaders::point::fs_main_entry([Some(wgpu::ColorTargetState {
+                format: wgpu::TextureFormat::Bgra8UnormSrgb,
+                blend: Some(wgpu::BlendState::ALPHA_BLENDING),
+                write_mask: wgpu::ColorWrites::ALL,
+            })]);
 
         let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: Some("Point Pipeline"),
             layout: Some(&pipeline_layout),
-            vertex: wgpu::VertexState {
-                module: &shader,
-                entry_point: Some("vs_main"),
-                buffers: &[wgpu::VertexBufferLayout {
-                    array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
-                    step_mode: wgpu::VertexStepMode::Vertex,
-                    attributes: &[
-                        wgpu::VertexAttribute {
-                            offset: 0,
-                            shader_location: 0,
-                            format: wgpu::VertexFormat::Float32x3,
-                        },
-                        wgpu::VertexAttribute {
-                            offset: std::mem::size_of::<[f32; 3]>() as wgpu::BufferAddress,
-                            shader_location: 1,
-                            format: wgpu::VertexFormat::Float32x2,
-                        },
-                        wgpu::VertexAttribute {
-                            offset: (std::mem::size_of::<[f32; 3]>()
-                                + std::mem::size_of::<[f32; 2]>())
-                                as wgpu::BufferAddress,
-                            shader_location: 2,
-                            format: wgpu::VertexFormat::Float32x3,
-                        },
-                    ],
-                }],
-                compilation_options: wgpu::PipelineCompilationOptions::default(),
-            },
-            fragment: Some(wgpu::FragmentState {
-                module: &shader,
-                entry_point: Some("fs_main"),
-                targets: &[Some(wgpu::ColorTargetState {
-                    format: wgpu::TextureFormat::Bgra8UnormSrgb,
-                    blend: Some(wgpu::BlendState::ALPHA_BLENDING),
-                    write_mask: wgpu::ColorWrites::ALL,
-                })],
-                compilation_options: wgpu::PipelineCompilationOptions::default(),
-            }),
+            vertex: generated_shaders::point::vertex_state(&shader, &vertex_entry),
+            fragment: Some(generated_shaders::point::fragment_state(
+                &shader,
+                &fragment_entry,
+            )),
             primitive: wgpu::PrimitiveState {
                 topology: wgpu::PrimitiveTopology::PointList,
                 strip_index_format: None,

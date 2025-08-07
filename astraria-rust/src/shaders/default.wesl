@@ -1,51 +1,30 @@
-// Default shader for basic 3D object rendering
+// Default shader package - basic 3D object rendering  
 // Uses shared uniform definitions for consistency
+import super::shared::{VertexInput};
 
-//!include src/shaders/shared/uniforms.wgsl
+// For now, inline the needed definitions until wesl import resolution is fixed
+struct StandardMVPUniform {
+    mvp_matrix: mat4x4<f32>,        // 0-63 (64 bytes)
+    camera_position: vec3<f32>,     // 64-75 (12 bytes)
+    _padding1: f32,                 // 76-79 (4 bytes padding)  
+    camera_direction: vec3<f32>,    // 80-91 (12 bytes)
+    _padding2: f32,                 // 92-95 (4 bytes padding)
+    log_depth_constant: f32,        // 96-99 (4 bytes)
+    far_plane_distance: f32,        // 100-103 (4 bytes)
+    near_plane_distance: f32,       // 104-107 (4 bytes)
+    fc_constant: f32,               // 108-111 (4 bytes)
+    mv_matrix: mat4x4<f32>,         // 112-175 (64 bytes)
+};
 
-// Directional light structure (for astronomical scale lighting)
-struct DirectionalLight {
-    direction: vec3<f32>,  // Normalized direction from object to light (WORLD SPACE, 12 bytes)
-    _padding1: f32,        // Align to 16 bytes (4 bytes, total: 16)
-    ambient: vec3<f32>,    // 12 bytes
-    _padding2: f32,        // Align to 16 bytes (4 bytes, total: 32) 
-    diffuse: vec3<f32>,    // 12 bytes
-    _padding3: f32,        // Align to 16 bytes (4 bytes, total: 48)
-    specular: vec3<f32>,   // 12 bytes  
-    _padding4: f32,        // Align to 16 bytes (4 bytes, total: 64)
-}
 
-// Lighting uniforms with explicit padding for WGSL alignment  
-struct LightingUniforms {
-    lights: array<DirectionalLight, 8>,  // 0-511 (8 * 64 = 512 bytes)
-    num_lights: i32,                     // 512-515 (4 bytes)
-    _padding: vec3<f32>,                 // 516-527 (12 bytes)
-    _padding2: vec4<f32>,                // 528-543 (16 bytes to reach 544)
-}
-
-// Vertex input
-struct VertexInput {
-    @location(0) position: vec3<f32>,
-    @location(1) tex_coord: vec2<f32>,
-    @location(2) normal: vec3<f32>,
-}
-
-// Vertex output / Fragment input
 struct VertexOutput {
     @builtin(position) clip_position: vec4<f32>,
     @location(0) tex_coord: vec2<f32>,
     @location(1) world_normal: vec3<f32>,
     @location(2) world_position: vec3<f32>,
-}
-
-// Bind groups
-// Note: StandardMVPUniform is declared above at @group(0) @binding(0)
-@group(1) @binding(0) var<uniform> lighting: LightingUniforms;
-@group(2) @binding(0) var diffuse_texture: texture_2d<f32>;
-@group(2) @binding(1) var diffuse_sampler: sampler;
+};
 
 // WebGPU-compatible logarithmic depth buffer function
-// Based on Outerra's optimized implementation for [0,1] depth range
 fn model_to_clip_coordinates(
     position: vec4<f32>,
     mvp_matrix: mat4x4<f32>,
@@ -62,6 +41,35 @@ fn model_to_clip_coordinates(
     
     return clip;
 }
+
+// MVP uniform binding
+@group(0) @binding(0) var<uniform> mvp: StandardMVPUniform;
+
+// Directional light structure (for astronomical scale lighting)
+struct DirectionalLight {
+    direction: vec3<f32>,  // Normalized direction from object to light (WORLD SPACE, 12 bytes)
+    _padding1: f32,        // Align to 16 bytes (4 bytes, total: 16)
+    ambient: vec3<f32>,    // 12 bytes
+    _padding2: f32,        // Align to 16 bytes (4 bytes, total: 32) 
+    diffuse: vec3<f32>,    // 12 bytes
+    _padding3: f32,        // Align to 16 bytes (4 bytes, total: 48)
+    specular: vec3<f32>,   // 12 bytes  
+    _padding4: f32,        // Align to 16 bytes (4 bytes, total: 64)
+}
+
+// Lighting uniforms - properly aligned for WGSL uniform buffer  
+struct LightingUniforms {
+    lights: array<DirectionalLight, 8>,  // 8 * 64 = 512 bytes
+    num_lights: i32,                     // 4 bytes
+    // Use vec4<f32> for proper 16-byte alignment in uniform buffer
+    _padding: array<vec4<f32>, 10>,      // 10 * 16 = 160 bytes (total 512+4+160=676, round to 688 = 43*16)
+}
+
+// Bind groups
+// Note: mvp uniform is imported from shared package at @group(0) @binding(0)
+@group(1) @binding(0) var<uniform> lighting: LightingUniforms;
+@group(2) @binding(0) var diffuse_texture: texture_2d<f32>;
+@group(2) @binding(1) var diffuse_sampler: sampler;
 
 // Vertex shader
 @vertex

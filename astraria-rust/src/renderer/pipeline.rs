@@ -3,7 +3,10 @@ use std::collections::HashMap;
 use wgpu::{Device, RenderPipeline, TextureFormat};
 
 use super::{ShaderManager, shaders::ShaderType};
-use crate::{AstrariaResult, graphics::Vertex};
+use crate::{
+    AstrariaResult,
+    generated_shaders::common::{BillboardVertexInput, SkyboxVertexInput, VertexInput},
+};
 
 pub struct PipelineManager {
     pipelines: HashMap<ShaderType, RenderPipeline>,
@@ -152,7 +155,9 @@ impl PipelineManager {
             vertex: wgpu::VertexState {
                 module: shader,
                 entry_point: Some("vs_main"),
-                buffers: &[Vertex::desc()],
+                buffers: &[VertexInput::vertex_buffer_layout(
+                    wgpu::VertexStepMode::Vertex,
+                )],
                 compilation_options: wgpu::PipelineCompilationOptions::default(),
             },
             fragment: Some(wgpu::FragmentState {
@@ -244,16 +249,7 @@ impl PipelineManager {
             push_constant_ranges: &[],
         });
 
-        // Simplified vertex layout for skybox (only position)
-        let skybox_vertex_layout = wgpu::VertexBufferLayout {
-            array_stride: std::mem::size_of::<[f32; 3]>() as wgpu::BufferAddress,
-            step_mode: wgpu::VertexStepMode::Vertex,
-            attributes: &[wgpu::VertexAttribute {
-                offset: 0,
-                shader_location: 0,
-                format: wgpu::VertexFormat::Float32x3,
-            }],
-        };
+        // Use generated skybox vertex layout
 
         // Create render pipeline
         let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
@@ -262,7 +258,9 @@ impl PipelineManager {
             vertex: wgpu::VertexState {
                 module: shader,
                 entry_point: Some("vs_main"),
-                buffers: &[skybox_vertex_layout],
+                buffers: &[SkyboxVertexInput::vertex_buffer_layout(
+                    wgpu::VertexStepMode::Vertex,
+                )],
                 compilation_options: wgpu::PipelineCompilationOptions::default(),
             },
             fragment: Some(wgpu::FragmentState {
@@ -428,7 +426,9 @@ impl PipelineManager {
             vertex: wgpu::VertexState {
                 module: shader,
                 entry_point: Some("vs_main"),
-                buffers: &[Vertex::desc()],
+                buffers: &[VertexInput::vertex_buffer_layout(
+                    wgpu::VertexStepMode::Vertex,
+                )],
                 compilation_options: wgpu::PipelineCompilationOptions::default(),
             },
             fragment: Some(wgpu::FragmentState {
@@ -572,7 +572,9 @@ impl PipelineManager {
             vertex: wgpu::VertexState {
                 module: shader,
                 entry_point: Some("vs_main"),
-                buffers: &[Vertex::desc()],
+                buffers: &[VertexInput::vertex_buffer_layout(
+                    wgpu::VertexStepMode::Vertex,
+                )],
                 compilation_options: wgpu::PipelineCompilationOptions::default(),
             },
             fragment: Some(wgpu::FragmentState {
@@ -699,23 +701,7 @@ impl PipelineManager {
             push_constant_ranges: &[],
         });
 
-        // Simplified vertex layout for billboards (position + texture coordinates only)
-        let billboard_vertex_layout = wgpu::VertexBufferLayout {
-            array_stride: std::mem::size_of::<[f32; 5]>() as wgpu::BufferAddress, // 3 pos + 2 tex
-            step_mode: wgpu::VertexStepMode::Vertex,
-            attributes: &[
-                wgpu::VertexAttribute {
-                    offset: 0,
-                    shader_location: 0,
-                    format: wgpu::VertexFormat::Float32x3, // position
-                },
-                wgpu::VertexAttribute {
-                    offset: std::mem::size_of::<[f32; 3]>() as wgpu::BufferAddress,
-                    shader_location: 1,
-                    format: wgpu::VertexFormat::Float32x2, // tex_coord
-                },
-            ],
-        };
+        // Use generated billboard vertex layout
 
         // Create render pipeline for billboard objects
         let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
@@ -724,7 +710,9 @@ impl PipelineManager {
             vertex: wgpu::VertexState {
                 module: shader,
                 entry_point: Some("vs_main"),
-                buffers: &[billboard_vertex_layout],
+                buffers: &[BillboardVertexInput::vertex_buffer_layout(
+                    wgpu::VertexStepMode::Vertex,
+                )],
                 compilation_options: wgpu::PipelineCompilationOptions::default(),
             },
             fragment: Some(wgpu::FragmentState {

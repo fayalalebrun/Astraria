@@ -1,7 +1,7 @@
-// Atmospheric planet shader with Fresnel effects and scattering
+// Atmospheric planet shader package with Fresnel effects and scattering
 // Uses shared uniform definitions for consistency
 
-//!include src/shaders/shared/uniforms.wgsl
+import shared::{StandardMVPUniform, mvp, VertexInput, model_to_clip_coordinates};
 
 struct DirectionalLight {
     direction: vec3<f32>,  // Normalized direction from object to light (WORLD SPACE)
@@ -27,19 +27,14 @@ struct AtmosphereUniform {
     _padding: vec2<f32>,
 };
 
-struct VertexInput {
-    @location(0) position: vec3<f32>,
-    @location(1) tex_coord: vec2<f32>,
-    @location(2) normal: vec3<f32>,
-};
-
-struct VertexOutput {
-    @builtin(position) clip_position: vec4<f32>,
-    @location(0) pixel_pos: vec3<f32>,        // Fragment position in camera space
-    @location(1) pixel_normal: vec3<f32>,     // Fragment surface normal
-    @location(2) tex_coords: vec2<f32>,       // Texture coordinates
-    @location(3) angle_incidence: f32,        // Light incidence angle
-    @location(4) atmosphere_color: vec4<f32>, // Computed atmosphere color
+// Custom vertex output for atmospheric effects (extends base VertexOutput)
+struct AtmosphereVertexOutput {
+    clip_position: vec4<f32> @builtin(position),
+    pixel_pos: vec3<f32> @location(0),        // Fragment position in camera space
+    pixel_normal: vec3<f32> @location(1),     // Fragment surface normal
+    tex_coords: vec2<f32> @location(2),       // Texture coordinates
+    angle_incidence: f32 @location(3),        // Light incidence angle
+    atmosphere_color: vec4<f32> @location(4), // Computed atmosphere color
 };
 
 // Note: StandardMVPUniform is declared above at @group(0) @binding(0)
@@ -100,27 +95,9 @@ fn calc_directional_light(
     return ambient + diffuse_contrib;
 }
 
-// Step 6: Add logarithmic depth buffer transformation (matching Java implementation)
-fn model_to_clip_coordinates(
-    position: vec4<f32>,
-    model_view_perspective_matrix: mat4x4<f32>,
-    depth_constant: f32,
-    far_plane_distance: f32
-) -> vec4<f32> {
-    var clip = model_view_perspective_matrix * position;
-    
-    // WebGPU logarithmic depth: maps to [0,1] range instead of OpenGL's [-1,1]
-    // Formula: z = log2(max(1e-6, 1.0 + w)) * Fcoef
-    // where Fcoef = 1.0 / log2(farplane + 1.0) for [0,1] range
-    let fcoef = 1.0 / log2(far_plane_distance + 1.0);
-    clip.z = log2(max(1e-6, 1.0 + clip.w)) * fcoef * clip.w;
-    
-    return clip;
-}
-
 @vertex
-fn vs_main(input: VertexInput) -> VertexOutput {
-    var out: VertexOutput;
+fn vs_main(input: VertexInput) -> AtmosphereVertexOutput {
+    var out: AtmosphereVertexOutput;
     
     // Use pre-computed MVP matrix (calculated with 64-bit precision on CPU)
     let vertex_position = vec4<f32>(input.position, 1.0);
@@ -173,7 +150,7 @@ fn vs_main(input: VertexInput) -> VertexOutput {
 }
 
 @fragment
-fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
+fn fs_main(input: AtmosphereVertexOutput) -> @location(0) vec4<f32> {
     // Step 7: Use point light function approach like the full shader
     let norm = normalize(input.pixel_normal);
     let view_dir = normalize(-input.pixel_pos);

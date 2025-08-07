@@ -45,6 +45,7 @@ wgsl_to_wgpu = "=0.15.0"
 
 [build-dependencies]
 wgsl_to_wgpu = "=0.15.0"
+wesl = "0.2"
 termcolor = "1.4"
 
 [lib]

@@ -1,18 +1,13 @@
 use glam::{DMat4, DVec3, Mat4};
 use std::sync::Arc;
 use wgpu::util::DeviceExt;
-
-/// Constants for dynamic MVP uniform buffer management
-const MVP_UNIFORM_ALIGNED_SIZE: u32 = 256; // 256-byte alignment required for dynamic offsets
-const MAX_OBJECTS_PER_FRAME: u32 = 64; // Support up to 64 objects per frame
-/// Main Renderer that manages all shader types
-/// Equivalent to the Java Renderer class that owns all shader instances
 use wgpu::{Device, Queue, RenderPass};
 
 use crate::{
     AstrariaError, AstrariaResult,
     assets::{AssetManager, CubemapAsset, ModelAsset, TextureAsset},
-    graphics::Mesh,
+    generated_shaders,
+    graphics::{Mesh, SkyboxMesh},
     renderer::{
         camera::Camera,
         core::{MeshType, RenderCommand, *},
@@ -21,12 +16,11 @@ use crate::{
             BillboardShader, BlackHoleShader, DefaultShader, LensGlowShader, LineShader,
             PlanetAtmoShader, PointShader, SkyboxShader, SunShader,
         },
-        uniforms::StandardMVPUniform,
     },
 };
 
 /// Main rendering coordinator that manages all specialized shaders
-/// Based on the Java Renderer.java architecture
+/// Based on the Java Renderer.java architecture - now using generated bind groups
 pub struct MainRenderer {
     // Core wgpu resources
     device: Device,
@@ -58,41 +52,39 @@ pub struct MainRenderer {
     pub star_glow_texture: Arc<TextureAsset>,
     pub star_spectrum_texture: Arc<TextureAsset>,
 
-    // Pre-created bind groups to avoid lifetime issues
-    pub sun_texture_bind_group: wgpu::BindGroup,
-    pub skybox_texture_bind_group: wgpu::BindGroup,
-    pub black_hole_texture_bind_group: wgpu::BindGroup,
-    pub black_hole_uniform_bind_group: wgpu::BindGroup,
-    pub lens_glow_texture_bind_group: wgpu::BindGroup,
-    pub transform_bind_group: wgpu::BindGroup,
-    transform_buffer: wgpu::Buffer,
+    // Generated bind groups for each shader type
+    pub default_lighting_bind_group: generated_shaders::default::bind_groups::BindGroup1,
+    pub default_texture_bind_group: generated_shaders::default::bind_groups::BindGroup2,
 
-    // Dynamic MVP uniform buffer for 64-bit precision calculations (supports multiple objects)
-    pub mvp_uniform_buffer: wgpu::Buffer,
-    pub mvp_bind_group: wgpu::BindGroup,
+    pub planet_lighting_bind_group: generated_shaders::planet_atmo::bind_groups::BindGroup1,
+    pub planet_texture_bind_group: generated_shaders::planet_atmo::bind_groups::BindGroup2,
 
-    // Current offset counter for dynamic buffer allocation (resets each frame)
-    current_mvp_offset: u32,
+    pub sun_uniform_bind_group: generated_shaders::sun_shader::bind_groups::BindGroup1,
+    pub sun_texture_bind_group: generated_shaders::sun_shader::bind_groups::BindGroup2,
 
-    // Frame-level MVP data collection (written once per frame before render pass)
-    frame_mvp_data: Vec<u8>, // Raw buffer data to write all at once
+    pub skybox_texture_bind_group: generated_shaders::skybox::bind_groups::BindGroup1,
 
-    // Render commands with their allocated MVP offsets (collected during preparation phase)
-    prepared_render_commands: Vec<(RenderCommand, Mat4, u32)>, // (command, transform, mvp_offset)
+    // Billboard shader only uses MVP bind group (BindGroup0), no separate uniform bind group needed
+    pub black_hole_uniform_bind_group: generated_shaders::black_hole::bind_groups::BindGroup1,
+    pub black_hole_texture_bind_group: generated_shaders::black_hole::bind_groups::BindGroup2,
 
-    // Default shader bind groups
-    pub default_lighting_bind_group: wgpu::BindGroup,
-    pub default_texture_bind_group: wgpu::BindGroup,
+    pub lens_glow_uniform_bind_group: generated_shaders::lens_glow::bind_groups::BindGroup1,
+    pub lens_glow_texture_bind_group: generated_shaders::lens_glow::bind_groups::BindGroup2,
 
-    // Planet atmosphere shader bind groups
-    pub planet_lighting_bind_group: wgpu::BindGroup,
-    pub planet_texture_bind_group: wgpu::BindGroup,
+    pub line_uniform_bind_group: generated_shaders::line::bind_groups::BindGroup1,
 
-    // Billboard shader bind group
-    pub billboard_uniform_bind_group: wgpu::BindGroup,
+    pub point_uniform_bind_group: generated_shaders::point::bind_groups::BindGroup1,
+
+    // Per-object MVP uniform buffers (no more dynamic offsets)
+    mvp_buffers: Vec<wgpu::Buffer>,
+    mvp_bind_groups: Vec<(generated_shaders::default::bind_groups::BindGroup0, usize)>, // (bind_group, buffer_index)
+
+    // Prepared render commands with their MVP bind groups
+    prepared_render_commands: Vec<(RenderCommand, Mat4, usize)>, // (command, transform, mvp_bind_group_index)
 
     // Geometry meshes for testing
     cube_mesh: Mesh,
+    skybox_mesh: SkyboxMesh, // Separate mesh for skybox with correct vertex type
     sphere_model: Arc<ModelAsset>, // Use loaded OBJ model for sphere
     quad_mesh: Mesh,
     line_mesh: Mesh,
@@ -101,6 +93,9 @@ pub struct MainRenderer {
     // Depth texture for rendering
     _depth_texture: wgpu::Texture,
     _depth_view: wgpu::TextureView,
+
+    // Default sampler for textures
+    default_sampler: wgpu::Sampler,
 
     // Camera matrices for 64-bit precision calculations
     pub view_matrix_d64: DMat4,
@@ -249,11 +244,15 @@ impl MainRenderer {
 
         // Create geometry meshes using test geometry
         use crate::graphics::test_geometry::{
-            create_test_cube, create_test_line, create_test_point, create_test_quad,
+            create_skybox_cube, create_test_cube, create_test_line, create_test_point,
+            create_test_quad,
         };
 
         let (cube_vertices, cube_indices) = create_test_cube();
         let cube_mesh = Mesh::new(&device, &cube_vertices, &cube_indices);
+
+        let (skybox_vertices, skybox_indices) = create_skybox_cube();
+        let skybox_mesh = SkyboxMesh::new(&device, &skybox_vertices, &skybox_indices);
 
         // Keep the Arc reference to the sphere model
 
@@ -266,21 +265,10 @@ impl MainRenderer {
         let (point_vertices, point_indices) = create_test_point();
         let point_mesh = Mesh::new(&device, &point_vertices, &point_indices);
 
-        // Create dynamic MVP bind group layout first
-        use crate::renderer::uniforms::buffer_helpers::*;
-        let mvp_bind_group_layout =
-            create_mvp_bind_group_layout_dynamic(&device, Some("Dynamic MVP Bind Group Layout"));
-
         // Create shaders
         let default_shader = DefaultShader::new(&device)?;
-        let planet_atmo_shader = PlanetAtmoShader::new(
-            &device,
-            &queue,
-            &earth_day_texture.texture,
-            &earth_night_texture.texture,
-            &atmo_gradient_texture.texture,
-        )?;
-        let sun_shader = SunShader::new(&device, &mvp_bind_group_layout)?;
+        let planet_atmo_shader = PlanetAtmoShader::new(&device, &queue)?;
+        let sun_shader = SunShader::new(&device, &queue)?;
         let skybox_shader = SkyboxShader::new(&device)?;
         let billboard_shader = BillboardShader::new(&device, &queue)?;
         let lens_glow_shader = LensGlowShader::new(&device, &queue)?;
@@ -288,22 +276,9 @@ impl MainRenderer {
         let line_shader = LineShader::new(&device, &queue)?;
         let point_shader = PointShader::new(&device, &queue)?;
 
-        // Create dynamic MVP uniform buffer (large enough for 64 objects * 256 bytes each)
-        let mvp_buffer_size = (MAX_OBJECTS_PER_FRAME * MVP_UNIFORM_ALIGNED_SIZE) as u64;
-        let mvp_uniform_buffer = device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("Dynamic MVP Uniform Buffer"),
-            size: mvp_buffer_size,
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-            mapped_at_creation: false,
-        });
-
-        // Create dynamic MVP bind group using the already-created layout
-        let mvp_bind_group = create_dynamic_mvp_bind_group(
-            &device,
-            &mvp_bind_group_layout,
-            &mvp_uniform_buffer,
-            Some("Dynamic MVP Bind Group"),
-        );
+        // Initialize MVP buffers and bind groups storage
+        let mvp_buffers = Vec::new();
+        let mvp_bind_groups = Vec::new();
 
         // Create default sampler
         let default_sampler = device.create_sampler(&wgpu::SamplerDescriptor {
@@ -316,274 +291,341 @@ impl MainRenderer {
             ..Default::default()
         });
 
-        // Create texture bind groups
-        let sun_texture_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("Sun Texture Bind Group"),
-            layout: &sun_shader.texture_bind_group_layout,
-            entries: &[
-                wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: wgpu::BindingResource::TextureView(&sun_texture.view),
+        // Create generated texture bind groups
+        let sun_texture_bind_group =
+            generated_shaders::sun_shader::bind_groups::BindGroup2::from_bindings(
+                &device,
+                generated_shaders::sun_shader::bind_groups::BindGroupLayout2 {
+                    diffuse_texture: &sun_texture.view,
+                    sun_gradient_texture: &star_spectrum_texture.view,
+                    texture_sampler: &default_sampler,
                 },
-                wgpu::BindGroupEntry {
-                    binding: 1,
-                    resource: wgpu::BindingResource::TextureView(&star_spectrum_texture.view),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 2,
-                    resource: wgpu::BindingResource::Sampler(&default_sampler),
-                },
-            ],
-        });
+            );
 
-        let skybox_texture_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("Skybox Texture Bind Group"),
-            layout: &skybox_shader.bind_group_layout,
-            entries: &[
-                wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: wgpu::BindingResource::TextureView(&skybox_cubemap.view),
+        let skybox_texture_bind_group =
+            generated_shaders::skybox::bind_groups::BindGroup1::from_bindings(
+                &device,
+                generated_shaders::skybox::bind_groups::BindGroupLayout1 {
+                    skybox_texture: &skybox_cubemap.view,
+                    skybox_sampler: &default_sampler,
                 },
-                wgpu::BindGroupEntry {
-                    binding: 1,
-                    resource: wgpu::BindingResource::Sampler(&default_sampler),
-                },
-            ],
-        });
+            );
 
-        let black_hole_texture_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("Black Hole Texture Bind Group"),
-            layout: &black_hole_shader.texture_bind_group_layout,
-            entries: &[
-                wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: wgpu::BindingResource::TextureView(&skybox_cubemap.view),
+        let black_hole_texture_bind_group =
+            generated_shaders::black_hole::bind_groups::BindGroup2::from_bindings(
+                &device,
+                generated_shaders::black_hole::bind_groups::BindGroupLayout2 {
+                    accretion_texture: &star_glow_texture.view,
+                    texture_sampler: &default_sampler,
                 },
-                wgpu::BindGroupEntry {
-                    binding: 1,
-                    resource: wgpu::BindingResource::Sampler(&default_sampler),
-                },
-            ],
-        });
+            );
 
-        // Create black hole uniform bind group
-        use crate::renderer::shaders::black_hole_shader::BlackHoleUniform;
-        let black_hole_uniform = BlackHoleUniform {
-            hole_position: [0.0, 0.0, 0.0],
+        // Create black hole uniform bind group using generated types
+        #[repr(C)]
+        #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+        struct BlackHoleUniformPod {
+            schwarzschild_radius: f32,
+            event_horizon: f32,
+            accretion_disk_inner: f32,
+            accretion_disk_outer: f32,
+            black_hole_position: [f32; 3], // Array version for Pod compatibility
+            _padding: f32,
+        }
+
+        let black_hole_uniform_pod = BlackHoleUniformPod {
+            schwarzschild_radius: 2.0,
+            event_horizon: 1.0,
+            accretion_disk_inner: 3.0,
+            accretion_disk_outer: 6.0,
+            black_hole_position: [0.0, 0.0, 0.0],
             _padding: 0.0,
         };
         let black_hole_uniform_buffer =
             device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("Black Hole Uniform Buffer"),
-                contents: bytemuck::cast_slice(&[black_hole_uniform]),
+                contents: bytemuck::cast_slice(&[black_hole_uniform_pod]),
                 usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
             });
-        let black_hole_uniform_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("Black Hole Uniform Bind Group"),
-            layout: &black_hole_shader.uniform_bind_group_layout,
-            entries: &[wgpu::BindGroupEntry {
-                binding: 0,
-                resource: black_hole_uniform_buffer.as_entire_binding(),
-            }],
-        });
-
-        let lens_glow_texture_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("Lens Glow Texture Bind Group"),
-            layout: &lens_glow_shader.texture_bind_group_layout,
-            entries: &[
-                wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: wgpu::BindingResource::TextureView(&star_glow_texture.view),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 1,
-                    resource: wgpu::BindingResource::TextureView(&star_spectrum_texture.view),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 2,
-                    resource: wgpu::BindingResource::Sampler(&default_sampler),
-                },
-            ],
-        });
-
-        // Create transform buffer and bind group for older shaders
-        let transform_buffer = device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("Transform Uniform Buffer"),
-            size: std::mem::size_of::<TransformUniform>() as wgpu::BufferAddress,
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-            mapped_at_creation: false,
-        });
-
-        let transform_bind_group_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                label: Some("Transform Bind Group Layout"),
-                entries: &[wgpu::BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: wgpu::ShaderStages::all(),
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Uniform,
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
+        let black_hole_uniform_bind_group =
+            generated_shaders::black_hole::bind_groups::BindGroup1::from_bindings(
+                &device,
+                generated_shaders::black_hole::bind_groups::BindGroupLayout1 {
+                    black_hole: wgpu::BufferBinding {
+                        buffer: &black_hole_uniform_buffer,
+                        offset: 0,
+                        size: None,
                     },
-                    count: None,
-                }],
-            });
+                },
+            );
 
-        let transform_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("Transform Bind Group"),
-            layout: &transform_bind_group_layout,
-            entries: &[wgpu::BindGroupEntry {
-                binding: 0,
-                resource: transform_buffer.as_entire_binding(),
-            }],
-        });
+        let lens_glow_texture_bind_group =
+            generated_shaders::lens_glow::bind_groups::BindGroup2::from_bindings(
+                &device,
+                generated_shaders::lens_glow::bind_groups::BindGroupLayout2 {
+                    glow_texture: &star_glow_texture.view,
+                    spectrum_texture: &star_spectrum_texture.view,
+                    texture_sampler: &default_sampler,
+                },
+            );
 
-        // Create default shader lighting bind group
-        use crate::renderer::shaders::default_shader::{DirectionalLight, LightingUniforms};
-        let default_lighting = LightingUniforms {
-            lights: [DirectionalLight {
+        // Transform buffer system is no longer needed with generated bind groups
+
+        // Create default shader lighting bind group using generated types
+        let default_lighting = generated_shaders::default::LightingUniforms {
+            lights: [generated_shaders::default::DirectionalLight {
                 // Default sun direction: coming from upper right (WORLD SPACE)
-                direction: [1.0, 1.0, -1.0], // Will be normalized in shader
+                direction: glam::Vec3::new(1.0, 1.0, -1.0), // Will be normalized in shader
                 _padding1: 0.0,
-                ambient: [0.1, 0.1, 0.1],
+                ambient: glam::Vec3::new(0.1, 0.1, 0.1),
                 _padding2: 0.0,
-                diffuse: [1.0, 1.0, 1.0],
+                diffuse: glam::Vec3::new(1.0, 1.0, 1.0),
                 _padding3: 0.0,
-                specular: [1.0, 1.0, 1.0],
+                specular: glam::Vec3::new(1.0, 1.0, 1.0),
                 _padding4: 0.0,
             }; 8],
             num_lights: 1,
-            _padding: [0.0, 0.0, 0.0],
+            _padding: [glam::Vec4::ZERO; 10], // Array of 10 Vec4s for proper alignment
         };
         let default_lighting_buffer =
             device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("Default Lighting Buffer"),
-                contents: bytemuck::cast_slice(&[default_lighting]),
+                contents: unsafe {
+                    std::slice::from_raw_parts(
+                        &default_lighting as *const _ as *const u8,
+                        std::mem::size_of::<generated_shaders::default::LightingUniforms>(),
+                    )
+                },
                 usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
             });
-        let default_lighting_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("Default Lighting Bind Group"),
-            layout: &default_shader.lighting_bind_group_layout,
-            entries: &[wgpu::BindGroupEntry {
-                binding: 0,
-                resource: default_lighting_buffer.as_entire_binding(),
-            }],
-        });
-
-        let default_texture_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("Default Texture Bind Group"),
-            layout: &default_shader.texture_bind_group_layout,
-            entries: &[
-                wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: wgpu::BindingResource::TextureView(&earth_day_texture.view),
+        let default_lighting_bind_group =
+            generated_shaders::default::bind_groups::BindGroup1::from_bindings(
+                &device,
+                generated_shaders::default::bind_groups::BindGroupLayout1 {
+                    lighting: wgpu::BufferBinding {
+                        buffer: &default_lighting_buffer,
+                        offset: 0,
+                        size: None,
+                    },
                 },
-                wgpu::BindGroupEntry {
-                    binding: 1,
-                    resource: wgpu::BindingResource::Sampler(&default_sampler),
-                },
-            ],
-        });
+            );
 
-        // Create planet atmosphere shader bind groups
-        use crate::renderer::shaders::planet_atmo_shader::{AtmosphereUniform, LightingUniform};
-        let planet_lighting = LightingUniform {
-            lights: [crate::renderer::shaders::planet_atmo_shader::DirectionalLight {
+        let default_texture_bind_group =
+            generated_shaders::default::bind_groups::BindGroup2::from_bindings(
+                &device,
+                generated_shaders::default::bind_groups::BindGroupLayout2 {
+                    diffuse_texture: &earth_day_texture.view,
+                    diffuse_sampler: &default_sampler,
+                },
+            );
+
+        // Create planet atmosphere shader bind groups using generated types
+        let planet_lighting = generated_shaders::planet_atmo::LightingUniform {
+            lights: [generated_shaders::planet_atmo::DirectionalLight {
                 // Sun direction in WORLD SPACE - should be computed from actual sun position
                 // For now using a default direction
-                direction: [1.0, 0.0, 0.0], // Light coming from +X direction
+                direction: glam::Vec3::new(1.0, 0.0, 0.0), // Light coming from +X direction
                 _padding1: 0.0,
-                ambient: [0.1, 0.1, 0.1],
+                ambient: glam::Vec3::new(0.1, 0.1, 0.1),
                 _padding2: 0.0,
-                diffuse: [1.0, 1.0, 1.0],
+                diffuse: glam::Vec3::new(1.0, 1.0, 1.0),
                 _padding3: 0.0,
-                specular: [1.0, 1.0, 1.0],
+                specular: glam::Vec3::new(1.0, 1.0, 1.0),
                 _padding4: 0.0,
             }; 8],
             num_lights: 1,
-            _padding: [0, 0, 0, 0, 0, 0, 0],
+            _padding: [glam::Vec4::ZERO; 16],
         };
-        let planet_atmosphere = AtmosphereUniform {
-            atmosphere_color_mod: [0.4, 0.6, 1.0, 1.0],
+        let planet_atmosphere = generated_shaders::planet_atmo::AtmosphereUniform {
+            atmosphere_color_mod: glam::Vec4::new(0.4, 0.6, 1.0, 1.0),
             overglow: 0.1,
             use_ambient_texture: 1,
-            _padding: [0.0, 0.0],
+            _padding: glam::Vec2::new(0.0, 0.0),
         };
 
         let planet_lighting_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Planet Lighting Buffer"),
-            contents: bytemuck::cast_slice(&[planet_lighting]),
+            contents: unsafe {
+                std::slice::from_raw_parts(
+                    &planet_lighting as *const _ as *const u8,
+                    std::mem::size_of::<generated_shaders::planet_atmo::LightingUniform>(),
+                )
+            },
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
         });
         let planet_atmosphere_buffer =
             device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("Planet Atmosphere Buffer"),
-                contents: bytemuck::cast_slice(&[planet_atmosphere]),
+                contents: unsafe {
+                    std::slice::from_raw_parts(
+                        &planet_atmosphere as *const _ as *const u8,
+                        std::mem::size_of::<generated_shaders::planet_atmo::AtmosphereUniform>(),
+                    )
+                },
                 usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
             });
 
-        let planet_lighting_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("Planet Lighting Bind Group"),
-            layout: &planet_atmo_shader.lighting_bind_group_layout,
-            entries: &[
-                wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: planet_lighting_buffer.as_entire_binding(),
+        let planet_lighting_bind_group =
+            generated_shaders::planet_atmo::bind_groups::BindGroup1::from_bindings(
+                &device,
+                generated_shaders::planet_atmo::bind_groups::BindGroupLayout1 {
+                    lighting: wgpu::BufferBinding {
+                        buffer: &planet_lighting_buffer,
+                        offset: 0,
+                        size: None,
+                    },
+                    atmosphere: wgpu::BufferBinding {
+                        buffer: &planet_atmosphere_buffer,
+                        offset: 0,
+                        size: None,
+                    },
                 },
-                wgpu::BindGroupEntry {
-                    binding: 1,
-                    resource: planet_atmosphere_buffer.as_entire_binding(),
-                },
-            ],
-        });
+            );
 
-        let planet_texture_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("Planet Texture Bind Group"),
-            layout: &planet_atmo_shader.texture_bind_group_layout,
-            entries: &[
-                wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: wgpu::BindingResource::TextureView(&earth_night_texture.view),
+        let planet_texture_bind_group =
+            generated_shaders::planet_atmo::bind_groups::BindGroup2::from_bindings(
+                &device,
+                generated_shaders::planet_atmo::bind_groups::BindGroupLayout2 {
+                    ambient_texture: &earth_night_texture.view,
+                    diffuse_texture: &earth_day_texture.view,
+                    atmosphere_gradient_texture: &atmo_gradient_texture.view,
+                    texture_sampler: &default_sampler,
                 },
-                wgpu::BindGroupEntry {
-                    binding: 1,
-                    resource: wgpu::BindingResource::TextureView(&earth_day_texture.view),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 2,
-                    resource: wgpu::BindingResource::TextureView(&atmo_gradient_texture.view),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 3,
-                    resource: wgpu::BindingResource::Sampler(&default_sampler),
-                },
-            ],
-        });
+            );
 
-        // Create billboard uniform bind group
-        use crate::renderer::shaders::billboard_shader::BillboardUniform;
-        let billboard_uniform = BillboardUniform {
-            billboard_width: 100.0,
-            billboard_height: 100.0,
-            screen_width: 800.0,
-            screen_height: 600.0,
-            billboard_origin: [0.0, 0.0, 0.0],
-            _padding: 0.0,
+        // Billboard shader only uses MVP bind group, no separate uniform needed
+
+        // Create sun uniform bind group using generated types
+        let sun_uniform = generated_shaders::sun_shader::SunUniform {
+            temperature: 5778.0, // Default sun temperature
+            _padding1: 0.0,
+            _padding2: 0.0,
+            _padding3: 0.0,
+            camera_to_sun_direction: glam::Vec3::ZERO,
+            _padding4: 0.0,
+            sun_position: glam::Vec3::ZERO,
+            _padding5: 0.0,
+            _padding6: glam::Vec4::ZERO,
+            _padding7: glam::Vec4::ZERO,
+            _padding8: glam::Vec4::ZERO,
         };
-        let billboard_uniform_buffer =
+
+        // Since generated types don't implement Pod, we need to serialize manually for now
+        // TODO: Implement Pod for generated types or use a different serialization method
+        let sun_uniform_data = unsafe {
+            std::slice::from_raw_parts(
+                &sun_uniform as *const _ as *const u8,
+                std::mem::size_of::<generated_shaders::sun_shader::SunUniform>(),
+            )
+        };
+
+        let sun_uniform_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Sun Uniform Buffer"),
+            contents: sun_uniform_data,
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        });
+        let sun_uniform_bind_group =
+            generated_shaders::sun_shader::bind_groups::BindGroup1::from_bindings(
+                &device,
+                generated_shaders::sun_shader::bind_groups::BindGroupLayout1 {
+                    sun: wgpu::BufferBinding {
+                        buffer: &sun_uniform_buffer,
+                        offset: 0,
+                        size: None,
+                    },
+                },
+            );
+
+        // Create lens glow uniform bind group using generated types
+        let lens_glow_uniform = generated_shaders::lens_glow::LensGlowUniform {
+            screen_dimensions: glam::Vec2::new(800.0, 600.0),
+            glow_size: glam::Vec2::new(1.0, 1.0),
+            star_position: glam::Vec3::ZERO,
+            _padding1: 0.0,
+            camera_direction: glam::Vec3::new(0.0, 0.0, -1.0),
+            temperature: 5778.0,
+        };
+        let lens_glow_uniform_buffer =
             device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("Billboard Uniform Buffer"),
-                contents: bytemuck::cast_slice(&[billboard_uniform]),
+                label: Some("Lens Glow Uniform Buffer"),
+                contents: unsafe {
+                    std::slice::from_raw_parts(
+                        &lens_glow_uniform as *const _ as *const u8,
+                        std::mem::size_of::<generated_shaders::lens_glow::LensGlowUniform>(),
+                    )
+                },
                 usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
             });
-        let billboard_uniform_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("Billboard Uniform Bind Group"),
-            layout: &billboard_shader.billboard_bind_group_layout,
-            entries: &[wgpu::BindGroupEntry {
-                binding: 0,
-                resource: billboard_uniform_buffer.as_entire_binding(),
-            }],
+        let lens_glow_uniform_bind_group =
+            generated_shaders::lens_glow::bind_groups::BindGroup1::from_bindings(
+                &device,
+                generated_shaders::lens_glow::bind_groups::BindGroupLayout1 {
+                    lens_glow: wgpu::BufferBinding {
+                        buffer: &lens_glow_uniform_buffer,
+                        offset: 0,
+                        size: None,
+                    },
+                },
+            );
+
+        // Create line uniform bind group using generated types
+        let line_uniform = generated_shaders::line::LineUniform {
+            line_color: glam::Vec4::new(1.0, 1.0, 1.0, 1.0), // Default white color
+            line_width: 1.0,
+            _padding1: 0.0,
+            _padding2: 0.0,
+            _padding3: 0.0,
+        };
+        let line_uniform_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Line Uniform Buffer"),
+            contents: unsafe {
+                std::slice::from_raw_parts(
+                    &line_uniform as *const _ as *const u8,
+                    std::mem::size_of::<generated_shaders::line::LineUniform>(),
+                )
+            },
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
         });
+        let line_uniform_bind_group =
+            generated_shaders::line::bind_groups::BindGroup1::from_bindings(
+                &device,
+                generated_shaders::line::bind_groups::BindGroupLayout1 {
+                    line: wgpu::BufferBinding {
+                        buffer: &line_uniform_buffer,
+                        offset: 0,
+                        size: None,
+                    },
+                },
+            );
+
+        // Create point uniform bind group using generated types
+        let point_uniform = generated_shaders::point::PointUniform {
+            point_color: glam::Vec4::new(1.0, 1.0, 1.0, 1.0), // Default white color
+            point_size: 1.0,
+            _padding1: 0.0,
+            _padding2: 0.0,
+            _padding3: 0.0,
+        };
+        let point_uniform_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Point Uniform Buffer"),
+            contents: unsafe {
+                std::slice::from_raw_parts(
+                    &point_uniform as *const _ as *const u8,
+                    std::mem::size_of::<generated_shaders::point::PointUniform>(),
+                )
+            },
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        });
+        let point_uniform_bind_group =
+            generated_shaders::point::bind_groups::BindGroup1::from_bindings(
+                &device,
+                generated_shaders::point::bind_groups::BindGroupLayout1 {
+                    point: wgpu::BufferBinding {
+                        buffer: &point_uniform_buffer,
+                        offset: 0,
+                        size: None,
+                    },
+                },
+            );
 
         Ok(Self {
             device,
@@ -606,30 +648,31 @@ impl MainRenderer {
             atmo_gradient_texture,
             star_glow_texture,
             star_spectrum_texture,
-            sun_texture_bind_group,
-            skybox_texture_bind_group,
-            black_hole_texture_bind_group,
-            black_hole_uniform_bind_group,
-            lens_glow_texture_bind_group,
-            transform_bind_group,
-            transform_buffer,
-            mvp_uniform_buffer,
-            mvp_bind_group,
-            current_mvp_offset: 0,
-            frame_mvp_data: Vec::new(),
-            prepared_render_commands: Vec::new(),
             default_lighting_bind_group,
             default_texture_bind_group,
             planet_lighting_bind_group,
             planet_texture_bind_group,
-            billboard_uniform_bind_group,
+            sun_uniform_bind_group,
+            sun_texture_bind_group,
+            skybox_texture_bind_group,
+            black_hole_uniform_bind_group,
+            black_hole_texture_bind_group,
+            lens_glow_uniform_bind_group,
+            lens_glow_texture_bind_group,
+            line_uniform_bind_group,
+            point_uniform_bind_group,
+            mvp_buffers,
+            mvp_bind_groups,
+            prepared_render_commands: Vec::new(),
             cube_mesh,
+            skybox_mesh,
             sphere_model,
             quad_mesh,
             line_mesh,
             point_mesh,
             _depth_texture: depth_texture,
             _depth_view: depth_view,
+            default_sampler,
             view_matrix_d64: DMat4::IDENTITY,
             projection_matrix_d64: DMat4::IDENTITY,
             view_projection_matrix_d64: DMat4::IDENTITY,
@@ -662,7 +705,7 @@ impl MainRenderer {
         object_scale: DVec3,
         light_position: Option<DVec3>,
         is_skybox: bool,
-    ) -> StandardMVPUniform {
+    ) -> generated_shaders::default::StandardMVPUniform {
         // Use the unified atmospheric computation for all cases
         let (mvp_matrix, camera_relative_transform) = calculate_mvp_matrix_64bit_with_atmosphere(
             &self.camera,
@@ -672,25 +715,23 @@ impl MainRenderer {
             light_position, // None for basic objects, Some(pos) for atmospheric
         );
 
-        // Create the unified uniform
-        let mut uniform = StandardMVPUniform {
-            mvp_matrix: mvp_matrix.to_cols_array_2d(),
-            camera_position: self.camera.position().as_vec3().to_array(),
+        // Create the unified uniform using generated types
+        let mut uniform = generated_shaders::default::StandardMVPUniform {
+            mvp_matrix,
+            camera_position: self.camera.position().as_vec3(),
             _padding1: 0.0,
-            camera_direction: self.camera.direction().to_array(),
+            camera_direction: self.camera.direction(),
             _padding2: 0.0,
             log_depth_constant: self.log_depth_constant,
             far_plane_distance: self.max_view_distance,
             near_plane_distance: 1.0,
             fc_constant: 2.0 / (self.max_view_distance + 1.0).ln(),
-            mv_matrix: camera_relative_transform.to_cols_array_2d(),
-            _padding3: 0.0,
-            _padding4: 0.0,
+            mv_matrix: camera_relative_transform,
         };
 
         // Special case overrides for skybox
         if is_skybox {
-            uniform.mv_matrix = Mat4::IDENTITY.to_cols_array_2d();
+            uniform.mv_matrix = Mat4::IDENTITY;
         }
 
         uniform
@@ -701,7 +742,7 @@ impl MainRenderer {
         &self,
         object_position: DVec3,
         object_scale: DVec3,
-    ) -> StandardMVPUniform {
+    ) -> generated_shaders::default::StandardMVPUniform {
         self.compute_uniform(object_position, object_scale, None, false)
     }
 
@@ -711,59 +752,75 @@ impl MainRenderer {
         planet_position: DVec3,
         planet_scale: DVec3,
         star_position: DVec3,
-    ) -> StandardMVPUniform {
+    ) -> generated_shaders::default::StandardMVPUniform {
         self.compute_uniform(planet_position, planet_scale, Some(star_position), false)
     }
 
     /// Convenience method for skybox rendering
-    pub fn compute_uniform_skybox(&self) -> StandardMVPUniform {
+    pub fn compute_uniform_skybox(&self) -> generated_shaders::default::StandardMVPUniform {
         self.compute_uniform(DVec3::ZERO, DVec3::ONE, None, true)
     }
 
-    /// Reset frame MVP data at the start of each frame
+    /// Reset frame data at the start of each frame
     pub fn begin_frame(&mut self) {
-        self.current_mvp_offset = 0;
-        self.frame_mvp_data.clear();
         self.prepared_render_commands.clear();
+        // Clear old MVP bind groups (keep buffers for reuse)
+        self.mvp_bind_groups.clear();
     }
 
-    /// Allocate space for an MVP uniform in the dynamic buffer and return the offset
-    fn allocate_mvp_uniform(&mut self, uniform: StandardMVPUniform) -> u32 {
-        let offset = self.current_mvp_offset;
-
-        // Check for buffer overflow
-        if offset + MVP_UNIFORM_ALIGNED_SIZE > MAX_OBJECTS_PER_FRAME * MVP_UNIFORM_ALIGNED_SIZE {
-            log::error!("MVP uniform buffer overflow! Too many objects in frame.");
-            return offset; // Return current offset to avoid crash, but rendering may be incorrect
-        }
-
-        // Convert uniform to bytes and pad to 256-byte alignment
-        let uniform_array = [uniform];
-        let uniform_bytes = bytemuck::cast_slice(&uniform_array);
-        let mut padded_data = vec![0u8; MVP_UNIFORM_ALIGNED_SIZE as usize];
-
-        // Copy the actual uniform data (first 240 bytes)
-        let copy_size = uniform_bytes.len().min(padded_data.len());
-        padded_data[..copy_size].copy_from_slice(&uniform_bytes[..copy_size]);
-
-        // Append to frame data
-        self.frame_mvp_data.extend_from_slice(&padded_data);
-
-        // Update offset for next allocation
-        self.current_mvp_offset += MVP_UNIFORM_ALIGNED_SIZE;
-
-        offset
-    }
-
-    /// Upload all frame MVP data to GPU buffer (call once per frame before render pass)
-    pub fn upload_frame_mvp_data(&self) {
-        if !self.frame_mvp_data.is_empty() {
+    /// Create or reuse an MVP buffer and bind group for a uniform
+    fn get_or_create_mvp_bind_group(
+        &mut self,
+        uniform: generated_shaders::default::StandardMVPUniform,
+    ) -> usize {
+        // Find an available buffer or create a new one
+        let buffer_index = if self.mvp_buffers.len() <= self.mvp_bind_groups.len() {
+            // Need a new buffer
+            let buffer = self
+                .device
+                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some(&format!("MVP Uniform Buffer {}", self.mvp_buffers.len())),
+                    contents: unsafe {
+                        std::slice::from_raw_parts(
+                            &uniform as *const _ as *const u8,
+                            std::mem::size_of::<generated_shaders::default::StandardMVPUniform>(),
+                        )
+                    },
+                    usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+                });
+            self.mvp_buffers.push(buffer);
+            self.mvp_buffers.len() - 1
+        } else {
+            // Reuse existing buffer
+            let buffer_index = self.mvp_bind_groups.len();
             self.queue
-                .write_buffer(&self.mvp_uniform_buffer, 0, &self.frame_mvp_data);
-        }
+                .write_buffer(&self.mvp_buffers[buffer_index], 0, unsafe {
+                    std::slice::from_raw_parts(
+                        &uniform as *const _ as *const u8,
+                        std::mem::size_of::<generated_shaders::default::StandardMVPUniform>(),
+                    )
+                });
+            buffer_index
+        };
+
+        // Create bind group for this buffer
+        let bind_group = generated_shaders::default::bind_groups::BindGroup0::from_bindings(
+            &self.device,
+            generated_shaders::default::bind_groups::BindGroupLayout0 {
+                mvp: wgpu::BufferBinding {
+                    buffer: &self.mvp_buffers[buffer_index],
+                    offset: 0,
+                    size: None,
+                },
+            },
+        );
+
+        let bind_group_index = self.mvp_bind_groups.len();
+        self.mvp_bind_groups.push((bind_group, buffer_index));
+        bind_group_index
     }
 
-    /// Prepare a render command for later execution (allocates MVP uniform and stores command)
+    /// Prepare a render command for later execution (creates MVP uniform and bind group)
     /// This should be called during the preparation phase for each object to render
     pub fn prepare_render_command(&mut self, command: RenderCommand, transform: Mat4) {
         // Compute the appropriate MVP uniform based on command type
@@ -804,67 +861,38 @@ impl MainRenderer {
             }
         };
 
-        // Allocate MVP uniform and get offset
-        let mvp_offset = self.allocate_mvp_uniform(mvp_uniform);
+        // Create or reuse MVP bind group
+        let mvp_bind_group_index = self.get_or_create_mvp_bind_group(mvp_uniform);
 
-        // Store the command with its MVP offset for later execution
+        // Store the command with its MVP bind group index for later execution
         self.prepared_render_commands
-            .push((command, transform, mvp_offset));
+            .push((command, transform, mvp_bind_group_index));
     }
 
-    /// Execute all prepared render commands with dynamic offsets
-    /// This should be called within the render pass after uploading MVP data
+    /// Execute all prepared render commands with their MVP bind groups
+    /// This should be called within the render pass
     pub fn execute_prepared_commands<'a>(&'a self, render_pass: &mut RenderPass<'a>) {
-        for (command, transform, mvp_offset) in &self.prepared_render_commands {
-            self.execute_render_command_with_offset(render_pass, command, *transform, *mvp_offset);
+        for (command, transform, mvp_bind_group_index) in &self.prepared_render_commands {
+            self.execute_render_command_with_bind_group(
+                render_pass,
+                command,
+                *transform,
+                *mvp_bind_group_index,
+            );
         }
     }
 
-    /// Execute a single render command with a specific dynamic MVP offset
-    /// This is the core rendering logic separated from MVP computation
-    fn execute_render_command_with_offset<'a>(
+    /// Execute a single render command with its MVP bind group
+    /// This is the core rendering logic using generated bind groups
+    fn execute_render_command_with_bind_group<'a>(
         &'a self,
         render_pass: &mut RenderPass<'a>,
         command: &RenderCommand,
-        transform: Mat4,
-        mvp_offset: u32,
+        _transform: Mat4,
+        mvp_bind_group_index: usize,
     ) {
-        // Update transform buffer with the provided transform matrix
-        let view_matrix = self.camera.view_matrix_f32();
-        let model_view_matrix = view_matrix * transform;
-        let normal_matrix = transform.inverse().transpose();
-
-        let transform_uniform = TransformUniform {
-            model_matrix: transform.to_cols_array_2d(),
-            model_view_matrix: model_view_matrix.to_cols_array_2d(),
-            normal_matrix: [
-                [
-                    normal_matrix.x_axis.x,
-                    normal_matrix.x_axis.y,
-                    normal_matrix.x_axis.z,
-                    0.0,
-                ],
-                [
-                    normal_matrix.y_axis.x,
-                    normal_matrix.y_axis.y,
-                    normal_matrix.y_axis.z,
-                    0.0,
-                ],
-                [
-                    normal_matrix.z_axis.x,
-                    normal_matrix.z_axis.y,
-                    normal_matrix.z_axis.z,
-                    0.0,
-                ],
-            ],
-            _padding: [0.0; 4],
-        };
-
-        self.queue.write_buffer(
-            &self.transform_buffer,
-            0,
-            bytemuck::cast_slice(&[transform_uniform]),
-        );
+        // Get the MVP bind group for this command
+        let (mvp_bind_group, _buffer_index) = &self.mvp_bind_groups[mvp_bind_group_index];
 
         match command {
             RenderCommand::Default {
@@ -872,11 +900,10 @@ impl MainRenderer {
                 light_position: _,
                 light_color: _,
             } => {
-                // No MVP computation - uses pre-allocated uniform with dynamic offset
                 render_pass.set_pipeline(&self.default_shader.pipeline);
-                render_pass.set_bind_group(0, &self.mvp_bind_group, &[mvp_offset]); // Dynamic offset
-                render_pass.set_bind_group(1, &self.default_lighting_bind_group, &[]);
-                render_pass.set_bind_group(2, &self.default_texture_bind_group, &[]);
+                mvp_bind_group.set(render_pass); // Use generated set method
+                self.default_lighting_bind_group.set(render_pass); // Use generated set method
+                self.default_texture_bind_group.set(render_pass); // Use generated set method
 
                 // Special handling for sphere to use OBJ model
                 if matches!(mesh_type, MeshType::Sphere) {
@@ -896,11 +923,23 @@ impl MainRenderer {
             }
 
             RenderCommand::AtmosphericPlanet { .. } => {
-                // No MVP computation - uses pre-allocated uniform with dynamic offset
                 render_pass.set_pipeline(&self.planet_atmo_shader.pipeline);
-                render_pass.set_bind_group(0, &self.mvp_bind_group, &[mvp_offset]); // Dynamic offset
-                render_pass.set_bind_group(1, &self.planet_lighting_bind_group, &[]);
-                render_pass.set_bind_group(2, &self.planet_texture_bind_group, &[]);
+                // Create appropriate MVP bind group for planet_atmo shader
+                let planet_mvp_bind_group =
+                    generated_shaders::planet_atmo::bind_groups::BindGroup0::from_bindings(
+                        &self.device,
+                        generated_shaders::planet_atmo::bind_groups::BindGroupLayout0 {
+                            mvp: wgpu::BufferBinding {
+                                buffer: &self.mvp_buffers
+                                    [self.mvp_bind_groups[mvp_bind_group_index].1],
+                                offset: 0,
+                                size: None,
+                            },
+                        },
+                    );
+                planet_mvp_bind_group.set(render_pass);
+                self.planet_lighting_bind_group.set(render_pass);
+                self.planet_texture_bind_group.set(render_pass);
                 render_pass.set_vertex_buffer(0, self.sphere_model.vertex_buffer.slice(..));
                 render_pass.set_index_buffer(
                     self.sphere_model.index_buffer.slice(..),
@@ -910,21 +949,26 @@ impl MainRenderer {
             }
 
             RenderCommand::Sun { temperature } => {
-                // Position is now embedded in the MVP matrix, so we derive it from the camera and the fact
-                // that we're looking at the sun (which is at the MVP matrix's transform position)
-                let star_position = glam::Vec3::ZERO; // Placeholder, position is handled by transform matrix
+                // Update sun uniforms if needed
+                let star_position = glam::Vec3::ZERO; // Placeholder, position is handled by MVP matrix
                 let camera_position = self.camera.position().as_vec3();
-                self.sun_shader.update_uniforms(
-                    &self.queue,
-                    *temperature,
-                    star_position,
-                    camera_position,
-                );
-
                 render_pass.set_pipeline(&self.sun_shader.pipeline);
-                render_pass.set_bind_group(0, &self.mvp_bind_group, &[mvp_offset]); // Dynamic offset
-                render_pass.set_bind_group(1, &self.sun_shader.bind_group, &[]);
-                render_pass.set_bind_group(2, &self.sun_texture_bind_group, &[]);
+                // Create appropriate MVP bind group for sun shader
+                let sun_mvp_bind_group =
+                    generated_shaders::sun_shader::bind_groups::BindGroup0::from_bindings(
+                        &self.device,
+                        generated_shaders::sun_shader::bind_groups::BindGroupLayout0 {
+                            mvp: wgpu::BufferBinding {
+                                buffer: &self.mvp_buffers
+                                    [self.mvp_bind_groups[mvp_bind_group_index].1],
+                                offset: 0,
+                                size: None,
+                            },
+                        },
+                    );
+                sun_mvp_bind_group.set(render_pass);
+                self.sun_uniform_bind_group.set(render_pass);
+                self.sun_texture_bind_group.set(render_pass);
                 render_pass.set_vertex_buffer(0, self.sphere_model.vertex_buffer.slice(..));
                 render_pass.set_index_buffer(
                     self.sphere_model.index_buffer.slice(..),
@@ -935,20 +979,46 @@ impl MainRenderer {
 
             RenderCommand::Skybox => {
                 render_pass.set_pipeline(&self.skybox_shader.pipeline);
-                render_pass.set_bind_group(0, &self.mvp_bind_group, &[mvp_offset]); // Dynamic offset
-                render_pass.set_bind_group(1, &self.skybox_texture_bind_group, &[]);
-                render_pass.set_vertex_buffer(0, self.cube_mesh.vertex_buffer.slice(..));
+                // Create appropriate MVP bind group for skybox shader
+                let skybox_mvp_bind_group =
+                    generated_shaders::skybox::bind_groups::BindGroup0::from_bindings(
+                        &self.device,
+                        generated_shaders::skybox::bind_groups::BindGroupLayout0 {
+                            mvp: wgpu::BufferBinding {
+                                buffer: &self.mvp_buffers
+                                    [self.mvp_bind_groups[mvp_bind_group_index].1],
+                                offset: 0,
+                                size: None,
+                            },
+                        },
+                    );
+                skybox_mvp_bind_group.set(render_pass);
+                self.skybox_texture_bind_group.set(render_pass);
+                render_pass.set_vertex_buffer(0, self.skybox_mesh.vertex_buffer.slice(..));
                 render_pass.set_index_buffer(
-                    self.cube_mesh.index_buffer.slice(..),
+                    self.skybox_mesh.index_buffer.slice(..),
                     wgpu::IndexFormat::Uint32,
                 );
-                render_pass.draw_indexed(0..self.cube_mesh.num_indices, 0, 0..1);
+                render_pass.draw_indexed(0..self.skybox_mesh.num_indices, 0, 0..1);
             }
 
             RenderCommand::Billboard => {
                 render_pass.set_pipeline(&self.billboard_shader.pipeline);
-                render_pass.set_bind_group(0, &self.mvp_bind_group, &[mvp_offset]); // Dynamic offset
-                render_pass.set_bind_group(1, &self.billboard_uniform_bind_group, &[]);
+                // Create appropriate MVP bind group for billboard shader
+                let billboard_mvp_bind_group =
+                    generated_shaders::billboard::bind_groups::BindGroup0::from_bindings(
+                        &self.device,
+                        generated_shaders::billboard::bind_groups::BindGroupLayout0 {
+                            mvp: wgpu::BufferBinding {
+                                buffer: &self.mvp_buffers
+                                    [self.mvp_bind_groups[mvp_bind_group_index].1],
+                                offset: 0,
+                                size: None,
+                            },
+                        },
+                    );
+                billboard_mvp_bind_group.set(render_pass);
+                // Billboard shader only uses MVP, no uniform bind group
                 render_pass.set_vertex_buffer(0, self.quad_mesh.vertex_buffer.slice(..));
                 render_pass.set_index_buffer(
                     self.quad_mesh.index_buffer.slice(..),
@@ -959,9 +1029,22 @@ impl MainRenderer {
 
             RenderCommand::LensGlow => {
                 render_pass.set_pipeline(&self.lens_glow_shader.pipeline);
-                render_pass.set_bind_group(0, &self.mvp_bind_group, &[mvp_offset]); // Dynamic offset
-                render_pass.set_bind_group(1, &self.lens_glow_shader.uniform_bind_group, &[]);
-                render_pass.set_bind_group(2, &self.lens_glow_texture_bind_group, &[]);
+                // Create appropriate MVP bind group for lens glow shader
+                let lens_glow_mvp_bind_group =
+                    generated_shaders::lens_glow::bind_groups::BindGroup0::from_bindings(
+                        &self.device,
+                        generated_shaders::lens_glow::bind_groups::BindGroupLayout0 {
+                            mvp: wgpu::BufferBinding {
+                                buffer: &self.mvp_buffers
+                                    [self.mvp_bind_groups[mvp_bind_group_index].1],
+                                offset: 0,
+                                size: None,
+                            },
+                        },
+                    );
+                lens_glow_mvp_bind_group.set(render_pass);
+                self.lens_glow_uniform_bind_group.set(render_pass);
+                self.lens_glow_texture_bind_group.set(render_pass);
                 render_pass.set_vertex_buffer(0, self.quad_mesh.vertex_buffer.slice(..));
                 render_pass.set_index_buffer(
                     self.quad_mesh.index_buffer.slice(..),
@@ -972,9 +1055,22 @@ impl MainRenderer {
 
             RenderCommand::BlackHole => {
                 render_pass.set_pipeline(&self.black_hole_shader.pipeline);
-                render_pass.set_bind_group(0, &self.mvp_bind_group, &[mvp_offset]); // Dynamic offset
-                render_pass.set_bind_group(1, &self.black_hole_uniform_bind_group, &[]);
-                render_pass.set_bind_group(2, &self.black_hole_texture_bind_group, &[]);
+                // Create appropriate MVP bind group for black hole shader
+                let black_hole_mvp_bind_group =
+                    generated_shaders::black_hole::bind_groups::BindGroup0::from_bindings(
+                        &self.device,
+                        generated_shaders::black_hole::bind_groups::BindGroupLayout0 {
+                            mvp: wgpu::BufferBinding {
+                                buffer: &self.mvp_buffers
+                                    [self.mvp_bind_groups[mvp_bind_group_index].1],
+                                offset: 0,
+                                size: None,
+                            },
+                        },
+                    );
+                black_hole_mvp_bind_group.set(render_pass);
+                self.black_hole_uniform_bind_group.set(render_pass);
+                self.black_hole_texture_bind_group.set(render_pass);
                 render_pass.set_vertex_buffer(0, self.sphere_model.vertex_buffer.slice(..));
                 render_pass.set_index_buffer(
                     self.sphere_model.index_buffer.slice(..),
@@ -985,8 +1081,21 @@ impl MainRenderer {
 
             RenderCommand::Line { color: _ } => {
                 render_pass.set_pipeline(&self.line_shader.pipeline);
-                render_pass.set_bind_group(0, &self.mvp_bind_group, &[mvp_offset]); // Dynamic offset
-                render_pass.set_bind_group(1, &self.line_shader.line_bind_group, &[]); // Line color uniform
+                // Create appropriate MVP bind group for line shader
+                let line_mvp_bind_group =
+                    generated_shaders::line::bind_groups::BindGroup0::from_bindings(
+                        &self.device,
+                        generated_shaders::line::bind_groups::BindGroupLayout0 {
+                            mvp: wgpu::BufferBinding {
+                                buffer: &self.mvp_buffers
+                                    [self.mvp_bind_groups[mvp_bind_group_index].1],
+                                offset: 0,
+                                size: None,
+                            },
+                        },
+                    );
+                line_mvp_bind_group.set(render_pass);
+                self.line_uniform_bind_group.set(render_pass);
                 render_pass.set_vertex_buffer(0, self.line_mesh.vertex_buffer.slice(..));
                 render_pass.set_index_buffer(
                     self.line_mesh.index_buffer.slice(..),
@@ -997,7 +1106,21 @@ impl MainRenderer {
 
             RenderCommand::Point => {
                 render_pass.set_pipeline(&self.point_shader.pipeline);
-                render_pass.set_bind_group(0, &self.mvp_bind_group, &[mvp_offset]); // Dynamic offset
+                // Create appropriate MVP bind group for point shader
+                let point_mvp_bind_group =
+                    generated_shaders::point::bind_groups::BindGroup0::from_bindings(
+                        &self.device,
+                        generated_shaders::point::bind_groups::BindGroupLayout0 {
+                            mvp: wgpu::BufferBinding {
+                                buffer: &self.mvp_buffers
+                                    [self.mvp_bind_groups[mvp_bind_group_index].1],
+                                offset: 0,
+                                size: None,
+                            },
+                        },
+                    );
+                point_mvp_bind_group.set(render_pass);
+                self.point_uniform_bind_group.set(render_pass);
                 render_pass.set_vertex_buffer(0, self.point_mesh.vertex_buffer.slice(..));
                 render_pass.set_index_buffer(
                     self.point_mesh.index_buffer.slice(..),
@@ -1008,7 +1131,7 @@ impl MainRenderer {
         }
     }
 
-    /// Legacy helper method for single command execution using two-phase approach
+    /// Legacy helper method for single command execution using new per-object approach
     /// Use this only for simple cases - prefer the full two-phase approach for multiple objects
     pub fn render<'a>(
         &'a mut self,
@@ -1018,7 +1141,6 @@ impl MainRenderer {
     ) {
         self.begin_frame();
         self.prepare_render_command(command.clone(), transform);
-        self.upload_frame_mvp_data();
         self.execute_prepared_commands(render_pass);
     }
 

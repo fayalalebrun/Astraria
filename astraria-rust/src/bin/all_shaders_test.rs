@@ -67,7 +67,6 @@ async fn save_render(
                     Mat4::from_translation(Vec3::new(0.0, 0.0, -2.0))
                         * Mat4::from_scale(Vec3::splat(1.5)),
                 );
-                renderer.upload_frame_mvp_data();
                 renderer.execute_prepared_commands(&mut rp);
             }
             1 => {
@@ -82,7 +81,6 @@ async fn save_render(
                     Mat4::from_translation(Vec3::new(0.0, 0.0, -2.0))
                         * Mat4::from_scale(Vec3::splat(1.5)),
                 );
-                renderer.upload_frame_mvp_data();
                 renderer.execute_prepared_commands(&mut rp);
             }
             2 => {
@@ -97,7 +95,6 @@ async fn save_render(
                     Mat4::from_translation(Vec3::new(0.0, 0.0, -2.5))
                         * Mat4::from_scale(Vec3::splat(1.8)),
                 );
-                renderer.upload_frame_mvp_data();
                 renderer.execute_prepared_commands(&mut rp);
             }
             3 => {
@@ -110,35 +107,30 @@ async fn save_render(
                     Mat4::from_translation(Vec3::new(0.0, 0.0, -2.5))
                         * Mat4::from_scale(Vec3::splat(1.8)),
                 );
-                renderer.upload_frame_mvp_data();
                 renderer.execute_prepared_commands(&mut rp);
             }
             4 => {
                 let command = RenderCommand::Skybox;
                 renderer.begin_frame();
                 renderer.prepare_render_command(command, Mat4::IDENTITY);
-                renderer.upload_frame_mvp_data();
                 renderer.execute_prepared_commands(&mut rp);
             }
             5 => {
                 let command = RenderCommand::Billboard;
                 renderer.begin_frame();
                 renderer.prepare_render_command(command, Mat4::IDENTITY);
-                renderer.upload_frame_mvp_data();
                 renderer.execute_prepared_commands(&mut rp);
             }
             6 => {
                 let command = RenderCommand::LensGlow;
                 renderer.begin_frame();
                 renderer.prepare_render_command(command, Mat4::IDENTITY);
-                renderer.upload_frame_mvp_data();
                 renderer.execute_prepared_commands(&mut rp);
             }
             7 => {
                 let command = RenderCommand::BlackHole;
                 renderer.begin_frame();
                 renderer.prepare_render_command(command, Mat4::IDENTITY);
-                renderer.upload_frame_mvp_data();
                 renderer.execute_prepared_commands(&mut rp);
             }
             8 => {
@@ -151,7 +143,6 @@ async fn save_render(
                     Mat4::from_translation(Vec3::new(0.0, 0.0, -2.0))
                         * Mat4::from_scale(Vec3::splat(5.0)),
                 );
-                renderer.upload_frame_mvp_data();
                 renderer.execute_prepared_commands(&mut rp);
             }
             9 => {
@@ -162,7 +153,6 @@ async fn save_render(
                     Mat4::from_translation(Vec3::new(0.0, 0.0, -2.0))
                         * Mat4::from_scale(Vec3::splat(5.0)),
                 );
-                renderer.upload_frame_mvp_data();
                 renderer.execute_prepared_commands(&mut rp);
             }
             10 => {
@@ -190,7 +180,6 @@ async fn save_render(
                 );
 
                 // Upload once and execute all
-                renderer.upload_frame_mvp_data();
                 renderer.execute_prepared_commands(&mut rp);
             }
             11 => {
@@ -218,7 +207,6 @@ async fn save_render(
                 );
 
                 // Upload once and execute all
-                renderer.upload_frame_mvp_data();
                 renderer.execute_prepared_commands(&mut rp);
             }
             12 => {
@@ -249,7 +237,6 @@ async fn save_render(
                 );
 
                 // Upload once and execute all
-                renderer.upload_frame_mvp_data();
                 renderer.execute_prepared_commands(&mut rp);
             }
             13 => {
@@ -280,7 +267,6 @@ async fn save_render(
                 );
 
                 // Upload once and execute all
-                renderer.upload_frame_mvp_data();
                 renderer.execute_prepared_commands(&mut rp);
             }
             _ => {}

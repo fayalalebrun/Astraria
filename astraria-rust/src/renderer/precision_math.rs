@@ -219,7 +219,7 @@ mod tests {
         let object_pos = DVec3::new(0.0, 0.0, 0.0); // Sun at origin
         let object_scale = DVec3::new(6.96e8, 6.96e8, 6.96e8); // Sun radius
 
-        let (mvp, _, _) = calculate_mvp_matrix_64bit_with_atmosphere(
+        let (mvp, _) = calculate_mvp_matrix_64bit_with_atmosphere(
             &camera,
             object_pos,
             object_scale,

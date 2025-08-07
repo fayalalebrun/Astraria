@@ -6,9 +6,13 @@ include!(concat!(env!("OUT_DIR"), "/shaders/mod.rs"));
 
 // Re-export commonly used types from the generated modules
 pub mod common {
-    // Re-export uniform types from default shader (they're identical across shaders)
-    pub use super::default::{DirectionalLight, LightingUniforms, StandardMVPUniform};
-
-    // Re-export vertex input types
+    // Re-export demangled/consolidated vertex input types
     pub use super::default::VertexInput;
+
+    // Re-export specialized vertex input types
+    pub use super::billboard::VertexInput as BillboardVertexInput;
+    pub use super::skybox::VertexInput as SkyboxVertexInput;
+
+    // Re-export bind group types for convenience
+    pub use super::default::bind_groups::*;
 }
