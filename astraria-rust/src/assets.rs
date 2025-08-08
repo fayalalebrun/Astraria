@@ -117,20 +117,57 @@ impl AssetManager {
         queue: &Queue,
         path: &str,
     ) -> AstrariaResult<Arc<TextureAsset>> {
+        log::info!("AssetManager: Attempting to load texture: {}", path);
+
         if let Some(texture) = self.textures.get(path) {
+            log::info!("AssetManager: Texture already cached: {}", path);
             return Ok(Arc::clone(texture));
         }
 
-        // Load image from file
-        let img = image::open(path).map_err(|e| {
-            AstrariaError::AssetLoading(format!("Failed to load image {}: {}", path, e))
+        // Resolve Java-style paths to actual file paths
+        let resolved_path = Self::resolve_texture_path(path)?;
+        log::info!(
+            "AssetManager: Resolved path '{}' -> '{}'",
+            path,
+            resolved_path
+        );
+
+        // Check if we already loaded this resolved path
+        if let Some(texture) = self.textures.get(&resolved_path).cloned() {
+            // Cache under both original and resolved path for future lookups
+            self.textures.insert(path.to_string(), Arc::clone(&texture));
+            return Ok(texture);
+        }
+
+        // Load image from resolved file path
+        log::info!("AssetManager: Loading image file: {}", resolved_path);
+        let img = image::open(&resolved_path).map_err(|e| {
+            log::error!(
+                "AssetManager: Failed to load image {} (resolved from {}): {}",
+                resolved_path,
+                path,
+                e
+            );
+            AstrariaError::AssetLoading(format!(
+                "Failed to load image {} (resolved from {}): {}",
+                resolved_path, path, e
+            ))
         })?;
 
-        let texture_asset = Self::create_texture_from_image(device, queue, &img, Some(path))?;
+        let texture_asset =
+            Self::create_texture_from_image(device, queue, &img, Some(&resolved_path))?;
         let texture_arc = Arc::new(texture_asset);
 
+        // Cache under both original and resolved path
         self.textures
             .insert(path.to_string(), Arc::clone(&texture_arc));
+        self.textures
+            .insert(resolved_path.clone(), Arc::clone(&texture_arc));
+        log::info!(
+            "AssetManager: Successfully loaded and cached texture: {} -> {}",
+            path,
+            resolved_path
+        );
         Ok(texture_arc)
     }
 
@@ -502,6 +539,95 @@ impl AssetManager {
     /// Get a shared reference to a loaded cubemap
     pub fn get_cubemap_handle(&self, name: &str) -> Option<Arc<CubemapAsset>> {
         self.cubemaps.get(name).map(Arc::clone)
+    }
+
+    /// Resolve Java-style texture paths to actual file system paths
+    /// Converts "./Planet Textures/filename.jpg" -> "assets/Planet Textures/filename.jpg"
+    fn resolve_texture_path(path: &str) -> AstrariaResult<String> {
+        if path.starts_with("./") {
+            // Java-style relative path, convert to assets directory
+            let resolved = format!("assets/{}", &path[2..]);
+
+            // Verify the file exists
+            if std::path::Path::new(&resolved).exists() {
+                Ok(resolved)
+            } else {
+                // Try alternative asset directories
+                let alternatives = [
+                    format!("assets/{}", &path[2..]),
+                    format!(
+                        "assets/textures/{}",
+                        &path[2..].replace("Planet Textures/", "")
+                    ),
+                    path.to_string(), // Try original path as-is
+                ];
+
+                for alt_path in &alternatives {
+                    if std::path::Path::new(alt_path).exists() {
+                        return Ok(alt_path.clone());
+                    }
+                }
+
+                Err(AstrariaError::AssetLoading(format!(
+                    "Texture file not found: {} (tried: {})",
+                    path,
+                    alternatives.join(", ")
+                )))
+            }
+        } else if std::path::Path::new(path).exists() {
+            // Already a valid path
+            Ok(path.to_string())
+        } else {
+            // Try prepending assets directory
+            let with_assets = format!("assets/{}", path);
+            if std::path::Path::new(&with_assets).exists() {
+                Ok(with_assets)
+            } else {
+                Err(AstrariaError::AssetLoading(format!(
+                    "Texture file not found: {} (tried: assets/{})",
+                    path, path
+                )))
+            }
+        }
+    }
+
+    /// Load hardcoded atmospheric assets required by shaders
+    pub async fn load_atmospheric_assets(
+        &mut self,
+        device: &Device,
+        queue: &Queue,
+    ) -> AstrariaResult<()> {
+        log::info!("AssetManager: Loading atmospheric assets...");
+
+        // Load atmospheric gradient texture (required for planet_atmo shader)
+        if !self.textures.contains_key("atmoGradient.png")
+            && !self.textures.contains_key("assets/atmoGradient.png")
+        {
+            match self.load_texture(device, queue, "atmoGradient.png").await {
+                Ok(_) => {
+                    log::info!("AssetManager: Successfully loaded atmospheric gradient texture")
+                }
+                Err(e) => log::warn!("AssetManager: Failed to load atmospheric gradient: {}", e),
+            }
+        } else {
+            log::info!("AssetManager: Atmospheric gradient texture already loaded");
+        }
+
+        // Load star spectrum texture (required for star temperature mapping)
+        if !self.textures.contains_key("star_spectrum_1D.png") {
+            match self
+                .load_texture(device, queue, "assets/star_spectrum_1D.png")
+                .await
+            {
+                Ok(_) => log::info!("AssetManager: Successfully loaded star spectrum texture"),
+                Err(e) => log::warn!("AssetManager: Failed to load star spectrum: {}", e),
+            }
+        } else {
+            log::info!("AssetManager: Star spectrum texture already loaded");
+        }
+
+        log::info!("AssetManager: Atmospheric assets loading complete");
+        Ok(())
     }
 
     /// Get cache statistics

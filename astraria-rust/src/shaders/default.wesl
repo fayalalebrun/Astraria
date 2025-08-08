@@ -100,13 +100,11 @@ fn vs_main(input: VertexInput) -> VertexOutput {
 
 // Calculate directional light contribution
 fn calc_directional_light(light: DirectionalLight, normal: vec3<f32>, frag_pos: vec3<f32>, view_dir: vec3<f32>) -> vec3<f32> {
-    // Transform world space light direction to view space
-    let normal_matrix = mat3x3<f32>(
-        mvp.mv_matrix[0].xyz,
-        mvp.mv_matrix[1].xyz,
-        mvp.mv_matrix[2].xyz
-    );
-    let light_dir = normalize(normal_matrix * light.direction);
+    // For directional lighting, the light direction should be in world space
+    // and only transformed by the model matrix (not the view matrix)
+    // Since light.direction is already computed in world space relative to the object,
+    // we can use it directly without additional transformation
+    let light_dir = normalize(light.direction);
     
     // Diffuse shading
     let diff = max(dot(normal, light_dir), 0.0);

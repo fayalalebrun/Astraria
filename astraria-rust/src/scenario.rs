@@ -104,10 +104,41 @@ impl ScenarioParser {
     fn parse_planet(lines: &[&str], i: &mut usize) -> AstrariaResult<ScenarioBody> {
         *i += 1; // Move past type line
 
-        let name = Self::extract_value(lines[*i])?;
+        if *i >= lines.len() {
+            return Err(AstrariaError::ParseError(
+                "Unexpected end of file while parsing planet".to_string(),
+            ));
+        }
+
+        let name = Self::extract_value(lines[*i]).map_err(|e| {
+            AstrariaError::ParseError(format!(
+                "Error parsing planet name at line {}: {}",
+                *i + 1,
+                e
+            ))
+        })?;
         *i += 1;
 
-        let radius = Self::extract_value(lines[*i])?.parse::<f32>()? * 1000.0; // Convert km to meters
+        if *i >= lines.len() {
+            return Err(AstrariaError::ParseError(format!(
+                "Missing radius for planet '{}'",
+                name
+            )));
+        }
+        let radius_str = Self::extract_value(lines[*i]).map_err(|e| {
+            AstrariaError::ParseError(format!(
+                "Error parsing radius for planet '{}' at line {}: {}",
+                name,
+                *i + 1,
+                e
+            ))
+        })?;
+        let radius = radius_str.parse::<f32>().map_err(|e| {
+            AstrariaError::ParseError(format!(
+                "Invalid radius '{}' for planet '{}': {}",
+                radius_str, name, e
+            ))
+        })? * 1000.0; // Convert km to meters
         *i += 1;
 
         let mass = Self::extract_value(lines[*i])?.parse::<f64>()?;
@@ -119,7 +150,7 @@ impl ScenarioParser {
         let position = Self::parse_vec3(lines[*i])?;
         *i += 1;
 
-        let texture_path = Self::extract_value(lines[*i])?;
+        let texture_path = Self::normalize_texture_path(&Self::extract_value(lines[*i])?);
         *i += 1;
 
         let orbit_color = Self::parse_color4(lines[*i])?;
@@ -160,7 +191,7 @@ impl ScenarioParser {
         let position = Self::parse_vec3(lines[*i])?;
         *i += 1;
 
-        let texture_path = Self::extract_value(lines[*i])?;
+        let texture_path = Self::normalize_texture_path(&Self::extract_value(lines[*i])?);
         *i += 1;
 
         let orbit_color = Self::parse_color4(lines[*i])?;
@@ -205,7 +236,7 @@ impl ScenarioParser {
         let position = Self::parse_vec3(lines[*i])?;
         *i += 1;
 
-        let texture_path = Self::extract_value(lines[*i])?;
+        let texture_path = Self::normalize_texture_path(&Self::extract_value(lines[*i])?);
         *i += 1;
 
         let orbit_color = Self::parse_color4(lines[*i])?;
@@ -220,7 +251,9 @@ impl ScenarioParser {
         // Check for optional ambient texture
         let mut ambient_texture = None;
         if *i < lines.len() && lines[*i].starts_with("ambientTexture:") {
-            ambient_texture = Some(Self::extract_value(lines[*i])?);
+            ambient_texture = Some(Self::normalize_texture_path(&Self::extract_value(
+                lines[*i],
+            )?));
             *i += 1;
         }
 
@@ -275,12 +308,30 @@ impl ScenarioParser {
 
     fn extract_value(line: &str) -> AstrariaResult<String> {
         if let Some(colon_pos) = line.find(':') {
-            Ok(line[colon_pos + 1..].trim().to_string())
+            let value = line[colon_pos + 1..].trim().to_string();
+            if value.is_empty() {
+                Err(AstrariaError::ParseError(format!(
+                    "Empty value in line: {}",
+                    line
+                )))
+            } else {
+                Ok(value)
+            }
         } else {
             Err(AstrariaError::ParseError(format!(
-                "Invalid line format: {}",
+                "Invalid line format (missing ':'): {}",
                 line
             )))
+        }
+    }
+
+    fn normalize_texture_path(path: &str) -> String {
+        // Normalize Java-style paths to be compatible with the AssetManager
+        if path.starts_with("./") {
+            // Remove the ./ prefix - AssetManager will handle the assets/ prefix
+            path[2..].to_string()
+        } else {
+            path.to_string()
         }
     }
 

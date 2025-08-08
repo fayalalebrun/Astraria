@@ -7,7 +7,7 @@ use astraria_rust::{
         core::{MeshType, RenderCommand, *},
     },
 };
-use glam::{Mat4, Vec3, Vec4};
+use glam::{DVec3, Mat4, Vec3, Vec4};
 use image::{ImageBuffer, Rgba};
 use std::fs;
 
@@ -88,6 +88,12 @@ async fn save_render(
                     atmosphere_color: Vec4::new(0.4, 0.6, 1.0, 1.0),
                     overglow: 0.1,
                     use_ambient_texture: true,
+                    texture_path: "assets/Planet Textures/8k_earth_with_clouds.jpg".to_string(),
+                    ambient_texture_path: Some(
+                        "assets/Planet Textures/8k_earth_nightmap.jpg".to_string(),
+                    ),
+                    planet_position: DVec3::ZERO,
+                    sun_position: DVec3::new(1.0, 0.0, 0.0),
                 };
                 renderer.begin_frame();
                 renderer.prepare_render_command(

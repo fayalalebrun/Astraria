@@ -52,11 +52,22 @@ pub enum RenderCommand {
         light_color: Vec3,
     },
 
+    /// Regular planet without atmosphere (like Mercury, Moon, etc.)
+    Planet {
+        texture_path: String,
+        planet_position: glam::DVec3,
+        sun_position: glam::DVec3,
+    },
+
     /// Planet with atmospheric scattering
     AtmosphericPlanet {
         atmosphere_color: glam::Vec4,
         overglow: f32,
         use_ambient_texture: bool,
+        texture_path: String,
+        ambient_texture_path: Option<String>,
+        planet_position: glam::DVec3,
+        sun_position: glam::DVec3,
     },
 
     /// Sun/star with stellar surface rendering

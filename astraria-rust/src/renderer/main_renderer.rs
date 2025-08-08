@@ -106,6 +106,343 @@ pub struct MainRenderer {
 }
 
 impl MainRenderer {
+    /// Create a dynamic lighting bind group for regular planets (default shader)
+    fn create_planet_lighting_bind_group(
+        &self,
+        planet_world_pos: glam::DVec3,
+        sun_world_pos: glam::DVec3,
+    ) -> AstrariaResult<generated_shaders::default::bind_groups::BindGroup1> {
+        log::debug!("MainRenderer: Creating dynamic lighting bind group for regular planet");
+
+        // Calculate light direction from planet to sun in world space
+        let light_direction_world = (sun_world_pos - planet_world_pos).normalize();
+
+        // Create the lighting uniform with computed light direction
+        let lighting_uniform = generated_shaders::default::LightingUniforms {
+            lights: [generated_shaders::default::DirectionalLight {
+                // Light direction FROM object TO sun in WORLD SPACE
+                direction: light_direction_world.as_vec3(),
+                _padding1: 0.0,
+                ambient: glam::Vec3::new(0.1, 0.1, 0.1),
+                _padding2: 0.0,
+                diffuse: glam::Vec3::new(1.0, 1.0, 1.0),
+                _padding3: 0.0,
+                specular: glam::Vec3::new(1.0, 1.0, 1.0),
+                _padding4: 0.0,
+            }; 8],
+            num_lights: 1,
+            _padding: [glam::Vec4::ZERO; 10], // Match default shader structure
+        };
+
+        // Create lighting buffer using unsafe raw bytes (since structs don't implement Pod)
+        let lighting_buffer = self
+            .device
+            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Dynamic Planet Lighting Uniform Buffer"),
+                contents: unsafe {
+                    std::slice::from_raw_parts(
+                        &lighting_uniform as *const _ as *const u8,
+                        std::mem::size_of::<generated_shaders::default::LightingUniforms>(),
+                    )
+                },
+                usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            });
+
+        // Create the bind group with dynamic lighting uniform
+        let bind_group = generated_shaders::default::bind_groups::BindGroup1::from_bindings(
+            &self.device,
+            generated_shaders::default::bind_groups::BindGroupLayout1 {
+                lighting: wgpu::BufferBinding {
+                    buffer: &lighting_buffer,
+                    offset: 0,
+                    size: None,
+                },
+            },
+        );
+
+        log::debug!(
+            "MainRenderer: Successfully created dynamic lighting bind group for regular planet"
+        );
+        Ok(bind_group)
+    }
+
+    /// Create a dynamic lighting bind group for atmospheric planets with specific atmospheric color
+    fn create_atmospheric_lighting_bind_group(
+        &self,
+        atmosphere_color: glam::Vec4,
+        overglow: f32,
+        use_ambient_texture: bool,
+        planet_world_pos: glam::DVec3,
+        sun_world_pos: glam::DVec3,
+    ) -> AstrariaResult<generated_shaders::planet_atmo::bind_groups::BindGroup1> {
+        log::debug!(
+            "MainRenderer: Creating dynamic lighting bind group with atmo_color: {:?}, overglow: {}, use_ambient: {}",
+            atmosphere_color,
+            overglow,
+            use_ambient_texture
+        );
+
+        // Calculate light direction from planet to sun in world space
+        let light_direction_world = (sun_world_pos - planet_world_pos).normalize();
+
+        // Create the lighting uniform with computed light direction
+        let lighting_uniform = generated_shaders::planet_atmo::LightingUniform {
+            lights: [generated_shaders::planet_atmo::DirectionalLight {
+                // Light direction FROM planet TO sun in WORLD SPACE
+                direction: light_direction_world.as_vec3(),
+                _padding1: 0.0,
+                ambient: glam::Vec3::new(0.1, 0.1, 0.1),
+                _padding2: 0.0,
+                diffuse: glam::Vec3::new(1.0, 1.0, 1.0),
+                _padding3: 0.0,
+                specular: glam::Vec3::new(1.0, 1.0, 1.0),
+                _padding4: 0.0,
+            }; 8],
+            num_lights: 1,
+            _padding: [glam::Vec4::ZERO; 16],
+        };
+
+        // Create the atmospheric uniform data
+        let atmospheric_uniform = generated_shaders::planet_atmo::AtmosphereUniform {
+            atmosphere_color_mod: atmosphere_color,
+            overglow,
+            use_ambient_texture: if use_ambient_texture { 1 } else { 0 },
+            _padding: glam::Vec2::ZERO,
+        };
+
+        // Create lighting buffer using unsafe raw bytes (since structs don't implement Pod)
+        let lighting_buffer = self
+            .device
+            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Dynamic Lighting Uniform Buffer"),
+                contents: unsafe {
+                    std::slice::from_raw_parts(
+                        &lighting_uniform as *const _ as *const u8,
+                        std::mem::size_of::<generated_shaders::planet_atmo::LightingUniform>(),
+                    )
+                },
+                usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            });
+
+        // Create atmospheric buffer using unsafe raw bytes
+        let atmospheric_buffer =
+            self.device
+                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("Dynamic Atmospheric Uniform Buffer"),
+                    contents: unsafe {
+                        std::slice::from_raw_parts(
+                            &atmospheric_uniform as *const _ as *const u8,
+                            std::mem::size_of::<generated_shaders::planet_atmo::AtmosphereUniform>(
+                            ),
+                        )
+                    },
+                    usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+                });
+
+        // Create the bind group with dynamic uniforms
+        let bind_group = generated_shaders::planet_atmo::bind_groups::BindGroup1::from_bindings(
+            &self.device,
+            generated_shaders::planet_atmo::bind_groups::BindGroupLayout1 {
+                lighting: wgpu::BufferBinding {
+                    buffer: &lighting_buffer,
+                    offset: 0,
+                    size: None,
+                },
+                atmosphere: wgpu::BufferBinding {
+                    buffer: &atmospheric_buffer,
+                    offset: 0,
+                    size: None,
+                },
+            },
+        );
+
+        log::debug!("MainRenderer: Successfully created dynamic lighting bind group");
+        Ok(bind_group)
+    }
+
+    /// Create a dynamic texture bind group for atmospheric planets
+    fn create_atmospheric_texture_bind_group(
+        &self,
+        main_texture_path: &str,
+        ambient_texture_path: Option<&str>,
+        use_ambient: bool,
+    ) -> AstrariaResult<generated_shaders::planet_atmo::bind_groups::BindGroup2> {
+        log::debug!(
+            "MainRenderer: Creating dynamic bind group for textures: main={}, ambient={:?}",
+            main_texture_path,
+            ambient_texture_path
+        );
+
+        // Get the main texture from the asset manager - try multiple possible cache keys
+        let main_texture = self
+            .asset_manager
+            .get_texture_handle(main_texture_path)
+            .or_else(|| {
+                self.asset_manager
+                    .get_texture_handle(&format!("assets/{}", main_texture_path))
+            })
+            .or_else(|| {
+                self.asset_manager
+                    .get_texture_handle(&format!("./{}", main_texture_path))
+            })
+            .ok_or_else(|| {
+                log::error!(
+                    "MainRenderer: Texture cache keys available: {:?}",
+                    self.asset_manager.cache_stats()
+                );
+                crate::AstrariaError::AssetLoading(format!(
+                    "Main texture not found in cache: {} (tried keys: '{}', 'assets/{}', './{})'",
+                    main_texture_path, main_texture_path, main_texture_path, main_texture_path
+                ))
+            })?;
+
+        // Get the ambient texture (or fallback to main texture if not available)
+        let ambient_texture = if use_ambient {
+            if let Some(ambient_path) = ambient_texture_path {
+                self.asset_manager.get_texture_handle(ambient_path)
+                    .unwrap_or_else(|| {
+                        log::warn!("MainRenderer: Ambient texture {} not found, using main texture as fallback", ambient_path);
+                        Arc::clone(&main_texture)
+                    })
+            } else {
+                log::warn!(
+                    "MainRenderer: use_ambient is true but no ambient path provided, using main texture"
+                );
+                Arc::clone(&main_texture)
+            }
+        } else {
+            Arc::clone(&main_texture)
+        };
+
+        // Get the atmospheric gradient texture (should be pre-loaded)
+        let atmo_gradient = self
+            .asset_manager
+            .get_texture_handle("atmoGradient.png")
+            .or_else(|| {
+                self.asset_manager
+                    .get_texture_handle("assets/atmoGradient.png")
+            })
+            .unwrap_or_else(|| {
+                log::warn!(
+                    "MainRenderer: Atmospheric gradient not found, using main texture as fallback"
+                );
+                Arc::clone(&main_texture)
+            });
+
+        // Create the bind group with the dynamic textures
+        let bind_group = generated_shaders::planet_atmo::bind_groups::BindGroup2::from_bindings(
+            &self.device,
+            generated_shaders::planet_atmo::bind_groups::BindGroupLayout2 {
+                ambient_texture: &ambient_texture.view,
+                diffuse_texture: &main_texture.view,
+                atmosphere_gradient_texture: &atmo_gradient.view,
+                texture_sampler: &self.default_sampler,
+            },
+        );
+
+        log::debug!("MainRenderer: Successfully created dynamic texture bind group");
+        Ok(bind_group)
+    }
+
+    /// Load textures for all bodies in a scenario
+    pub async fn load_scenario_textures(
+        &mut self,
+        asset_manager: &mut crate::assets::AssetManager,
+        scenario: &crate::scenario::Scenario,
+    ) -> AstrariaResult<()> {
+        log::info!(
+            "MainRenderer: Loading textures for {} bodies in scenario",
+            scenario.bodies.len()
+        );
+
+        for body in &scenario.bodies {
+            match &body.body_type {
+                crate::scenario::BodyType::Planet { texture_path, .. }
+                | crate::scenario::BodyType::Star { texture_path, .. } => {
+                    match asset_manager
+                        .load_texture(&self.device, &self.queue, texture_path)
+                        .await
+                    {
+                        Ok(_) => {
+                            // Also load into MainRenderer's asset manager for cache consistency
+                            let _ = self
+                                .asset_manager
+                                .load_texture(&self.device, &self.queue, texture_path)
+                                .await;
+                        }
+                        Err(e) => {
+                            log::warn!(
+                                "MainRenderer: Failed to load texture {} for {}: {}",
+                                texture_path,
+                                body.name,
+                                e
+                            );
+                        }
+                    }
+                }
+                crate::scenario::BodyType::PlanetAtmo {
+                    texture_path,
+                    ambient_texture,
+                    ..
+                } => {
+                    match asset_manager
+                        .load_texture(&self.device, &self.queue, texture_path)
+                        .await
+                    {
+                        Ok(_) => {
+                            // Also load into MainRenderer's asset manager for cache consistency
+                            let _ = self
+                                .asset_manager
+                                .load_texture(&self.device, &self.queue, texture_path)
+                                .await;
+                        }
+                        Err(e) => {
+                            log::warn!(
+                                "MainRenderer: Failed to load main texture {} for {}: {}",
+                                texture_path,
+                                body.name,
+                                e
+                            );
+                        }
+                    }
+
+                    if let Some(ambient_path) = ambient_texture {
+                        match asset_manager
+                            .load_texture(&self.device, &self.queue, ambient_path)
+                            .await
+                        {
+                            Ok(_) => {
+                                // Also load into MainRenderer's asset manager for cache consistency
+                                let _ = self
+                                    .asset_manager
+                                    .load_texture(&self.device, &self.queue, ambient_path)
+                                    .await;
+                            }
+                            Err(e) => {
+                                log::warn!(
+                                    "MainRenderer: Failed to load ambient texture {} for {}: {}",
+                                    ambient_path,
+                                    body.name,
+                                    e
+                                );
+                            }
+                        }
+                    }
+                }
+                _ => {} // Black holes don't have textures
+            }
+        }
+
+        let (textures, models, cubemaps) = self.asset_manager.cache_stats();
+        log::info!(
+            "MainRenderer: Scenario texture loading complete - MainRenderer cache now has: textures={}, models={}, cubemaps={}",
+            textures,
+            models,
+            cubemaps
+        );
+        Ok(())
+    }
+
     pub async fn new() -> AstrariaResult<Self> {
         let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
             backends: wgpu::Backends::all(),
@@ -922,8 +1259,93 @@ impl MainRenderer {
                 }
             }
 
-            RenderCommand::AtmosphericPlanet { .. } => {
+            RenderCommand::Planet {
+                texture_path,
+                planet_position,
+                sun_position,
+            } => {
+                render_pass.set_pipeline(&self.default_shader.pipeline);
+                mvp_bind_group.set(render_pass); // MVP bind group
+
+                // Create dynamic lighting bind group with planet-to-sun direction
+                let dynamic_lighting_bind_group =
+                    self.create_planet_lighting_bind_group(*planet_position, *sun_position);
+                match dynamic_lighting_bind_group {
+                    Ok(lighting_bind_group) => {
+                        lighting_bind_group.set(render_pass);
+                        log::debug!(
+                            "MainRenderer: Using dynamic lighting bind group for regular planet"
+                        );
+                    }
+                    Err(e) => {
+                        log::warn!(
+                            "MainRenderer: Failed to create dynamic planet lighting: {}, falling back to hardcoded",
+                            e
+                        );
+                        self.default_lighting_bind_group.set(render_pass); // Fallback
+                    }
+                }
+
+                // Create dynamic texture bind group for the planet's specific texture
+                let planet_texture = self
+                    .asset_manager
+                    .get_texture_handle(texture_path)
+                    .or_else(|| {
+                        self.asset_manager
+                            .get_texture_handle(&format!("assets/{}", texture_path))
+                    })
+                    .or_else(|| {
+                        self.asset_manager
+                            .get_texture_handle(&format!("./{}", texture_path))
+                    });
+
+                match planet_texture {
+                    Some(texture) => {
+                        // Create dynamic texture bind group with the planet's texture
+                        let dynamic_texture_bind_group =
+                            generated_shaders::default::bind_groups::BindGroup2::from_bindings(
+                                &self.device,
+                                generated_shaders::default::bind_groups::BindGroupLayout2 {
+                                    diffuse_texture: &texture.view,
+                                    diffuse_sampler: &self.default_sampler,
+                                },
+                            );
+                        dynamic_texture_bind_group.set(render_pass);
+                        log::debug!(
+                            "MainRenderer: Using dynamic texture bind group for planet: {}",
+                            texture_path
+                        );
+                    }
+                    None => {
+                        // Fall back to default texture if planet texture not found
+                        log::warn!(
+                            "MainRenderer: Planet texture {} not found in cache, using default",
+                            texture_path
+                        );
+                        self.default_texture_bind_group.set(render_pass);
+                    }
+                }
+
+                // Render using sphere model
+                render_pass.set_vertex_buffer(0, self.sphere_model.vertex_buffer.slice(..));
+                render_pass.set_index_buffer(
+                    self.sphere_model.index_buffer.slice(..),
+                    wgpu::IndexFormat::Uint32,
+                );
+                render_pass.draw_indexed(0..self.sphere_model.num_indices, 0, 0..1);
+            }
+
+            RenderCommand::AtmosphericPlanet {
+                texture_path,
+                ambient_texture_path,
+                use_ambient_texture,
+                atmosphere_color,
+                overglow,
+                planet_position,
+                sun_position,
+            } => {
                 render_pass.set_pipeline(&self.planet_atmo_shader.pipeline);
+
                 // Create appropriate MVP bind group for planet_atmo shader
                 let planet_mvp_bind_group =
                     generated_shaders::planet_atmo::bind_groups::BindGroup0::from_bindings(
@@ -938,8 +1360,56 @@ impl MainRenderer {
                         },
                     );
                 planet_mvp_bind_group.set(render_pass);
-                self.planet_lighting_bind_group.set(render_pass);
-                self.planet_texture_bind_group.set(render_pass);
+
+                // Create dynamic lighting bind group with the correct atmospheric color and planet-to-sun direction
+                let dynamic_lighting_bind_group = self.create_atmospheric_lighting_bind_group(
+                    *atmosphere_color,
+                    *overglow,
+                    *use_ambient_texture,
+                    *planet_position,
+                    *sun_position,
+                );
+
+                match dynamic_lighting_bind_group {
+                    Ok(lighting_bind_group) => {
+                        lighting_bind_group.set(render_pass);
+                        log::debug!(
+                            "MainRenderer: Using dynamic lighting bind group with atmo_color: {:?}",
+                            atmosphere_color
+                        );
+                    }
+                    Err(e) => {
+                        log::warn!(
+                            "MainRenderer: Failed to create dynamic lighting bind group: {}, falling back to hardcoded",
+                            e
+                        );
+                        self.planet_lighting_bind_group.set(render_pass);
+                    }
+                }
+
+                // Create dynamic texture bind group based on the texture paths
+                let dynamic_texture_bind_group = self.create_atmospheric_texture_bind_group(
+                    texture_path,
+                    ambient_texture_path.as_deref(),
+                    *use_ambient_texture,
+                );
+
+                match dynamic_texture_bind_group {
+                    Ok(texture_bind_group) => {
+                        texture_bind_group.set(render_pass);
+                        log::debug!(
+                            "MainRenderer: Using dynamic texture bind group for atmospheric planet"
+                        );
+                    }
+                    Err(e) => {
+                        log::warn!(
+                            "MainRenderer: Failed to create dynamic texture bind group: {}, falling back to hardcoded",
+                            e
+                        );
+                        self.planet_texture_bind_group.set(render_pass);
+                    }
+                }
+
                 render_pass.set_vertex_buffer(0, self.sphere_model.vertex_buffer.slice(..));
                 render_pass.set_index_buffer(
                     self.sphere_model.index_buffer.slice(..),

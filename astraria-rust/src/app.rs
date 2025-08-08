@@ -68,6 +68,13 @@ impl AstrariaApp {
         let renderer = Renderer::new(window, self.asset_manager.as_mut().unwrap()).await?;
         self.renderer = Some(renderer);
 
+        // Load atmospheric assets required by shaders after renderer is ready
+        if let (Some(asset_manager), Some(renderer)) = (&mut self.asset_manager, &self.renderer) {
+            asset_manager
+                .load_atmospheric_assets(renderer.device(), renderer.queue())
+                .await?;
+        }
+
         // Initialize physics simulation
         self.physics = Some(PhysicsSimulation::new());
 
@@ -90,18 +97,66 @@ impl AstrariaApp {
 
     async fn load_default_scenario(&mut self) -> AstrariaResult<()> {
         // Try to load the specified scenario file
-        if let Some(asset_manager) = &self.asset_manager {
+        log::info!(
+            "App: Attempting to load scenario file: {}",
+            self.scenario_file
+        );
+        if let Some(asset_manager) = &mut self.asset_manager {
             if let Ok(scenario_data) = asset_manager.load_scenario(&self.scenario_file).await {
+                log::info!("App: Successfully loaded scenario data, parsing...");
+
+                // Parse the scenario
+                let scenario = crate::scenario::ScenarioParser::parse(&scenario_data)?;
+                log::info!("App: Parsed scenario with {} bodies", scenario.bodies.len());
+
+                // Load textures for all bodies in the scenario
+                if let Some(renderer) = &mut self.renderer {
+                    log::info!("App: Loading scenario textures...");
+                    let (textures_before, models_before, cubemaps_before) =
+                        asset_manager.cache_stats();
+                    log::info!(
+                        "App: AssetManager cache before scenario textures: textures={}, models={}, cubemaps={}",
+                        textures_before,
+                        models_before,
+                        cubemaps_before
+                    );
+
+                    renderer
+                        .main_renderer()
+                        .load_scenario_textures(asset_manager, &scenario)
+                        .await?;
+
+                    let (textures_after, models_after, cubemaps_after) =
+                        asset_manager.cache_stats();
+                    log::info!(
+                        "App: AssetManager cache after scenario textures: textures={}, models={}, cubemaps={}",
+                        textures_after,
+                        models_after,
+                        cubemaps_after
+                    );
+                    log::info!(
+                        "App: Scenario textures loaded successfully - added {} textures",
+                        textures_after - textures_before
+                    );
+                } else {
+                    log::error!("App: Renderer not initialized when loading scenario textures");
+                }
+
+                // Pass the raw scenario data to physics (it will re-parse, but that's OK for now)
                 if let Some(physics) = &mut self.physics {
                     physics.load_scenario(scenario_data)?;
-                    log::info!("Loaded scenario: {}", self.scenario_file);
+                    log::info!("App: Physics loaded scenario: {}", self.scenario_file);
+                } else {
+                    log::error!("App: Physics system not initialized when loading scenario");
                 }
             } else {
                 log::warn!(
-                    "Could not load scenario '{}', starting with empty simulation",
+                    "App: Could not load scenario '{}', starting with empty simulation",
                     self.scenario_file
                 );
             }
+        } else {
+            log::error!("App: Asset manager not initialized when loading scenario");
         }
         Ok(())
     }

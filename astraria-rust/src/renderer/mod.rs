@@ -200,7 +200,7 @@ impl Renderer {
     pub fn render_scene(
         &mut self,
         physics: &PhysicsSimulation,
-        _asset_manager: &AssetManager,
+        asset_manager: &AssetManager,
     ) -> AstrariaResult<()> {
         let frame = self
             .current_frame
@@ -295,7 +295,7 @@ impl Renderer {
     ) -> AstrariaResult<Vec<(crate::renderer::core::RenderCommand, glam::Mat4)>> {
         use crate::renderer::core::{MeshType, RenderCommand};
         use crate::scenario::BodyType;
-        use glam::{Mat4, Vec3, Vec4};
+        use glam::{DVec3, Mat4, Vec3, Vec4};
 
         let mut commands = Vec::new();
 
@@ -309,6 +309,13 @@ impl Renderer {
                     self.main_renderer.camera.position().y,
                     self.main_renderer.camera.position().z
                 );
+
+                // Find the sun position first (needed for lighting calculations)
+                let sun_position = bodies
+                    .iter()
+                    .find(|body| matches!(body.body_type, BodyType::Star { .. }))
+                    .map(|sun| sun.position)
+                    .unwrap_or(DVec3::ZERO); // Fallback to origin if no sun found
 
                 for body in &bodies {
                     // Use TRUE ASTRONOMICAL SCALE - no scaling down allowed!
@@ -360,22 +367,29 @@ impl Renderer {
                         BodyType::Star { temperature, .. } => RenderCommand::Sun {
                             temperature: *temperature,
                         },
-                        BodyType::PlanetAtmo { atmo_color, .. } => {
-                            RenderCommand::AtmosphericPlanet {
-                                atmosphere_color: Vec4::new(
-                                    atmo_color[0],
-                                    atmo_color[1],
-                                    atmo_color[2],
-                                    atmo_color[3],
-                                ),
-                                overglow: 0.1,
-                                use_ambient_texture: false,
-                            }
-                        }
-                        BodyType::Planet { .. } => RenderCommand::Default {
-                            mesh_type: MeshType::Sphere,
-                            light_position: Vec3::new(0.0, 0.0, 0.0), // Sun position
-                            light_color: Vec3::new(1.0, 1.0, 1.0),
+                        BodyType::PlanetAtmo {
+                            atmo_color,
+                            ambient_texture,
+                            texture_path,
+                            ..
+                        } => RenderCommand::AtmosphericPlanet {
+                            atmosphere_color: Vec4::new(
+                                atmo_color[0],
+                                atmo_color[1],
+                                atmo_color[2],
+                                atmo_color[3],
+                            ),
+                            overglow: 0.1,
+                            use_ambient_texture: ambient_texture.is_some(),
+                            texture_path: texture_path.clone(),
+                            ambient_texture_path: ambient_texture.clone(),
+                            planet_position: body.position,
+                            sun_position,
+                        },
+                        BodyType::Planet { texture_path, .. } => RenderCommand::Planet {
+                            texture_path: texture_path.clone(),
+                            planet_position: body.position,
+                            sun_position,
                         },
                         BodyType::BlackHole { .. } => RenderCommand::Default {
                             mesh_type: MeshType::Sphere,
@@ -470,6 +484,10 @@ impl Renderer {
 
     pub fn lights_mut(&mut self) -> &mut LightManager {
         &mut self.lights
+    }
+
+    pub fn main_renderer(&mut self) -> &mut MainRenderer {
+        &mut self.main_renderer
     }
 
     /// Handle camera input
