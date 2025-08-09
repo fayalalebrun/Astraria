@@ -7,7 +7,7 @@ struct LensGlowUniform {
     screen_dimensions: vec2<f32>,   // Screen width and height (8 bytes)
     glow_size: vec2<f32>,          // Width and height of the glow effect (8 bytes, total: 16)  
     star_position: vec3<f32>,      // Star position in world coordinates (12 bytes)
-    _padding1: f32,                // Align to 16-byte boundary (4 bytes, total: 32)
+    visibility_factor: f32,        // Occlusion visibility (0.0-1.0) (4 bytes, total: 32)
     camera_direction: vec3<f32>,   // Camera forward direction (12 bytes)
     temperature: f32,              // Star temperature for spectrum mapping (4 bytes, total: 48)
 };
@@ -48,7 +48,7 @@ fn vs_main(input: VertexInput) -> VertexOutput {
         mvp.far_plane_distance
     );
     out.tex_coord = input.tex_coord;
-    out.dot_view = 1.0; // Placeholder for lens flare visibility calculation
+    out.dot_view = lens_glow.visibility_factor; // Use occlusion query result
     
     return out;
 }

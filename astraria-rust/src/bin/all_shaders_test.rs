@@ -128,9 +128,17 @@ async fn save_render(
                 renderer.execute_prepared_commands(&mut rp);
             }
             6 => {
-                let command = RenderCommand::LensGlow;
+                let command = RenderCommand::LensGlow {
+                    star_id: 0, // Test star ID
+                    star_position: DVec3::new(0.0, 0.0, -2.0),
+                    star_temperature: 5778.0,            // Solar temperature
+                    star_radius: 6.96e8,                 // Solar radius in meters
+                    camera_distance: 30824722183.825447, // Distance that produces ~110 pixel glow
+                };
                 renderer.begin_frame();
-                renderer.prepare_render_command(command, Mat4::IDENTITY);
+                // Billboard size is handled in shader, just position the star
+                let transform = Mat4::from_translation(Vec3::new(0.0, 0.0, -2.0));
+                renderer.prepare_render_command(command, transform);
                 renderer.execute_prepared_commands(&mut rp);
             }
             7 => {
@@ -373,7 +381,7 @@ async fn run() -> AstrariaResult<()> {
         (3, "SunShader + Stellar Surface", "sun_shader.png"),
         (4, "SkyboxShader + Cubemap", "skybox_shader.png"),
         (5, "BillboardShader + Sprite", "billboard_shader.png"),
-        // (6, "LensGlowShader + Lens Flare", "lens_glow_shader.png"), // TEMPORARILY DISABLED due to buffer size issues
+        (6, "LensGlowShader + Lens Flare", "lens_glow_shader.png"),
         (
             7,
             "BlackHoleShader + Gravitational Lensing",

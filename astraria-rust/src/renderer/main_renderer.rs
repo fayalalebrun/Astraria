@@ -1,4 +1,4 @@
-use glam::{DMat4, DVec3, Mat4};
+use glam::{DMat4, DVec3, Mat4, Vec4Swizzles};
 use std::sync::Arc;
 use wgpu::util::DeviceExt;
 use wgpu::{Device, Queue, RenderPass};
@@ -11,6 +11,7 @@ use crate::{
     renderer::{
         camera::Camera,
         core::{MeshType, RenderCommand, *},
+        occlusion::OcclusionSystem,
         precision_math::calculate_mvp_matrix_64bit_with_atmosphere,
         shaders::{
             BillboardShader, BlackHoleShader, DefaultShader, LensGlowShader, LineShader,
@@ -69,7 +70,6 @@ pub struct MainRenderer {
     pub black_hole_texture_bind_group: generated_shaders::black_hole::bind_groups::BindGroup2,
 
     pub lens_glow_uniform_bind_group: generated_shaders::lens_glow::bind_groups::BindGroup1,
-    pub lens_glow_texture_bind_group: generated_shaders::lens_glow::bind_groups::BindGroup2,
 
     pub line_uniform_bind_group: generated_shaders::line::bind_groups::BindGroup1,
 
@@ -77,7 +77,7 @@ pub struct MainRenderer {
 
     // Per-object MVP uniform buffers (no more dynamic offsets)
     mvp_buffers: Vec<wgpu::Buffer>,
-    mvp_bind_groups: Vec<(generated_shaders::default::bind_groups::BindGroup0, usize)>, // (bind_group, buffer_index)
+    pub mvp_bind_groups: Vec<(generated_shaders::default::bind_groups::BindGroup0, usize)>, // (bind_group, buffer_index)
 
     // Prepared render commands with their MVP bind groups
     prepared_render_commands: Vec<(RenderCommand, Mat4, usize)>, // (command, transform, mvp_bind_group_index)
@@ -101,6 +101,9 @@ pub struct MainRenderer {
     pub view_matrix_d64: DMat4,
     pub projection_matrix_d64: DMat4,
     pub view_projection_matrix_d64: DMat4,
+
+    // Simplified occlusion query system for lens glow visibility testing
+    occlusion_system: OcclusionSystem,
     pub max_view_distance: f32,
     pub log_depth_constant: f32,
 }
@@ -163,6 +166,55 @@ impl MainRenderer {
         log::debug!(
             "MainRenderer: Successfully created dynamic lighting bind group for regular planet"
         );
+        Ok(bind_group)
+    }
+
+    /// Create a dynamic lens glow uniform bind group with physics-calculated size and visibility
+    fn create_lens_glow_uniform_bind_group(
+        &self,
+        glow_size: f32,
+        star_id: u32,
+        star_position: DVec3,
+        camera_direction: DVec3,
+        temperature: f32,
+    ) -> AstrariaResult<generated_shaders::lens_glow::bind_groups::BindGroup1> {
+        let visibility_factor = self.get_star_visibility(star_id);
+
+        // TODO: Update when generated structure matches WESL with visibility_factor
+        let lens_glow_uniform = generated_shaders::lens_glow::LensGlowUniform {
+            glow_size,
+            screen_width: 800.0,  // TODO: Get from actual surface config
+            screen_height: 800.0, // TODO: Get from actual surface config
+        };
+
+        // Create uniform buffer
+        let uniform_buffer = self
+            .device
+            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Dynamic Lens Glow Uniform Buffer"),
+                contents: unsafe {
+                    std::slice::from_raw_parts(
+                        &lens_glow_uniform as *const _ as *const u8,
+                        std::mem::size_of::<generated_shaders::lens_glow::LensGlowUniform>(),
+                    )
+                },
+                usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            });
+
+        // Create the bind group with glow texture and sampler (updated to match generated structure)
+        let bind_group = generated_shaders::lens_glow::bind_groups::BindGroup1::from_bindings(
+            &self.device,
+            generated_shaders::lens_glow::bind_groups::BindGroupLayout1 {
+                lens_glow: wgpu::BufferBinding {
+                    buffer: &uniform_buffer,
+                    offset: 0,
+                    size: None,
+                },
+                glow_texture: &self.star_glow_texture.view,
+                glow_sampler: &self.default_sampler,
+            },
+        );
+
         Ok(bind_group)
     }
 
@@ -695,13 +747,34 @@ impl MainRenderer {
                 },
             );
 
-        let lens_glow_texture_bind_group =
-            generated_shaders::lens_glow::bind_groups::BindGroup2::from_bindings(
+        // Create lens glow uniform bind group using generated types
+        let lens_glow_uniform = generated_shaders::lens_glow::LensGlowUniform {
+            glow_size: 10.0,      // Default size
+            screen_width: 800.0,  // Default test screen dimensions
+            screen_height: 800.0, // Default test screen dimensions
+        };
+        let lens_glow_uniform_buffer =
+            device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Lens Glow Uniform Buffer"),
+                contents: unsafe {
+                    std::slice::from_raw_parts(
+                        &lens_glow_uniform as *const _ as *const u8,
+                        std::mem::size_of::<generated_shaders::lens_glow::LensGlowUniform>(),
+                    )
+                },
+                usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            });
+        let lens_glow_uniform_bind_group =
+            generated_shaders::lens_glow::bind_groups::BindGroup1::from_bindings(
                 &device,
-                generated_shaders::lens_glow::bind_groups::BindGroupLayout2 {
+                generated_shaders::lens_glow::bind_groups::BindGroupLayout1 {
+                    lens_glow: wgpu::BufferBinding {
+                        buffer: &lens_glow_uniform_buffer,
+                        offset: 0,
+                        size: None,
+                    },
                     glow_texture: &star_glow_texture.view,
-                    spectrum_texture: &star_spectrum_texture.view,
-                    texture_sampler: &default_sampler,
+                    glow_sampler: &default_sampler,
                 },
             );
 
@@ -872,37 +945,7 @@ impl MainRenderer {
                 },
             );
 
-        // Create lens glow uniform bind group using generated types
-        let lens_glow_uniform = generated_shaders::lens_glow::LensGlowUniform {
-            screen_dimensions: glam::Vec2::new(800.0, 600.0),
-            glow_size: glam::Vec2::new(1.0, 1.0),
-            star_position: glam::Vec3::ZERO,
-            _padding1: 0.0,
-            camera_direction: glam::Vec3::new(0.0, 0.0, -1.0),
-            temperature: 5778.0,
-        };
-        let lens_glow_uniform_buffer =
-            device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("Lens Glow Uniform Buffer"),
-                contents: unsafe {
-                    std::slice::from_raw_parts(
-                        &lens_glow_uniform as *const _ as *const u8,
-                        std::mem::size_of::<generated_shaders::lens_glow::LensGlowUniform>(),
-                    )
-                },
-                usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-            });
-        let lens_glow_uniform_bind_group =
-            generated_shaders::lens_glow::bind_groups::BindGroup1::from_bindings(
-                &device,
-                generated_shaders::lens_glow::bind_groups::BindGroupLayout1 {
-                    lens_glow: wgpu::BufferBinding {
-                        buffer: &lens_glow_uniform_buffer,
-                        offset: 0,
-                        size: None,
-                    },
-                },
-            );
+        // Lens glow now only uses MVP, no uniform bind group needed
 
         // Create line uniform bind group using generated types
         let line_uniform = generated_shaders::line::LineUniform {
@@ -964,6 +1007,11 @@ impl MainRenderer {
                 },
             );
 
+        // Initialize occlusion query system
+        let occlusion_system = OcclusionSystem::new(&device, &queue).map_err(|e| {
+            AstrariaError::RenderingError(format!("Failed to create occlusion system: {}", e))
+        })?;
+
         Ok(Self {
             device,
             queue,
@@ -995,7 +1043,6 @@ impl MainRenderer {
             black_hole_uniform_bind_group,
             black_hole_texture_bind_group,
             lens_glow_uniform_bind_group,
-            lens_glow_texture_bind_group,
             line_uniform_bind_group,
             point_uniform_bind_group,
             mvp_buffers,
@@ -1013,6 +1060,7 @@ impl MainRenderer {
             view_matrix_d64: DMat4::IDENTITY,
             projection_matrix_d64: DMat4::IDENTITY,
             view_projection_matrix_d64: DMat4::IDENTITY,
+            occlusion_system,
             max_view_distance: 100000000000.0, // Like Java MAXVIEWDISTANCE
             log_depth_constant: 1.0,           // Like Java LOGDEPTHCONSTANT
         })
@@ -1026,6 +1074,90 @@ impl MainRenderer {
     /// Get queue reference for external use
     pub fn queue(&self) -> &Queue {
         &self.queue
+    }
+
+    /// Begin occlusion testing for a star
+    pub fn test_star_occlusion(
+        &mut self,
+        star_id: u32,
+        world_position: DVec3,
+    ) -> AstrariaResult<()> {
+        log::debug!(
+            "MainRenderer: Testing occlusion for star {} at {:?}",
+            star_id,
+            world_position
+        );
+        self.occlusion_system
+            .test_star_occlusion(star_id, world_position)
+            .map_err(|e| AstrariaError::RenderingError(format!("Occlusion test failed: {}", e)))
+    }
+
+    /// Get visibility factor for a star (0.0 = occluded, 1.0 = visible)
+    pub fn get_star_visibility(&self, star_id: u32) -> f32 {
+        let visibility = self.occlusion_system.get_star_visibility(star_id);
+        log::debug!("MainRenderer: Star {} visibility: {}", star_id, visibility);
+        visibility
+    }
+
+    /// Process occlusion query results from previous frames
+    pub fn process_occlusion_results(&mut self) -> AstrariaResult<()> {
+        self.occlusion_system
+            .process_query_results(&self.device)
+            .map_err(|e| {
+                AstrariaError::RenderingError(format!("Occlusion processing failed: {}", e))
+            })?;
+        self.occlusion_system.cleanup_old_queries();
+        Ok(())
+    }
+
+    /// Get the first MVP bind group for occlusion queries (returns None if no bind groups exist)
+    fn get_first_mvp_bind_group(
+        &self,
+    ) -> Option<&generated_shaders::default::bind_groups::BindGroup0> {
+        self.mvp_bind_groups
+            .first()
+            .map(|(bind_group, _)| bind_group)
+    }
+
+    /// Execute occlusion queries for pending stars
+    pub fn execute_occlusion_queries_with_bind_group(
+        &mut self,
+        encoder: &mut wgpu::CommandEncoder,
+        color_view: &wgpu::TextureView,
+        depth_view: &wgpu::TextureView,
+        screen_width: f32,
+        screen_height: f32,
+    ) -> AstrariaResult<()> {
+        // Check if we have MVP bind groups
+        if let Some((mvp_bind_group, _)) = self.mvp_bind_groups.first() {
+            // Get camera data for occlusion queries
+            let camera_view = self.camera.view_matrix();
+            let camera_projection = self.camera.projection_matrix();
+            let camera_position = self.camera.position();
+
+            self.occlusion_system
+                .execute_occlusion_queries(
+                    encoder,
+                    camera_view,
+                    camera_projection,
+                    camera_position,
+                    color_view,
+                    depth_view,
+                    mvp_bind_group,
+                    &self.queue,
+                    screen_width,
+                    screen_height,
+                )
+                .map_err(|e| {
+                    AstrariaError::RenderingError(format!(
+                        "Occlusion query execution failed: {}",
+                        e
+                    ))
+                })
+        } else {
+            log::warn!("No MVP bind groups available for occlusion queries");
+            Ok(())
+        }
     }
 
     /// Update camera with movement and GPU uniforms
@@ -1497,30 +1629,62 @@ impl MainRenderer {
                 render_pass.draw_indexed(0..self.quad_mesh.num_indices, 0, 0..1);
             }
 
-            RenderCommand::LensGlow => {
+            RenderCommand::LensGlow {
+                star_id,
+                star_position,
+                star_temperature,
+                star_radius,
+                camera_distance,
+            } => {
                 render_pass.set_pipeline(&self.lens_glow_shader.pipeline);
-                // Create appropriate MVP bind group for lens glow shader
-                let lens_glow_mvp_bind_group =
-                    generated_shaders::lens_glow::bind_groups::BindGroup0::from_bindings(
-                        &self.device,
-                        generated_shaders::lens_glow::bind_groups::BindGroupLayout0 {
-                            mvp: wgpu::BufferBinding {
-                                buffer: &self.mvp_buffers
-                                    [self.mvp_bind_groups[mvp_bind_group_index].1],
-                                offset: 0,
-                                size: None,
-                            },
-                        },
-                    );
-                lens_glow_mvp_bind_group.set(render_pass);
-                self.lens_glow_uniform_bind_group.set(render_pass);
-                self.lens_glow_texture_bind_group.set(render_pass);
-                render_pass.set_vertex_buffer(0, self.quad_mesh.vertex_buffer.slice(..));
-                render_pass.set_index_buffer(
-                    self.quad_mesh.index_buffer.slice(..),
-                    wgpu::IndexFormat::Uint32,
+
+                // Calculate physics-based glow size for uniform
+                // Java uses star.getRadius() * 200 as diameter input
+                let diameter_km = ((*star_radius as f64) / 1000.0) * 200.0; // Convert radius to km, then multiply by 200
+                let physics_size = crate::renderer::calculate_lens_glow_size(
+                    diameter_km,
+                    *star_temperature as f64,
+                    *camera_distance,
                 );
-                render_pass.draw_indexed(0..self.quad_mesh.num_indices, 0, 0..1);
+
+                // Create dynamic uniform bind group with physics size, visibility, and star data
+                let camera_direction = self.camera.get_forward_direction();
+                let dynamic_uniform_bind_group = self.create_lens_glow_uniform_bind_group(
+                    physics_size as f32,
+                    *star_id,
+                    *star_position,
+                    camera_direction,
+                    *star_temperature,
+                );
+
+                match dynamic_uniform_bind_group {
+                    Ok(uniform_bind_group) => {
+                        // Create appropriate MVP bind group for lens glow shader
+                        let lens_glow_mvp_bind_group =
+                            generated_shaders::lens_glow::bind_groups::BindGroup0::from_bindings(
+                                &self.device,
+                                generated_shaders::lens_glow::bind_groups::BindGroupLayout0 {
+                                    mvp: wgpu::BufferBinding {
+                                        buffer: &self.mvp_buffers
+                                            [self.mvp_bind_groups[mvp_bind_group_index].1],
+                                        offset: 0,
+                                        size: None,
+                                    },
+                                },
+                            );
+                        lens_glow_mvp_bind_group.set(render_pass);
+                        uniform_bind_group.set(render_pass);
+                        render_pass.set_vertex_buffer(0, self.quad_mesh.vertex_buffer.slice(..));
+                        render_pass.set_index_buffer(
+                            self.quad_mesh.index_buffer.slice(..),
+                            wgpu::IndexFormat::Uint32,
+                        );
+                        render_pass.draw_indexed(0..self.quad_mesh.num_indices, 0, 0..1);
+                    }
+                    Err(e) => {
+                        log::warn!("Failed to create lens glow uniform bind group: {}", e);
+                    }
+                }
             }
 
             RenderCommand::BlackHole => {

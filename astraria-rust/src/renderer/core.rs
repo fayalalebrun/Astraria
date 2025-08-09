@@ -1,7 +1,6 @@
-use glam::{Mat4, Vec3};
-use wgpu::util::DeviceExt;
+use glam::Vec3;
 /// Core rendering functionality shared between main app and shader testing
-use wgpu::{Buffer, Device, Texture};
+use wgpu::{Buffer, Texture};
 
 use crate::generated_shaders::common::VertexInput;
 
@@ -33,7 +32,7 @@ pub struct TransformUniform {
     pub _padding: [f32; 4],               // 16 bytes
 } // Total: 192 bytes
 
-use crate::renderer::buffers::LightingUniform;
+// LightingUniform import removed - unused
 
 /// Create a skybox cube with all 6 faces visible from inside
 pub fn create_cube_geometry() -> (Vec<VertexInput>, Vec<u32>) {
@@ -80,7 +79,13 @@ pub enum RenderCommand {
     Billboard,
 
     /// Lens glow/flare effect
-    LensGlow,
+    LensGlow {
+        star_id: u32,
+        star_position: glam::DVec3,
+        star_temperature: f32,
+        star_radius: f64,
+        camera_distance: f64,
+    },
 
     /// Black hole with gravitational lensing
     BlackHole,

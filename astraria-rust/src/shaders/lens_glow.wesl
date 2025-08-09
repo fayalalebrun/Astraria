@@ -4,57 +4,62 @@
 import super::shared::{StandardMVPUniform, model_to_clip_coordinates, VertexInput};
 
 struct LensGlowUniform {
-    screen_dimensions: vec2<f32>,   // Screen width and height (8 bytes)
-    glow_size: vec2<f32>,          // Width and height of the glow effect (8 bytes, total: 16)  
-    star_position: vec3<f32>,      // Star position in world coordinates (12 bytes)
-    _padding1: f32,                // Align to 16-byte boundary (4 bytes, total: 32)
-    camera_direction: vec3<f32>,   // Camera forward direction (12 bytes)
-    temperature: f32,              // Star temperature for spectrum mapping (4 bytes, total: 48)
+    glow_size: f32,           // Size factor for the glow
+    screen_width: f32,        // Screen width in pixels
+    screen_height: f32,       // Screen height in pixels
 };
-
 
 struct VertexOutput {
     @builtin(position) clip_position: vec4<f32>,
     @location(0) tex_coord: vec2<f32>,
-    @location(1) dot_view: f32,
 };
 
 @group(0) @binding(0) var<uniform> mvp: StandardMVPUniform;
-
 @group(1) @binding(0) var<uniform> lens_glow: LensGlowUniform;
-
-@group(2) @binding(0) var glow_texture: texture_2d<f32>;
-@group(2) @binding(1) var spectrum_texture: texture_2d<f32>;
-@group(2) @binding(2) var texture_sampler: sampler;
+@group(1) @binding(1) var glow_texture: texture_2d<f32>;
+@group(1) @binding(2) var glow_sampler: sampler;
 
 @vertex
 fn vs_main(input: VertexInput) -> VertexOutput {
     var out: VertexOutput;
     
-    // Use pre-computed MVP matrix (calculated with 64-bit precision on CPU)
-    out.clip_position = model_to_clip_coordinates(
-        vec4<f32>(input.position, 1.0),
-        mvp.mvp_matrix,
-        mvp.log_depth_constant,
-        mvp.far_plane_distance
+    // BILLBOARD BEHAVIOR: Transform the star center to clip space first
+    let star_center = vec4<f32>(0.0, 0.0, 0.0, 1.0); // Model space center
+    var center_clip = mvp.mvp_matrix * star_center;
+    
+    // Perform perspective divide to get normalized device coordinates
+    let center_ndc = center_clip.xyz / center_clip.w;
+    
+    // Add the quad offset exactly like Java does
+    // Java: offsetX = (width/screenWidth), offsetY = (height/screenHeight)
+    // Both width and height have the same value in Java: (size / aspect_ratio)
+    let aspect_ratio = lens_glow.screen_width / lens_glow.screen_height;
+    let size_with_aspect = lens_glow.glow_size / aspect_ratio;
+    
+    let offset_x = size_with_aspect / lens_glow.screen_width;
+    let offset_y = size_with_aspect / lens_glow.screen_height;
+    
+    let screen_offset = vec2<f32>(input.position.x * offset_x, input.position.y * offset_y);
+    
+    // Final position: star center + screen-aligned offset
+    out.clip_position = vec4<f32>(
+        center_ndc.x + screen_offset.x,
+        center_ndc.y + screen_offset.y,
+        0.001, // Force to render on top (near plane)
+        1.0
     );
+    
     out.tex_coord = input.tex_coord;
-    out.dot_view = 1.0; // Placeholder for lens flare visibility calculation
     
     return out;
 }
 
 @fragment
 fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
-    // Sample glow texture
-    let glow_color = textureSample(glow_texture, texture_sampler, input.tex_coord);
+    // Sample the original lens glow texture (star_glow.png)
+    let tex_color = textureSample(glow_texture, glow_sampler, input.tex_coord);
     
-    // Map temperature to spectrum
-    let u = (lens_glow.temperature - 800.0) / 29200.0; // 800K to 30000K range
-    let spectrum_color = textureSample(spectrum_texture, texture_sampler, vec2<f32>(u, 0.5));
-    
-    // Apply lens flare effect
-    let final_color = glow_color.rgb * spectrum_color.rgb * input.dot_view;
-    
-    return vec4<f32>(final_color, glow_color.a);
+    // For now, use the original texture directly without modification
+    // The additive blending will handle the final color mixing
+    return vec4<f32>(tex_color.rgb, tex_color.a);
 }

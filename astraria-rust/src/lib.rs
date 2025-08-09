@@ -23,6 +23,8 @@ pub enum AstrariaError {
     AssetLoading(String),
     #[error("Parse error: {0}")]
     ParseError(String),
+    #[error("Rendering error: {0}")]
+    RenderingError(String),
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
     #[error("Parse float error: {0}")]

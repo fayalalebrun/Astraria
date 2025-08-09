@@ -253,6 +253,13 @@ impl Camera {
         self.position
     }
 
+    /// Get camera forward direction (negative Z axis in camera space, transformed by rotation)
+    pub fn get_forward_direction(&self) -> DVec3 {
+        // Camera forward is -Z in camera space, transform by rotation
+        let forward = self.rotation * glam::DVec3::NEG_Z.as_vec3();
+        DVec3::new(forward.x as f64, forward.y as f64, forward.z as f64)
+    }
+
     /// Position camera relative to a body at a multiple of its radius
     pub fn position_relative_to_body(
         &mut self,

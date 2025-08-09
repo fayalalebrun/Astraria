@@ -5,6 +5,7 @@ pub mod camera;
 pub mod core;
 pub mod lighting;
 pub mod main_renderer;
+pub mod occlusion;
 pub mod pipeline;
 pub mod precision_math;
 pub mod shader_utils;
@@ -15,6 +16,10 @@ use wgpu::{Device, Queue, Surface, SurfaceConfiguration};
 use winit::{dpi::PhysicalSize, window::Window};
 
 use crate::{AstrariaError, AstrariaResult, assets::AssetManager, physics::PhysicsSimulation};
+
+/// Physics constants for lens glow size calculation (from Java LensGlow.java)
+const SOLAR_DIAMETER_KM: f64 = 1392684.0; // Solar diameter in kilometers
+const SOLAR_TEMPERATURE_K: f64 = 5778.0; // Solar temperature in Kelvin
 
 pub use buffers::BufferManager;
 pub use camera::Camera;
@@ -37,6 +42,36 @@ pub struct Renderer {
 
     // Use MainRenderer for shader management and device access
     main_renderer: MainRenderer,
+}
+
+/// Calculate lens glow size using exact Java LensGlow.calculateGlowSize() formula
+/// Matches the Java implementation precisely for consistent results
+pub fn calculate_lens_glow_size(diameter_km: f64, temperature_k: f64, distance_m: f64) -> f64 {
+    // Java constants - exact values from LensGlow.calculateGlowSize()
+    const DSUN: f64 = 1392684.0; // Sun diameter in km
+    const TSUN: f64 = 5778.0; // Sun temperature in K
+
+    // Convert distance from meters to kilometers (Java formula expects km)
+    let d = distance_m / 1000.0;
+
+    // Java formula step 1: D = diameter * DSUN
+    let D = diameter_km * DSUN;
+
+    // Java formula step 2: L = (D * D) * (temperature / TSUN)^4.0
+    let L = (D * D) * (temperature_k / TSUN).powf(4.0);
+
+    // Java formula step 3: size = 0.016 * L^0.25 / d^0.3
+    let size = 0.016 * L.powf(0.25) / d.powf(0.3);
+
+    size
+}
+
+/// Calculate distance modifier for lens glow based on camera proximity
+pub fn get_distance_modifier(distance_m: f64) -> f32 {
+    // Add proximity-based scaling (closer = larger glow)
+    let base_distance = 1e9; // 1 million km reference distance
+    let factor = (base_distance / distance_m).min(5.0).max(0.1); // Clamp between 0.1x and 5x
+    factor as f32
 }
 
 impl Renderer {
@@ -233,13 +268,34 @@ impl Renderer {
             render_commands.len()
         );
 
+        // Separate solid objects from lens glow effects for proper rendering order
+        let mut solid_commands = Vec::new();
+        let mut lens_glow_commands = Vec::new();
+
+        for (command, transform) in render_commands {
+            match command {
+                crate::renderer::core::RenderCommand::LensGlow { .. } => {
+                    lens_glow_commands.push((command, transform));
+                }
+                _ => {
+                    solid_commands.push((command, transform));
+                }
+            }
+        }
+
         // Prepare skybox command first
         let skybox_command = crate::renderer::core::RenderCommand::Skybox;
         self.main_renderer
             .prepare_render_command(skybox_command, glam::Mat4::IDENTITY);
 
-        // Prepare all physics body render commands
-        for (command, transform) in &render_commands {
+        // Prepare all solid object render commands first
+        for (command, transform) in &solid_commands {
+            self.main_renderer
+                .prepare_render_command(command.clone(), *transform);
+        }
+
+        // Prepare lens glow commands last (to render on top)
+        for (command, transform) in &lens_glow_commands {
             self.main_renderer
                 .prepare_render_command(command.clone(), *transform);
         }
@@ -266,7 +322,7 @@ impl Renderer {
                 depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
                     view: &self.depth_view,
                     depth_ops: Some(wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(1.0),
+                        load: wgpu::LoadOp::Clear(1.0), // Clear depth buffer for main scene
                         store: wgpu::StoreOp::Store,
                     }),
                     stencil_ops: None,
@@ -281,6 +337,13 @@ impl Renderer {
                 .execute_prepared_commands(&mut render_pass);
         }
 
+        // TEMPORARILY DISABLED: Execute occlusion queries AFTER main scene rendering
+        // This is disabled to test if the black screen is caused by occlusion system
+        log::debug!("Occlusion queries temporarily disabled for debugging");
+
+        // TEMPORARILY DISABLED: Process occlusion results from previous frames
+        log::debug!("Occlusion result processing temporarily disabled for debugging");
+
         // Submit the command buffer
         self.main_renderer
             .queue()
@@ -290,7 +353,7 @@ impl Renderer {
     }
 
     fn generate_physics_render_commands(
-        &self,
+        &mut self,
         physics: &PhysicsSimulation,
     ) -> AstrariaResult<Vec<(crate::renderer::core::RenderCommand, glam::Mat4)>> {
         use crate::renderer::core::{MeshType, RenderCommand};
@@ -317,7 +380,7 @@ impl Renderer {
                     .map(|sun| sun.position)
                     .unwrap_or(DVec3::ZERO); // Fallback to origin if no sun found
 
-                for body in &bodies {
+                for (body_index, body) in bodies.iter().enumerate() {
                     // Use TRUE ASTRONOMICAL SCALE - no scaling down allowed!
                     let position = Vec3::new(
                         body.position.x as f32,
@@ -398,7 +461,64 @@ impl Renderer {
                         },
                     };
 
-                    commands.push((command, transform));
+                    commands.push((command.clone(), transform));
+
+                    // Add lens glow effect for stars
+                    if let BodyType::Star {
+                        temperature,
+                        radius,
+                        ..
+                    } = &body.body_type
+                    {
+                        // Calculate camera distance to star
+                        let camera_distance =
+                            (body.position - self.main_renderer.camera.position()).length();
+
+                        let star_id = body_index as u32;
+                        log::info!(
+                            "Setting up lens glow for star '{}' (ID: {}) at distance {:.2e}",
+                            body.name,
+                            star_id,
+                            camera_distance
+                        );
+
+                        // Test occlusion for this star using simplified system
+                        if let Err(e) = self
+                            .main_renderer
+                            .test_star_occlusion(star_id, body.position)
+                        {
+                            log::warn!(
+                                "Failed to set up occlusion test for star {}: {}",
+                                star_id,
+                                e
+                            );
+                        } else {
+                            log::debug!("Successfully queued occlusion test for star {}", star_id);
+                        }
+
+                        let lens_glow_command = RenderCommand::LensGlow {
+                            star_id, // Use body index as star ID
+                            star_position: body.position,
+                            star_temperature: *temperature,
+                            star_radius: *radius as f64,
+                            camera_distance,
+                        };
+
+                        // Use physics-based size calculation
+                        // Java uses star.getRadius() * 200 as diameter input
+                        let diameter_km = ((*radius as f64) / 1000.0) * 200.0; // Convert radius to km, then multiply by 200
+                        let physics_size_pixels = calculate_lens_glow_size(
+                            diameter_km,
+                            *temperature as f64,
+                            camera_distance,
+                        );
+
+                        // BILLBOARD: Transform only positions the star center, size is handled in shader
+
+                        // Only position the star - no scaling needed for billboard
+                        let glow_transform = Mat4::from_translation(position);
+                        commands.push((lens_glow_command, glow_transform));
+                    }
 
                     log::debug!(
                         "Generated render command for body '{}' - transform: {:?}",
