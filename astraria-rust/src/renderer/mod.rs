@@ -606,6 +606,38 @@ impl Renderer {
         &mut self.lights
     }
 
+    pub fn render_ui_overlay(
+        &mut self,
+        ui: &mut crate::ui::UserInterface,
+        clipped_primitives: &[egui::ClippedPrimitive],
+        screen_descriptor: &egui_wgpu::ScreenDescriptor,
+    ) -> AstrariaResult<()> {
+        if let Some(current_frame) = &self.current_frame {
+            let view = current_frame
+                .texture
+                .create_view(&wgpu::TextureViewDescriptor::default());
+            let mut encoder = self.main_renderer.device().create_command_encoder(
+                &wgpu::CommandEncoderDescriptor {
+                    label: Some("UI Render Encoder"),
+                },
+            );
+
+            ui.render(
+                self.main_renderer.device(),
+                self.main_renderer.queue(),
+                &mut encoder,
+                &view,
+                clipped_primitives,
+                screen_descriptor,
+            )?;
+
+            self.main_renderer
+                .queue()
+                .submit(std::iter::once(encoder.finish()));
+        }
+        Ok(())
+    }
+
     pub fn main_renderer(&mut self) -> &mut MainRenderer {
         &mut self.main_renderer
     }

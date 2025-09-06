@@ -224,22 +224,73 @@ impl AstrariaApp {
         // Update UI
         if let Some(ui) = &mut self.ui {
             ui.update(delta_time, self.physics.as_ref(), &mut self.renderer)?;
+
+            // Handle UI actions
+            let actions = ui.take_actions();
+            for action in actions {
+                self.handle_ui_action(action)?;
+            }
+        }
+
+        Ok(())
+    }
+
+    fn handle_ui_action(&mut self, action: crate::ui::UiAction) -> AstrariaResult<()> {
+        use crate::ui::UiAction;
+
+        match action {
+            UiAction::FocusCameraOnObject {
+                object_index,
+                position,
+                radius,
+            } => {
+                log::info!(
+                    "Focusing camera on object {} at position ({:.2e}, {:.2e}, {:.2e}) with radius {:.2e}",
+                    object_index,
+                    position.x,
+                    position.y,
+                    position.z,
+                    radius
+                );
+
+                if let Some(renderer) = &mut self.renderer {
+                    // Position camera at 3x radius distance for good view (matching Java behavior)
+                    let camera_distance = (radius * 3.0).max(1000.0); // Minimum 1000m distance
+                    renderer.set_camera_look_at(position, camera_distance);
+
+                    log::info!(
+                        "Camera positioned at distance {:.2e} meters looking at object",
+                        camera_distance
+                    );
+                }
+            }
+            UiAction::ClearCameraFocus => {
+                log::info!("Clearing camera focus - camera now in free mode");
+                // Camera focus is cleared - user can now move freely
+                // No specific action needed as the camera will respond to user input
+            }
         }
 
         Ok(())
     }
 
     fn render(&mut self) -> AstrariaResult<()> {
-        if let (Some(renderer), Some(physics), Some(asset_manager)) =
-            (&mut self.renderer, &self.physics, &self.asset_manager)
-        {
+        if let (Some(renderer), Some(physics), Some(asset_manager), Some(ui), Some(window)) = (
+            &mut self.renderer,
+            &self.physics,
+            &self.asset_manager,
+            &mut self.ui,
+            &self.window,
+        ) {
             renderer.begin_frame()?;
 
             // Render 3D scene
             renderer.render_scene(physics, asset_manager)?;
 
-            // TODO: Render UI overlay - need window reference
-            // ui.render(renderer, window)?;
+            // Prepare and render UI overlay
+            let (screen_descriptor, clipped_primitives) =
+                ui.prepare(renderer, window, Some(physics))?;
+            renderer.render_ui_overlay(ui, &clipped_primitives, &screen_descriptor)?;
 
             renderer.end_frame()?;
         }
