@@ -29,40 +29,16 @@ impl CpuOcclusionSystem {
     ) -> bool {
         // Calculate ray from camera to star
         let ray_direction = (star_position - camera_position).normalize();
-        let star_distance = (star_position - camera_position).length();
-
-        log::info!(
-            "OCCLUSION DEBUG: Ray direction: ({:.3}, {:.3}, {:.3}), star distance: {:.2e}",
-            ray_direction.x,
-            ray_direction.y,
-            ray_direction.z,
-            star_distance
-        );
 
         // Test against all occluding spheres
-        for (i, sphere) in occluding_spheres.iter().enumerate() {
-            let sphere_distance = (sphere.position - camera_position).length();
-            log::info!(
-                "OCCLUSION DEBUG: Testing sphere {} at ({:.2e}, {:.2e}, {:.2e}) radius {:.2e}, distance from camera: {:.2e}",
-                i,
-                sphere.position.x,
-                sphere.position.y,
-                sphere.position.z,
-                sphere.radius,
-                sphere_distance
-            );
-
+        for sphere in occluding_spheres.iter() {
             if Self::ray_intersects_sphere(camera_position, ray_direction, sphere, star_position) {
                 // Star is occluded by this sphere
-                log::info!("OCCLUSION DEBUG: *** STAR OCCLUDED by sphere {} ***", i);
                 return false;
-            } else {
-                log::info!("OCCLUSION DEBUG: Sphere {} does not occlude star", i);
             }
         }
 
         // Star is visible
-        log::info!("OCCLUSION DEBUG: Star is VISIBLE (no occlusion)");
         true
     }
 
@@ -97,17 +73,8 @@ impl CpuOcclusionSystem {
 
         let discriminant = b * b - 4.0 * a * c;
 
-        log::info!(
-            "OCCLUSION DEBUG: Ray-sphere math: a={:.3}, b={:.3}, c={:.3}, discriminant={:.3}",
-            a,
-            b,
-            c,
-            discriminant
-        );
-
         // No intersection if discriminant is negative
         if discriminant < 0.0 {
-            log::info!("OCCLUSION DEBUG: No intersection (discriminant < 0)");
             return false;
         }
 
@@ -119,24 +86,8 @@ impl CpuOcclusionSystem {
         // Check if either intersection point is between camera and star
         let star_distance = (star_position - ray_origin).length();
 
-        log::info!(
-            "OCCLUSION DEBUG: Intersection distances: t1={:.3}, t2={:.3}, star_distance={:.2e}",
-            t1,
-            t2,
-            star_distance
-        );
-
-        let occluded = (t1 > 0.0 && t1 < star_distance) || (t2 > 0.0 && t2 < star_distance);
-
-        log::info!(
-            "OCCLUSION DEBUG: Occlusion check: t1_valid={}, t2_valid={}, result={}",
-            t1 > 0.0 && t1 < star_distance,
-            t2 > 0.0 && t2 < star_distance,
-            occluded
-        );
-
         // If either intersection is in front of camera and before the star, it's occluded
-        occluded
+        (t1 > 0.0 && t1 < star_distance) || (t2 > 0.0 && t2 < star_distance)
     }
 }
 

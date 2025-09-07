@@ -467,14 +467,12 @@ impl Renderer {
                             (body.position - self.main_renderer.camera.position()).length();
 
                         let star_id = body_index as u32;
-                        log::info!(
+                        log::debug!(
                             "Setting up lens glow for star '{}' (ID: {}) at distance {:.2e}",
                             body.name,
                             star_id,
                             camera_distance
                         );
-
-                        // With CPU raytracing, no need to pre-test - visibility is checked on-demand!
 
                         let lens_glow_command = RenderCommand::LensGlow {
                             star_id, // Use body index as star ID
@@ -483,17 +481,6 @@ impl Renderer {
                             star_radius: *radius as f64,
                             camera_distance,
                         };
-
-                        // Use physics-based size calculation
-                        // Java uses star.getRadius() * 200 as diameter input
-                        let diameter_km = ((*radius as f64) / 1000.0) * 200.0; // Convert radius to km, then multiply by 200
-                        let _physics_size_pixels = calculate_lens_glow_size(
-                            diameter_km,
-                            *temperature as f64,
-                            camera_distance,
-                        );
-
-                        // BILLBOARD: Transform only positions the star center, size is handled in shader
 
                         // Only position the star - no scaling needed for billboard
                         let glow_transform = Mat4::from_translation(position);

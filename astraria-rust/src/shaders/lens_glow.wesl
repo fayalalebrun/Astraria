@@ -27,6 +27,13 @@ fn vs_main(input: VertexInput) -> VertexOutput {
     let star_center = vec4<f32>(0.0, 0.0, 0.0, 1.0); // Model space center
     var center_clip = mvp.mvp_matrix * star_center;
     
+    // Check if star is behind camera (negative w means behind camera in clip space)
+    if (center_clip.w <= 0.0) {
+        // Star is behind camera - don't render lens glow
+        out.clip_position = vec4<f32>(-2.0, -2.0, -1.0, 1.0); // Off-screen
+        return out;
+    }
+    
     // Perform perspective divide to get normalized device coordinates
     let center_ndc = center_clip.xyz / center_clip.w;
     

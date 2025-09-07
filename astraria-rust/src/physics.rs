@@ -5,12 +5,20 @@ use std::sync::{
     atomic::{AtomicBool, Ordering},
 };
 use std::thread::{self, JoinHandle};
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 use crate::{
     AstrariaError, AstrariaResult,
     math::{Body, BodyCollection, GRAVITATIONAL_CONSTANT},
 };
+
+/// Physics simulation statistics
+#[derive(Default, Clone)]
+pub struct PhysicsStats {
+    pub steps_per_second: f64,
+    pub average_delta_time: f64,
+    pub total_steps: u64,
+}
 
 /// Velocity-Verlet integration algorithm for N-body simulation
 /// Ported from the original VelocityVerlet.java
@@ -19,6 +27,7 @@ pub struct VelocityVerlet {
     simulation_speed: Arc<RwLock<f32>>,
     terminate_flag: Arc<AtomicBool>,
     thread_handle: Option<JoinHandle<()>>,
+    stats: Arc<RwLock<PhysicsStats>>,
 }
 
 impl Default for VelocityVerlet {
@@ -34,6 +43,7 @@ impl VelocityVerlet {
             simulation_speed: Arc::new(RwLock::new(1.0)),
             terminate_flag: Arc::new(AtomicBool::new(false)),
             thread_handle: None,
+            stats: Arc::new(RwLock::new(PhysicsStats::default())),
         }
     }
 
@@ -47,9 +57,13 @@ impl VelocityVerlet {
         let bodies = Arc::clone(&self.bodies);
         let simulation_speed = Arc::clone(&self.simulation_speed);
         let terminate_flag = Arc::clone(&self.terminate_flag);
+        let stats = Arc::clone(&self.stats);
 
         let handle = thread::spawn(move || {
             let mut last_time = Instant::now();
+            let mut step_count = 0u64;
+            let mut stats_update_timer = Instant::now();
+            let mut delta_time_accumulator = 0.0;
 
             while !terminate_flag.load(Ordering::Relaxed) {
                 let current_time = Instant::now();
@@ -70,8 +84,31 @@ impl VelocityVerlet {
                     break;
                 }
 
-                // Sleep briefly to avoid maxing out CPU
-                thread::sleep(Duration::from_millis(1));
+                // Update statistics
+                step_count += 1;
+                delta_time_accumulator += delta_time;
+
+                // Update statistics every second
+                if stats_update_timer.elapsed().as_secs_f64() >= 1.0 {
+                    if let Ok(mut stats_guard) = stats.write() {
+                        let elapsed_seconds = stats_update_timer.elapsed().as_secs_f64();
+                        stats_guard.steps_per_second = step_count as f64 / elapsed_seconds;
+                        stats_guard.average_delta_time = if step_count > 0 {
+                            delta_time_accumulator / step_count as f64
+                        } else {
+                            0.0
+                        };
+                        stats_guard.total_steps = stats_guard.total_steps.wrapping_add(step_count);
+                    }
+
+                    // Reset counters
+                    step_count = 0;
+                    delta_time_accumulator = 0.0;
+                    stats_update_timer = Instant::now();
+                }
+
+                // Let other threads run if needed
+                thread::yield_now();
             }
 
             log::info!("Physics simulation thread terminated");
@@ -242,6 +279,16 @@ impl VelocityVerlet {
 
         Ok(*sim_speed)
     }
+
+    /// Get current physics simulation statistics
+    pub fn get_stats(&self) -> AstrariaResult<PhysicsStats> {
+        let stats = self
+            .stats
+            .read()
+            .map_err(|_| AstrariaError::Physics("Failed to acquire read lock".to_string()))?;
+
+        Ok(stats.clone())
+    }
 }
 
 impl Drop for VelocityVerlet {
@@ -370,6 +417,11 @@ impl PhysicsSimulation {
 
         log::info!("Created test Sun-Earth scenario");
         Ok(())
+    }
+
+    /// Get physics simulation performance statistics
+    pub fn get_stats(&self) -> AstrariaResult<PhysicsStats> {
+        self.algorithm.get_stats()
     }
 }
 

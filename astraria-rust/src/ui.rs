@@ -153,6 +153,7 @@ impl UserInterface {
                 &bodies,
                 &mut pending_actions,
                 ui_visible,
+                physics,
             );
         });
 
@@ -257,6 +258,7 @@ impl UserInterface {
         bodies: &[crate::math::Body],
         pending_actions: &mut Vec<UiAction>,
         ui_visible: bool,
+        physics: Option<&crate::physics::PhysicsSimulation>,
     ) {
         // If UI is hidden, don't render any windows
         if !ui_visible {
@@ -320,7 +322,25 @@ impl UserInterface {
                     // Display actual simulation statistics
                     ui.label(format!("Bodies: {}", bodies.len()));
                     ui.label(format!("FPS: {:.1}", 60.0)); // TODO: Get actual FPS
-                    ui.label(format!("Physics Steps/s: {}", 0)); // TODO: Get actual physics rate
+
+                    // Get actual physics statistics
+                    if let Some(physics) = physics {
+                        match physics.get_stats() {
+                            Ok(stats) => {
+                                ui.label(format!("Physics Steps/s: {:.1}", stats.steps_per_second));
+                                ui.label(format!(
+                                    "Average Δt: {:.3}ms",
+                                    stats.average_delta_time * 1000.0
+                                ));
+                                ui.label(format!("Total Steps: {}", stats.total_steps));
+                            }
+                            Err(_) => {
+                                ui.label("Physics Steps/s: Error");
+                            }
+                        }
+                    } else {
+                        ui.label("Physics Steps/s: No Physics");
+                    }
                 });
         }
 
