@@ -3,9 +3,9 @@ pub mod buffers;
 /// Replaces the LibGDX rendering pipeline with modern GPU-driven approach
 pub mod camera;
 pub mod core;
+pub mod cpu_occlusion;
 pub mod lighting;
 pub mod main_renderer;
-pub mod occlusion;
 pub mod pipeline;
 pub mod precision_math;
 pub mod shader_utils;
@@ -16,10 +16,6 @@ use wgpu::{Device, Queue, Surface, SurfaceConfiguration};
 use winit::{dpi::PhysicalSize, window::Window};
 
 use crate::{AstrariaError, AstrariaResult, assets::AssetManager, physics::PhysicsSimulation};
-
-/// Physics constants for lens glow size calculation (from Java LensGlow.java)
-const SOLAR_DIAMETER_KM: f64 = 1392684.0; // Solar diameter in kilometers
-const SOLAR_TEMPERATURE_K: f64 = 5778.0; // Solar temperature in Kelvin
 
 pub use buffers::BufferManager;
 pub use camera::Camera;
@@ -55,13 +51,13 @@ pub fn calculate_lens_glow_size(diameter_km: f64, temperature_k: f64, distance_m
     let d = distance_m / 1000.0;
 
     // Java formula step 1: D = diameter * DSUN
-    let D = diameter_km * DSUN;
+    let d_value = diameter_km * DSUN;
 
     // Java formula step 2: L = (D * D) * (temperature / TSUN)^4.0
-    let L = (D * D) * (temperature_k / TSUN).powf(4.0);
+    let l_value = (d_value * d_value) * (temperature_k / TSUN).powf(4.0);
 
     // Java formula step 3: size = 0.016 * L^0.25 / d^0.3
-    let size = 0.016 * L.powf(0.25) / d.powf(0.3);
+    let size = 0.016 * l_value.powf(0.25) / d.powf(0.3);
 
     size
 }
@@ -235,7 +231,7 @@ impl Renderer {
     pub fn render_scene(
         &mut self,
         physics: &PhysicsSimulation,
-        asset_manager: &AssetManager,
+        _asset_manager: &AssetManager,
     ) -> AstrariaResult<()> {
         let frame = self
             .current_frame
@@ -331,18 +327,14 @@ impl Renderer {
                 timestamp_writes: None,
             });
 
+            // Build occluding spheres from physics simulation for stateless occlusion testing
+            let occluding_spheres = MainRenderer::build_occluding_spheres(physics);
+
             // Execute all prepared render commands with dynamic MVP offsets
             // This includes skybox and all physics bodies
             self.main_renderer
-                .execute_prepared_commands(&mut render_pass);
+                .execute_prepared_commands(&mut render_pass, &occluding_spheres);
         }
-
-        // TEMPORARILY DISABLED: Execute occlusion queries AFTER main scene rendering
-        // This is disabled to test if the black screen is caused by occlusion system
-        log::debug!("Occlusion queries temporarily disabled for debugging");
-
-        // TEMPORARILY DISABLED: Process occlusion results from previous frames
-        log::debug!("Occlusion result processing temporarily disabled for debugging");
 
         // Submit the command buffer
         self.main_renderer
@@ -482,19 +474,7 @@ impl Renderer {
                             camera_distance
                         );
 
-                        // Test occlusion for this star using simplified system
-                        if let Err(e) = self
-                            .main_renderer
-                            .test_star_occlusion(star_id, body.position)
-                        {
-                            log::warn!(
-                                "Failed to set up occlusion test for star {}: {}",
-                                star_id,
-                                e
-                            );
-                        } else {
-                            log::debug!("Successfully queued occlusion test for star {}", star_id);
-                        }
+                        // With CPU raytracing, no need to pre-test - visibility is checked on-demand!
 
                         let lens_glow_command = RenderCommand::LensGlow {
                             star_id, // Use body index as star ID
@@ -507,7 +487,7 @@ impl Renderer {
                         // Use physics-based size calculation
                         // Java uses star.getRadius() * 200 as diameter input
                         let diameter_km = ((*radius as f64) / 1000.0) * 200.0; // Convert radius to km, then multiply by 200
-                        let physics_size_pixels = calculate_lens_glow_size(
+                        let _physics_size_pixels = calculate_lens_glow_size(
                             diameter_km,
                             *temperature as f64,
                             camera_distance,

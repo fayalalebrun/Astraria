@@ -117,11 +117,6 @@ impl UserInterface {
         std::mem::take(&mut self.pending_actions)
     }
 
-    /// Add an action to the pending actions queue
-    fn queue_action(&mut self, action: UiAction) {
-        self.pending_actions.push(action);
-    }
-
     pub fn prepare(
         &mut self,
         renderer: &mut Renderer,
@@ -418,7 +413,7 @@ impl UserInterface {
                     }
                 });
 
-            if let Some(response) = window_response {
+            if let Some(_response) = window_response {
                 log::debug!("Object List window rendered successfully");
             } else {
                 log::warn!("Object List window failed to render");

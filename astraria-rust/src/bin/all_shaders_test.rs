@@ -67,7 +67,7 @@ async fn save_render(
                     Mat4::from_translation(Vec3::new(0.0, 0.0, -2.0))
                         * Mat4::from_scale(Vec3::splat(1.5)),
                 );
-                renderer.execute_prepared_commands(&mut rp);
+                renderer.execute_prepared_commands(&mut rp, &[]);
             }
             1 => {
                 let command = RenderCommand::Default {
@@ -81,7 +81,7 @@ async fn save_render(
                     Mat4::from_translation(Vec3::new(0.0, 0.0, -2.0))
                         * Mat4::from_scale(Vec3::splat(1.5)),
                 );
-                renderer.execute_prepared_commands(&mut rp);
+                renderer.execute_prepared_commands(&mut rp, &[]);
             }
             2 => {
                 let command = RenderCommand::AtmosphericPlanet {
@@ -101,7 +101,7 @@ async fn save_render(
                     Mat4::from_translation(Vec3::new(0.0, 0.0, -2.5))
                         * Mat4::from_scale(Vec3::splat(1.8)),
                 );
-                renderer.execute_prepared_commands(&mut rp);
+                renderer.execute_prepared_commands(&mut rp, &[]);
             }
             3 => {
                 let command = RenderCommand::Sun {
@@ -113,19 +113,19 @@ async fn save_render(
                     Mat4::from_translation(Vec3::new(0.0, 0.0, -2.5))
                         * Mat4::from_scale(Vec3::splat(1.8)),
                 );
-                renderer.execute_prepared_commands(&mut rp);
+                renderer.execute_prepared_commands(&mut rp, &[]);
             }
             4 => {
                 let command = RenderCommand::Skybox;
                 renderer.begin_frame();
                 renderer.prepare_render_command(command, Mat4::IDENTITY);
-                renderer.execute_prepared_commands(&mut rp);
+                renderer.execute_prepared_commands(&mut rp, &[]);
             }
             5 => {
                 let command = RenderCommand::Billboard;
                 renderer.begin_frame();
                 renderer.prepare_render_command(command, Mat4::IDENTITY);
-                renderer.execute_prepared_commands(&mut rp);
+                renderer.execute_prepared_commands(&mut rp, &[]);
             }
             6 => {
                 let command = RenderCommand::LensGlow {
@@ -139,13 +139,13 @@ async fn save_render(
                 // Billboard size is handled in shader, just position the star
                 let transform = Mat4::from_translation(Vec3::new(0.0, 0.0, -2.0));
                 renderer.prepare_render_command(command, transform);
-                renderer.execute_prepared_commands(&mut rp);
+                renderer.execute_prepared_commands(&mut rp, &[]);
             }
             7 => {
                 let command = RenderCommand::BlackHole;
                 renderer.begin_frame();
                 renderer.prepare_render_command(command, Mat4::IDENTITY);
-                renderer.execute_prepared_commands(&mut rp);
+                renderer.execute_prepared_commands(&mut rp, &[]);
             }
             8 => {
                 let command = RenderCommand::Line {
@@ -157,7 +157,7 @@ async fn save_render(
                     Mat4::from_translation(Vec3::new(0.0, 0.0, -2.0))
                         * Mat4::from_scale(Vec3::splat(5.0)),
                 );
-                renderer.execute_prepared_commands(&mut rp);
+                renderer.execute_prepared_commands(&mut rp, &[]);
             }
             9 => {
                 let command = RenderCommand::Point;
@@ -167,7 +167,7 @@ async fn save_render(
                     Mat4::from_translation(Vec3::new(0.0, 0.0, -2.0))
                         * Mat4::from_scale(Vec3::splat(5.0)),
                 );
-                renderer.execute_prepared_commands(&mut rp);
+                renderer.execute_prepared_commands(&mut rp, &[]);
             }
             10 => {
                 // Near objects test (0.5, 1.0, 2.0 units from camera) - prepare all commands first
@@ -194,7 +194,7 @@ async fn save_render(
                 );
 
                 // Upload once and execute all
-                renderer.execute_prepared_commands(&mut rp);
+                renderer.execute_prepared_commands(&mut rp, &[]);
             }
             11 => {
                 // Medium distance test (10, 50, 100 units)
@@ -221,7 +221,7 @@ async fn save_render(
                 );
 
                 // Upload once and execute all
-                renderer.execute_prepared_commands(&mut rp);
+                renderer.execute_prepared_commands(&mut rp, &[]);
             }
             12 => {
                 // Far distance test - keep objects reasonable but scale them up
@@ -251,7 +251,7 @@ async fn save_render(
                 );
 
                 // Upload once and execute all
-                renderer.execute_prepared_commands(&mut rp);
+                renderer.execute_prepared_commands(&mut rp, &[]);
             }
             13 => {
                 // Large scale test - test the logarithmic depth precision
@@ -281,7 +281,7 @@ async fn save_render(
                 );
 
                 // Upload once and execute all
-                renderer.execute_prepared_commands(&mut rp);
+                renderer.execute_prepared_commands(&mut rp, &[]);
             }
             _ => {}
         }

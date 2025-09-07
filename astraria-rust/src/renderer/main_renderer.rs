@@ -1,4 +1,4 @@
-use glam::{DMat4, DVec3, Mat4, Vec4Swizzles};
+use glam::{DMat4, DVec3, Mat4};
 use std::sync::Arc;
 use wgpu::util::DeviceExt;
 use wgpu::{Device, Queue, RenderPass};
@@ -10,8 +10,8 @@ use crate::{
     graphics::{Mesh, SkyboxMesh},
     renderer::{
         camera::Camera,
-        core::{MeshType, RenderCommand, *},
-        occlusion::OcclusionSystem,
+        core::{MeshType, RenderCommand},
+        cpu_occlusion::{self, CpuOcclusionSystem},
         precision_math::calculate_mvp_matrix_64bit_with_atmosphere,
         shaders::{
             BillboardShader, BlackHoleShader, DefaultShader, LensGlowShader, LineShader,
@@ -102,8 +102,6 @@ pub struct MainRenderer {
     pub projection_matrix_d64: DMat4,
     pub view_projection_matrix_d64: DMat4,
 
-    // Simplified occlusion query system for lens glow visibility testing
-    occlusion_system: OcclusionSystem,
     pub max_view_distance: f32,
     pub log_depth_constant: f32,
 }
@@ -173,16 +171,26 @@ impl MainRenderer {
     fn create_lens_glow_uniform_bind_group(
         &self,
         glow_size: f32,
-        star_id: u32,
+        _star_id: u32,
         star_position: DVec3,
-        camera_direction: DVec3,
-        temperature: f32,
+        _camera_direction: DVec3,
+        _temperature: f32,
+        occluding_spheres: &[cpu_occlusion::Sphere],
     ) -> AstrariaResult<generated_shaders::lens_glow::bind_groups::BindGroup1> {
-        let visibility_factor = self.get_star_visibility(star_id);
+        let visibility_factor = self.get_star_visibility(star_position, occluding_spheres);
 
-        // TODO: Update when generated structure matches WESL with visibility_factor
-        let lens_glow_uniform = generated_shaders::lens_glow::LensGlowUniform {
+        // Apply visibility factor to glow size (0.0 = fully occluded, 1.0 = fully visible)
+        let occluded_glow_size = glow_size * visibility_factor;
+
+        log::info!(
+            "OCCLUSION DEBUG: Creating lens glow uniform with visibility_factor={}, original_glow_size={}, occluded_glow_size={}",
+            visibility_factor,
             glow_size,
+            occluded_glow_size
+        );
+
+        let lens_glow_uniform = generated_shaders::lens_glow::LensGlowUniform {
+            glow_size: occluded_glow_size,
             screen_width: 800.0,  // TODO: Get from actual surface config
             screen_height: 800.0, // TODO: Get from actual surface config
         };
@@ -1007,11 +1015,6 @@ impl MainRenderer {
                 },
             );
 
-        // Initialize occlusion query system
-        let occlusion_system = OcclusionSystem::new(&device, &queue).map_err(|e| {
-            AstrariaError::RenderingError(format!("Failed to create occlusion system: {}", e))
-        })?;
-
         Ok(Self {
             device,
             queue,
@@ -1060,7 +1063,6 @@ impl MainRenderer {
             view_matrix_d64: DMat4::IDENTITY,
             projection_matrix_d64: DMat4::IDENTITY,
             view_projection_matrix_d64: DMat4::IDENTITY,
-            occlusion_system,
             max_view_distance: 100000000000.0, // Like Java MAXVIEWDISTANCE
             log_depth_constant: 1.0,           // Like Java LOGDEPTHCONSTANT
         })
@@ -1076,88 +1078,96 @@ impl MainRenderer {
         &self.queue
     }
 
-    /// Begin occlusion testing for a star
-    pub fn test_star_occlusion(
-        &mut self,
-        star_id: u32,
-        world_position: DVec3,
-    ) -> AstrariaResult<()> {
-        log::debug!(
-            "MainRenderer: Testing occlusion for star {} at {:?}",
-            star_id,
-            world_position
-        );
-        self.occlusion_system
-            .test_star_occlusion(star_id, world_position)
-            .map_err(|e| AstrariaError::RenderingError(format!("Occlusion test failed: {}", e)))
+    /// Test if a star is visible (not occluded by any sphere) - returns immediately!
+    /// STATELESS: Pass occluding spheres directly as parameter
+    pub fn is_star_visible(
+        &self,
+        star_position: DVec3,
+        occluding_spheres: &[cpu_occlusion::Sphere],
+    ) -> bool {
+        CpuOcclusionSystem::is_star_visible(
+            self.camera.position(),
+            star_position,
+            occluding_spheres,
+        )
     }
 
-    /// Get visibility factor for a star (0.0 = occluded, 1.0 = visible)
-    pub fn get_star_visibility(&self, star_id: u32) -> f32 {
-        let visibility = self.occlusion_system.get_star_visibility(star_id);
-        log::debug!("MainRenderer: Star {} visibility: {}", star_id, visibility);
+    /// Get star visibility as float (1.0 = visible, 0.0 = occluded) - for lens glow
+    /// STATELESS: Pass occluding spheres directly as parameter
+    pub fn get_star_visibility(
+        &self,
+        star_position: DVec3,
+        occluding_spheres: &[cpu_occlusion::Sphere],
+    ) -> f32 {
+        let camera_pos = self.camera.position();
+        log::info!(
+            "OCCLUSION DEBUG: Testing star visibility at ({:.2e}, {:.2e}, {:.2e}) from camera ({:.2e}, {:.2e}, {:.2e}) with {} occluders",
+            star_position.x,
+            star_position.y,
+            star_position.z,
+            camera_pos.x,
+            camera_pos.y,
+            camera_pos.z,
+            occluding_spheres.len()
+        );
+
+        let visibility =
+            CpuOcclusionSystem::get_star_visibility(camera_pos, star_position, occluding_spheres);
+
+        log::info!("OCCLUSION DEBUG: Star visibility result: {}", visibility);
         visibility
     }
 
-    /// Process occlusion query results from previous frames
-    pub fn process_occlusion_results(&mut self) -> AstrariaResult<()> {
-        self.occlusion_system
-            .process_query_results(&self.device)
-            .map_err(|e| {
-                AstrariaError::RenderingError(format!("Occlusion processing failed: {}", e))
-            })?;
-        self.occlusion_system.cleanup_old_queries();
-        Ok(())
-    }
+    /// Build occluding spheres from physics simulation bodies
+    /// This is used to create the sphere list for occlusion testing
+    pub fn build_occluding_spheres(
+        physics: &crate::physics::PhysicsSimulation,
+    ) -> Vec<cpu_occlusion::Sphere> {
+        use crate::scenario::BodyType;
+        let mut spheres = Vec::new();
 
-    /// Get the first MVP bind group for occlusion queries (returns None if no bind groups exist)
-    fn get_first_mvp_bind_group(
-        &self,
-    ) -> Option<&generated_shaders::default::bind_groups::BindGroup0> {
-        self.mvp_bind_groups
-            .first()
-            .map(|(bind_group, _)| bind_group)
-    }
+        if let Ok(bodies) = physics.get_bodies() {
+            log::info!(
+                "OCCLUSION DEBUG: Building occluding spheres from {} physics bodies",
+                bodies.len()
+            );
 
-    /// Execute occlusion queries for pending stars
-    pub fn execute_occlusion_queries_with_bind_group(
-        &mut self,
-        encoder: &mut wgpu::CommandEncoder,
-        color_view: &wgpu::TextureView,
-        depth_view: &wgpu::TextureView,
-        screen_width: f32,
-        screen_height: f32,
-    ) -> AstrariaResult<()> {
-        // Check if we have MVP bind groups
-        if let Some((mvp_bind_group, _)) = self.mvp_bind_groups.first() {
-            // Get camera data for occlusion queries
-            let camera_view = self.camera.view_matrix();
-            let camera_projection = self.camera.projection_matrix();
-            let camera_position = self.camera.position();
-
-            self.occlusion_system
-                .execute_occlusion_queries(
-                    encoder,
-                    camera_view,
-                    camera_projection,
-                    camera_position,
-                    color_view,
-                    depth_view,
-                    mvp_bind_group,
-                    &self.queue,
-                    screen_width,
-                    screen_height,
-                )
-                .map_err(|e| {
-                    AstrariaError::RenderingError(format!(
-                        "Occlusion query execution failed: {}",
-                        e
-                    ))
-                })
+            for body in bodies.iter() {
+                // Only add non-star bodies as occluders (planets can occlude stars)
+                match &body.body_type {
+                    BodyType::Planet { radius, .. } | BodyType::PlanetAtmo { radius, .. } => {
+                        let sphere = cpu_occlusion::Sphere {
+                            position: body.position,
+                            radius: *radius as f64,
+                        };
+                        log::info!(
+                            "OCCLUSION DEBUG: Adding occluder '{}' at ({:.2e}, {:.2e}, {:.2e}) with radius {:.2e}",
+                            body.name,
+                            sphere.position.x,
+                            sphere.position.y,
+                            sphere.position.z,
+                            sphere.radius
+                        );
+                        spheres.push(sphere);
+                    }
+                    // Skip stars and black holes as occluders for now
+                    BodyType::Star { .. } | BodyType::BlackHole { .. } => {
+                        log::info!(
+                            "OCCLUSION DEBUG: Skipping '{}' (not an occluder)",
+                            body.name
+                        );
+                    }
+                }
+            }
         } else {
-            log::warn!("No MVP bind groups available for occlusion queries");
-            Ok(())
+            log::warn!("OCCLUSION DEBUG: Failed to get physics bodies for occlusion");
         }
+
+        log::info!(
+            "OCCLUSION DEBUG: Built {} occluding spheres total",
+            spheres.len()
+        );
+        spheres
     }
 
     /// Update camera with movement and GPU uniforms
@@ -1340,13 +1350,20 @@ impl MainRenderer {
 
     /// Execute all prepared render commands with their MVP bind groups
     /// This should be called within the render pass
-    pub fn execute_prepared_commands<'a>(&'a self, render_pass: &mut RenderPass<'a>) {
-        for (command, transform, mvp_bind_group_index) in &self.prepared_render_commands {
+    pub fn execute_prepared_commands<'a>(
+        &'a self,
+        render_pass: &mut RenderPass<'a>,
+        occluding_spheres: &[cpu_occlusion::Sphere],
+    ) {
+        // Clone the commands to avoid borrow checker issues
+        let commands = self.prepared_render_commands.clone();
+        for (command, transform, mvp_bind_group_index) in commands {
             self.execute_render_command_with_bind_group(
                 render_pass,
-                command,
-                *transform,
-                *mvp_bind_group_index,
+                &command,
+                transform,
+                mvp_bind_group_index,
+                occluding_spheres,
             );
         }
     }
@@ -1359,6 +1376,7 @@ impl MainRenderer {
         command: &RenderCommand,
         _transform: Mat4,
         mvp_bind_group_index: usize,
+        occluding_spheres: &[cpu_occlusion::Sphere],
     ) {
         // Get the MVP bind group for this command
         let (mvp_bind_group, _buffer_index) = &self.mvp_bind_groups[mvp_bind_group_index];
@@ -1550,10 +1568,10 @@ impl MainRenderer {
                 render_pass.draw_indexed(0..self.sphere_model.num_indices, 0, 0..1);
             }
 
-            RenderCommand::Sun { temperature } => {
+            RenderCommand::Sun { temperature: _ } => {
                 // Update sun uniforms if needed
-                let star_position = glam::Vec3::ZERO; // Placeholder, position is handled by MVP matrix
-                let camera_position = self.camera.position().as_vec3();
+                let _star_position = glam::Vec3::ZERO; // Placeholder, position is handled by MVP matrix
+                let _camera_position = self.camera.position().as_vec3();
                 render_pass.set_pipeline(&self.sun_shader.pipeline);
                 // Create appropriate MVP bind group for sun shader
                 let sun_mvp_bind_group =
@@ -1655,6 +1673,7 @@ impl MainRenderer {
                     *star_position,
                     camera_direction,
                     *star_temperature,
+                    occluding_spheres,
                 );
 
                 match dynamic_uniform_bind_group {
@@ -1775,7 +1794,7 @@ impl MainRenderer {
     ) {
         self.begin_frame();
         self.prepare_render_command(command.clone(), transform);
-        self.execute_prepared_commands(render_pass);
+        self.execute_prepared_commands(render_pass, &[]);
     }
 
     /// Helper method to get the appropriate mesh for a given mesh type
