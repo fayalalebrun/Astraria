@@ -1,4 +1,4 @@
-use crate::scenario::BodyType;
+use crate::{scenario::BodyType, renderer::orbital_paths::OrbitTrail};
 use bytemuck::{Pod, Zeroable};
 /// Physics body representation for N-body simulation
 /// Ported from the original Java Body.java with Rust safety improvements
@@ -7,7 +7,7 @@ use std::sync::{Arc, RwLock};
 // Removed serde for now - can be added back when needed
 
 /// A celestial body in the simulation with position, velocity, and mass
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug)]
 pub struct Body {
     /// Mass in kilograms
     pub mass: f64,
@@ -35,6 +35,9 @@ pub struct Body {
 
     /// Rotation parameters (incTilt, axisRightAsc, rotPeriod, offset) in radians
     pub rotation_params: (f32, f32, f32, f32),
+
+    /// Simple orbital trail (like Java Orbit.java)
+    pub orbit_trail: OrbitTrail,
 }
 
 impl Body {
@@ -53,6 +56,7 @@ impl Body {
             },
             orbit_color: [1.0, 1.0, 1.0, 1.0],
             rotation_params: (0.0, 0.0, 0.0, 0.0),
+            orbit_trail: OrbitTrail::new([1.0, 1.0, 1.0, 1.0]), // Default white trail
         }
     }
 
@@ -76,6 +80,7 @@ impl Body {
             body_type,
             orbit_color,
             rotation_params,
+            orbit_trail: OrbitTrail::new(orbit_color), // Use body's orbit color
         }
     }
 
@@ -127,11 +132,60 @@ impl Body {
         let acceleration = force / self.mass;
         self.acceleration += acceleration;
     }
+
+    /// Update orbital trail with current position (like Java SimulationObject.prepare())
+    pub fn update_orbit_trail(&mut self) {
+        log::trace!("Updating orbital trail for '{}' at position ({:.2e}, {:.2e}, {:.2e})", 
+                   self.name, self.position.x, self.position.y, self.position.z);
+        self.orbit_trail.update_position(self.position);
+    }
+
+    /// Get mutable reference to orbit trail for GPU buffer updates
+    pub fn get_orbit_trail_mut(&mut self) -> &mut OrbitTrail {
+        &mut self.orbit_trail
+    }
+
+    /// Get reference to orbit trail for rendering
+    pub fn get_orbit_trail(&self) -> &OrbitTrail {
+        &self.orbit_trail
+    }
 }
 
 impl Default for Body {
     fn default() -> Self {
         Self::new(1.0, DVec3::ZERO, DVec3::ZERO)
+    }
+}
+
+impl Clone for Body {
+    fn clone(&self) -> Self {
+        Body {
+            mass: self.mass,
+            position: self.position,
+            velocity: self.velocity,
+            acceleration: self.acceleration,
+            acceleration_initialized: self.acceleration_initialized,
+            name: self.name.clone(),
+            body_type: self.body_type.clone(),
+            orbit_color: self.orbit_color,
+            rotation_params: self.rotation_params,
+            orbit_trail: OrbitTrail::new(self.orbit_color), // Create new trail
+        }
+    }
+}
+
+impl PartialEq for Body {
+    fn eq(&self, other: &Self) -> bool {
+        self.mass == other.mass
+            && self.position == other.position
+            && self.velocity == other.velocity
+            && self.acceleration == other.acceleration
+            && self.acceleration_initialized == other.acceleration_initialized
+            && self.name == other.name
+            && self.body_type == other.body_type
+            && self.orbit_color == other.orbit_color
+            && self.rotation_params == other.rotation_params
+        // Note: orbit_trail is not compared as it contains GPU resources
     }
 }
 

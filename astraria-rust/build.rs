@@ -227,6 +227,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         "src/shaders/black_hole.wesl",
         "src/shaders/line.wesl",
         "src/shaders/point.wesl",
+        "src/shaders/orbital_paths.wesl",
     ];
 
     // Process each shader
@@ -236,11 +237,29 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             match process_shader(shader_path, &shader_out_dir, &wesl_compiler, &shader_dir) {
                 Ok(_) => {}
                 Err(e) => {
+                    let shader_name = shader_path.file_stem().unwrap().to_string_lossy();
                     eprintln!(
                         "Warning: Failed to process shader {}: {}",
                         shader_path.display(),
                         e
                     );
+
+                    // For orbital_paths, print additional debug info
+                    if shader_name == "orbital_paths" {
+                        eprintln!("ORBITAL_PATHS DEBUG: Detailed error for orbital_paths shader:");
+                        eprintln!("Error: {:#?}", e);
+
+                        // Check if WGSL file exists
+                        let wgsl_file = shader_out_dir.join("orbital_paths.wgsl");
+                        eprintln!("WGSL file exists: {}", wgsl_file.exists());
+                        if wgsl_file.exists() {
+                            match std::fs::metadata(&wgsl_file) {
+                                Ok(meta) => eprintln!("WGSL file size: {} bytes", meta.len()),
+                                Err(e) => eprintln!("Cannot read WGSL file metadata: {}", e),
+                            }
+                        }
+                    }
+
                     // Continue processing other shaders
                 }
             }

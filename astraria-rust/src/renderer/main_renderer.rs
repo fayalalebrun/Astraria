@@ -18,6 +18,7 @@ use crate::{
             PlanetAtmoShader, PointShader, SkyboxShader, SunShader,
         },
     },
+    physics::PhysicsSimulation,
 };
 
 /// Main rendering coordinator that manages all specialized shaders
@@ -104,6 +105,16 @@ pub struct MainRenderer {
 
     pub max_view_distance: f32,
     pub log_depth_constant: f32,
+    
+    // Cached orbital trail data for rendering
+    cached_trail_data: Vec<Option<TrailRenderData>>,
+}
+
+/// Data needed for rendering an orbital trail
+#[derive(Debug)]
+struct TrailRenderData {
+    vertex_buffer: Option<wgpu::Buffer>,
+    vertex_count: u32,
 }
 
 impl MainRenderer {
@@ -1065,6 +1076,7 @@ impl MainRenderer {
             view_projection_matrix_d64: DMat4::IDENTITY,
             max_view_distance: 100000000000.0, // Like Java MAXVIEWDISTANCE
             log_depth_constant: 1.0,           // Like Java LOGDEPTHCONSTANT
+            cached_trail_data: Vec::new(),
         })
     }
 
@@ -1354,6 +1366,7 @@ impl MainRenderer {
         &'a self,
         render_pass: &mut RenderPass<'a>,
         occluding_spheres: &[cpu_occlusion::Sphere],
+        physics: Option<&PhysicsSimulation>,
     ) {
         // Clone the commands to avoid borrow checker issues
         let commands = self.prepared_render_commands.clone();
@@ -1364,6 +1377,7 @@ impl MainRenderer {
                 transform,
                 mvp_bind_group_index,
                 occluding_spheres,
+                physics,
             );
         }
     }
@@ -1377,6 +1391,7 @@ impl MainRenderer {
         _transform: Mat4,
         mvp_bind_group_index: usize,
         occluding_spheres: &[cpu_occlusion::Sphere],
+        physics: Option<&PhysicsSimulation>,
     ) {
         // Get the MVP bind group for this command
         let (mvp_bind_group, _buffer_index) = &self.mvp_bind_groups[mvp_bind_group_index];
@@ -1757,6 +1772,52 @@ impl MainRenderer {
                 render_pass.draw_indexed(0..self.line_mesh.num_indices, 0, 0..1);
             }
 
+            RenderCommand::OrbitTrail { body_index, color: _ } => {
+                log::debug!("Executing OrbitTrail render command for body_index={}", body_index);
+                if let Some(physics) = physics {
+                    if let Ok(bodies) = physics.get_bodies() {
+                        if let Some(body) = bodies.get(*body_index) {
+                            let trail = body.get_orbit_trail();
+                            
+                            log::debug!("Body '{}': trail has vertex_buffer={}, vertex_count={}", 
+                                       body.name, trail.get_vertex_buffer().is_some(), trail.vertex_count());
+                            
+                            if let Some(vertex_buffer) = trail.get_vertex_buffer() {
+                                if trail.vertex_count() >= 2 {
+                                    log::debug!("Rendering orbital trail for '{}' with {} vertices", 
+                                               body.name, trail.vertex_count());
+                                    render_pass.set_pipeline(&self.line_shader.pipeline);
+                                    
+                                    // Create MVP bind group for orbital trail
+                                    let trail_mvp_bind_group =
+                                        generated_shaders::line::bind_groups::BindGroup0::from_bindings(
+                                            &self.device,
+                                            generated_shaders::line::bind_groups::BindGroupLayout0 {
+                                                mvp: wgpu::BufferBinding {
+                                                    buffer: &self.mvp_buffers
+                                                        [self.mvp_bind_groups[mvp_bind_group_index].1],
+                                                    offset: 0,
+                                                    size: None,
+                                                },
+                                            },
+                                        );
+                                    
+                                    trail_mvp_bind_group.set(render_pass);
+                                    self.line_uniform_bind_group.set(render_pass);
+                                    render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
+                                    
+                                    // Draw as line strip (not indexed)
+                                    render_pass.draw(0..trail.vertex_count(), 0..1);
+                                    
+                                    log::debug!("Rendered orbital trail for body {} with {} vertices", 
+                                               body_index, trail.vertex_count());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             RenderCommand::Point => {
                 render_pass.set_pipeline(&self.point_shader.pipeline);
                 // Create appropriate MVP bind group for point shader
@@ -1794,7 +1855,7 @@ impl MainRenderer {
     ) {
         self.begin_frame();
         self.prepare_render_command(command.clone(), transform);
-        self.execute_prepared_commands(render_pass, &[]);
+        self.execute_prepared_commands(render_pass, &[], None);
     }
 
     /// Helper method to get the appropriate mesh for a given mesh type
@@ -1806,5 +1867,75 @@ impl MainRenderer {
             MeshType::Line => &self.line_mesh,
             MeshType::Point => &self.point_mesh,
         }
+    }
+
+    /// Update orbital trail data from physics simulation (like Java prepare() call)
+    pub fn update_orbital_trails(&mut self, physics: &PhysicsSimulation) -> AstrariaResult<()> {
+        if let Ok(bodies) = physics.get_bodies() {
+            // Resize cache if needed
+            while self.cached_trail_data.len() < bodies.len() {
+                self.cached_trail_data.push(None);
+            }
+
+            // Update each body's trail data
+            for (index, body) in bodies.iter().enumerate() {
+                let trail = body.get_orbit_trail();
+                
+                if trail.is_renderable() {
+                    // Trail has data and vertex buffer - store reference info only
+                    self.cached_trail_data[index] = Some(TrailRenderData {
+                        vertex_buffer: None, // We'll get it directly from the trail during rendering
+                        vertex_count: trail.vertex_count(),
+                    });
+                } else {
+                    // Trail not ready for rendering
+                    self.cached_trail_data[index] = None;
+                }
+            }
+        }
+        Ok(())
+    }
+
+    /// Get orbital trail rendering data for a body index
+    fn get_orbital_trail_data(&self, body_index: usize) -> Option<&TrailRenderData> {
+        self.cached_trail_data.get(body_index)?.as_ref()
+    }
+
+    /// Generate orbital trail render commands (like Java drawing loop)
+    pub fn generate_orbital_trail_commands(&mut self, physics: &PhysicsSimulation, show_trails: bool) -> AstrariaResult<()> {
+        if !show_trails {
+            log::debug!("Orbital trails disabled, skipping command generation");
+            return Ok(());
+        }
+        
+        log::debug!("Generating orbital trail render commands");
+        let mut renderable_trails = 0;
+
+        if let Ok(bodies) = physics.get_bodies() {
+            log::debug!("Checking {} bodies for renderable orbital trails", bodies.len());
+            
+            for (index, body) in bodies.iter().enumerate() {
+                let trail = body.get_orbit_trail();
+                
+                log::debug!("Body '{}' ({}): trail_length={}, is_renderable={}, vertex_count={}", 
+                           body.name, index, trail.trail_length(), trail.is_renderable(), trail.vertex_count());
+                
+                if trail.is_renderable() {
+                    let command = RenderCommand::OrbitTrail {
+                        body_index: index,
+                        color: glam::Vec4::from_array(trail.color()),
+                    };
+                    
+                    // Use identity transform for orbital trails (they use camera-relative positions)
+                    self.prepare_render_command(command, Mat4::IDENTITY);
+                    renderable_trails += 1;
+                    log::debug!("Generated orbital trail command for '{}' with {} vertices", 
+                               body.name, trail.vertex_count());
+                }
+            }
+        }
+        
+        log::debug!("Generated {} orbital trail render commands", renderable_trails);
+        Ok(())
     }
 }

@@ -31,6 +31,11 @@ pub struct UserInterface {
     selected_object_index: Option<usize>,
     pending_actions: Vec<UiAction>,
     ui_visible: bool,
+    
+    // Orbital path controls (like Java Options.drawOrbits)
+    show_orbital_paths: bool,
+    orbital_path_history_length: i32,
+    orbital_path_segment_distance: f32,  // In km
 }
 
 impl UserInterface {
@@ -66,6 +71,11 @@ impl UserInterface {
             selected_object_index: None,
             pending_actions: Vec::new(),
             ui_visible: true,
+            
+            // Default orbital path settings (same as Java)
+            show_orbital_paths: true,  // Like Options.drawOrbits = true
+            orbital_path_history_length: 500,  // Like Java MAX_POINTS
+            orbital_path_segment_distance: 5000.0,  // Like Java segmentLength (5000 km)
         })
     }
 
@@ -132,6 +142,9 @@ impl UserInterface {
         let mut simulation_speed = self.simulation_speed;
         let mut selected_object_index = self.selected_object_index;
         let mut pending_actions = Vec::new();
+        let mut show_orbital_paths = self.show_orbital_paths;
+        let mut orbital_path_history_length = self.orbital_path_history_length;
+        let mut orbital_path_segment_distance = self.orbital_path_segment_distance;
         let ui_visible = self.ui_visible;
 
         // Get physics data for object list
@@ -154,6 +167,9 @@ impl UserInterface {
                 &mut pending_actions,
                 ui_visible,
                 physics,
+                &mut show_orbital_paths,
+                &mut orbital_path_history_length,
+                &mut orbital_path_segment_distance,
             );
         });
 
@@ -164,6 +180,9 @@ impl UserInterface {
         self.show_object_list = show_object_list;
         self.simulation_speed = simulation_speed;
         self.selected_object_index = selected_object_index;
+        self.show_orbital_paths = show_orbital_paths;
+        self.orbital_path_history_length = orbital_path_history_length;
+        self.orbital_path_segment_distance = orbital_path_segment_distance;
 
         // Store pending actions
         self.pending_actions.extend(pending_actions);
@@ -259,6 +278,9 @@ impl UserInterface {
         pending_actions: &mut Vec<UiAction>,
         ui_visible: bool,
         physics: Option<&crate::physics::PhysicsSimulation>,
+        show_orbital_paths: &mut bool,
+        orbital_path_history_length: &mut i32,
+        orbital_path_segment_distance: &mut f32,
     ) {
         // If UI is hidden, don't render any windows
         if !ui_visible {
@@ -280,6 +302,36 @@ impl UserInterface {
                                 .text("x"),
                         );
                     });
+
+                    ui.separator();
+
+                    ui.heading("Orbital Paths");
+                    
+                    // Enable/disable orbital trails (like Java Options.drawOrbits)
+                    if ui.checkbox(show_orbital_paths, "Show Orbital Trails").changed() {
+                        log::info!("Orbital paths toggled to: {}", *show_orbital_paths);
+                    }
+                    
+                    // Only show path settings if paths are enabled
+                    if *show_orbital_paths {
+                        ui.horizontal(|ui| {
+                            ui.label("Trail Length:");
+                            ui.add(egui::Slider::new(orbital_path_history_length, 50..=2000).text("points"));
+                        });
+                        
+                        ui.horizontal(|ui| {
+                            ui.label("Segment Distance:");
+                            ui.add(egui::Slider::new(orbital_path_segment_distance, 1000.0..=50000.0)
+                                .logarithmic(true)
+                                .text("km"));
+                        });
+                        
+                        if ui.small_button("Reset to Defaults").clicked() {
+                            *orbital_path_history_length = 500;
+                            *orbital_path_segment_distance = 5000.0;
+                            log::info!("Orbital path settings reset to defaults");
+                        }
+                    }
 
                     ui.separator();
 
@@ -463,6 +515,10 @@ impl UserInterface {
                     if ui.checkbox(show_object_list, "Object List").changed() {
                         log::info!("Object List toggled via menu to: {}", *show_object_list);
                     }
+                    ui.separator();
+                    if ui.checkbox(show_orbital_paths, "Orbital Paths").changed() {
+                        log::info!("Orbital paths toggled via menu to: {}", *show_orbital_paths);
+                    }
                 });
 
                 ui.menu_button("Help", |ui| {
@@ -477,5 +533,19 @@ impl UserInterface {
     pub fn resize(&mut self, _new_size: PhysicalSize<u32>) -> AstrariaResult<()> {
         // egui handles resize automatically
         Ok(())
+    }
+
+    /// Get orbital path rendering settings (like Java Options.drawOrbits)
+    pub fn get_orbital_path_settings(&self) -> (bool, usize, f64) {
+        (
+            self.show_orbital_paths,
+            self.orbital_path_history_length as usize,
+            (self.orbital_path_segment_distance * 1000.0) as f64, // Convert km to meters
+        )
+    }
+
+    /// Check if orbital paths should be rendered (like Java Options.drawOrbits)
+    pub fn should_show_orbital_paths(&self) -> bool {
+        self.show_orbital_paths
     }
 }

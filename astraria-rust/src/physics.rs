@@ -64,6 +64,7 @@ impl VelocityVerlet {
             let mut step_count = 0u64;
             let mut stats_update_timer = Instant::now();
             let mut delta_time_accumulator = 0.0;
+            let mut simulation_time = 0.0; // Track total simulation time for path recording
 
             while !terminate_flag.load(Ordering::Relaxed) {
                 let current_time = Instant::now();
@@ -78,8 +79,11 @@ impl VelocityVerlet {
                 // Limit delta time to prevent numerical instability
                 delta_time = delta_time.min(0.1);
 
+                // Update simulation time
+                simulation_time += delta_time;
+
                 // Run the integration step
-                if let Err(e) = Self::integration_step(&bodies, delta_time) {
+                if let Err(e) = Self::integration_step(&bodies, delta_time, simulation_time) {
                     log::error!("Physics integration error: {e}");
                     break;
                 }
@@ -121,6 +125,7 @@ impl VelocityVerlet {
     fn integration_step(
         bodies: &Arc<RwLock<BodyCollection>>,
         delta_time: f64,
+        _simulation_time: f64,
     ) -> AstrariaResult<()> {
         let bodies_guard = bodies
             .read()
@@ -218,6 +223,9 @@ impl VelocityVerlet {
             // Store new acceleration for next timestep
             body.acceleration = *new_acceleration;
             body.acceleration_initialized = false; // Reset for next iteration
+
+            // Update orbital trail (like Java SimulationObject.prepare())
+            body.update_orbit_trail();
         }
 
         Ok(())
@@ -288,6 +296,28 @@ impl VelocityVerlet {
             .map_err(|_| AstrariaError::Physics("Failed to acquire read lock".to_string()))?;
 
         Ok(stats.clone())
+    }
+
+    /// Update orbital trail GPU buffers for all bodies
+    /// This provides the mutable access needed for GPU buffer updates during rendering
+    pub fn update_orbital_trail_buffers(&self, device: &wgpu::Device, camera_position: glam::DVec3) -> crate::AstrariaResult<()> {
+        let bodies = self.bodies.read().map_err(|_| {
+            crate::AstrariaError::Physics("Failed to acquire read lock for bodies".to_string())
+        })?;
+
+        for body_ref in bodies.bodies() {
+            let mut body = body_ref.write().map_err(|_| {
+                crate::AstrariaError::Physics("Failed to acquire write lock for body".to_string())
+            })?;
+
+            // Update GPU buffer if the trail needs updating
+            if body.orbit_trail.needs_update() {
+                body.orbit_trail.update_gpu_buffer(device, camera_position);
+                log::debug!("Updated GPU buffer for orbital trail of '{}'", body.name);
+            }
+        }
+        
+        Ok(())
     }
 }
 
@@ -422,6 +452,12 @@ impl PhysicsSimulation {
     /// Get physics simulation performance statistics
     pub fn get_stats(&self) -> AstrariaResult<PhysicsStats> {
         self.algorithm.get_stats()
+    }
+
+    /// Update orbital trail GPU buffers for all bodies
+    /// This provides the mutable access needed for GPU buffer updates during rendering
+    pub fn update_orbital_trail_buffers(&self, device: &wgpu::Device, camera_position: glam::DVec3) -> crate::AstrariaResult<()> {
+        self.algorithm.update_orbital_trail_buffers(device, camera_position)
     }
 }
 

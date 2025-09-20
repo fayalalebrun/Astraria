@@ -6,6 +6,7 @@ pub mod core;
 pub mod cpu_occlusion;
 pub mod lighting;
 pub mod main_renderer;
+pub mod orbital_paths;
 pub mod pipeline;
 pub mod precision_math;
 pub mod shader_utils;
@@ -290,6 +291,24 @@ impl Renderer {
                 .prepare_render_command(command.clone(), *transform);
         }
 
+        // Generate orbital trail render commands if enabled (like Java drawOrbits check)
+        // TODO: Pass UI settings from main app loop - for now use default enabled
+        let show_orbital_paths = true; // Will be replaced with ui.should_show_orbital_paths() from caller
+        log::debug!("Orbital trail rendering enabled: {}", show_orbital_paths);
+        
+        if show_orbital_paths {
+            log::debug!("Starting orbital trail buffer updates and command generation");
+            
+            // Update orbital trail GPU buffers for all bodies
+            self.update_orbital_trail_buffers(physics)?;
+            
+            // Generate orbital trail commands
+            self.main_renderer
+                .generate_orbital_trail_commands(physics, show_orbital_paths)?;
+                
+            log::debug!("Completed orbital trail buffer updates and command generation");
+        }
+
         // Prepare lens glow commands last (to render on top)
         for (command, transform) in &lens_glow_commands {
             self.main_renderer
@@ -333,7 +352,7 @@ impl Renderer {
             // Execute all prepared render commands with dynamic MVP offsets
             // This includes skybox and all physics bodies
             self.main_renderer
-                .execute_prepared_commands(&mut render_pass, &occluding_spheres);
+                .execute_prepared_commands(&mut render_pass, &occluding_spheres, Some(physics));
         }
 
         // Submit the command buffer
@@ -607,6 +626,13 @@ impl Renderer {
 
     pub fn main_renderer(&mut self) -> &mut MainRenderer {
         &mut self.main_renderer
+    }
+
+    /// Update orbital trail GPU buffers for all bodies that have trails
+    /// Uses physics system's method that provides the necessary mutable access
+    fn update_orbital_trail_buffers(&mut self, physics: &PhysicsSimulation) -> AstrariaResult<()> {
+        let camera_position = self.main_renderer.camera.position();
+        physics.update_orbital_trail_buffers(self.main_renderer.device(), camera_position)
     }
 
     /// Handle camera input

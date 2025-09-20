@@ -90,8 +90,14 @@ pub enum RenderCommand {
     /// Black hole with gravitational lensing
     BlackHole,
 
-    /// Orbital path lines
+    /// Orbital path lines (hardcoded test mesh)
     Line { color: glam::Vec4 },
+
+    /// Dynamic orbital trail (uses body index to get vertex buffer from renderer)
+    OrbitTrail {
+        body_index: usize,
+        color: glam::Vec4,
+    },
 
     /// Point rendering for distant objects
     Point,
